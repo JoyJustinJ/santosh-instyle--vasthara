@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Vasthara",
+        "supportEmail": "jkjustin1805@gmail.com"
+      }
+    }
+  }
+}

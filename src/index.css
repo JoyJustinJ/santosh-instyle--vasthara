@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&family=Noto+Sans+Tamil:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", serif;
+  --font-tamil: "Noto Sans Tamil", sans-serif;
+
+  --color-primary: #2D2D2D;
+  --color-accent: #5B7FE8;
+  --color-accent-light: #EEF2FD;
+  --color-background: #FFFFFF;
+  --color-surface: #F7F8FA;
+  --color-border: #E4E6EB;
+  --color-success: #1A8A5A;
+  --color-success-light: #E8F7F0;
+  --color-danger: #D13232;
+  --color-danger-light: #FDEAEA;
+  --color-warning: #D97706;
+
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+
+  --shadow-subtle: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  /* Tamil font support */
+  [lang="ta"] {
+    @apply font-tamil;
+  }
+}
+
+.mobile-container {
+  @apply w-full max-w-[430px] mx-auto min-h-screen bg-background relative overflow-x-hidden shadow-2xl;
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.page-transition-wrapper {
+  @apply min-h-screen w-full;
+}
