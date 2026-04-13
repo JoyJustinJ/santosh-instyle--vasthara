@@ -25,7 +25,9 @@ const AuthContext = createContext<{
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return sessionStorage.getItem('vasthara_unlocked_session') === 'true';
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -70,11 +72,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
     setIsUnlocked(false);
+    sessionStorage.removeItem('vasthara_unlocked_session');
     localStorage.removeItem('vasthara_pin');
   };
 
   const unlockApp = () => {
     setIsUnlocked(true);
+    sessionStorage.setItem('vasthara_unlocked_session', 'true');
   };
 
   return (
