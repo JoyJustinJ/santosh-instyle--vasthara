@@ -131,3 +131,28 @@ export const getAllUsersFromDB = async () => {
     }
 };
 
+// ================= ADMIN SETTINGS =================
+export const getAdminSettings = async () => {
+    try {
+        const docSnap = await getDoc(doc(db, "admins", "main_admin"));
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        // Default seed if not exists
+        const defaultSettings = { adminId: 'admin', password: 'admin123', securityPin: '0000' };
+        await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
+        return defaultSettings;
+    } catch (e) {
+        console.error("Error getting admin settings:", e);
+        return { adminId: 'admin', password: 'admin123', securityPin: '0000' };
+    }
+};
+
+export const updateAdminSettings = async (settings: any) => {
+    try {
+        await setDoc(doc(db, "admins", "main_admin"), settings, { merge: true });
+    } catch (e) {
+        console.error("Error updating admin settings:", e);
+    }
+};
+

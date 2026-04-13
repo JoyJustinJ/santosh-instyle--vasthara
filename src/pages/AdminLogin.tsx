@@ -6,6 +6,7 @@ import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
 import { Notification, NotificationType } from '../components/UI/Notification';
+import { getAdminSettings } from '../services/db';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
@@ -22,26 +23,28 @@ const AdminLogin = () => {
         setTimeout(() => setNotification(null), 5000);
     };
 
-    const handleAdminLogin = (e: React.FormEvent) => {
+    const handleAdminLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simulated Admin check - In a real app we'd check a secure Firestore "admins" collection
-        // For now using secure defaults as requested for testing
-        setTimeout(() => {
+        try {
+            const adminSettings = await getAdminSettings();
+
             if (
-                (formData.adminId === 'admin' || formData.adminId === 'vasthara@admin.com') &&
-                formData.password === 'admin123' &&
-                formData.securityPin === '0000'
+                formData.adminId === adminSettings.adminId &&
+                formData.password === adminSettings.password &&
+                formData.securityPin === adminSettings.securityPin
             ) {
                 localStorage.setItem('is_admin_authenticated', 'true');
                 navigate('/admin');
             } else {
                 showNotif('Invalid Admin Credentials or Security PIN', 'error');
             }
-            setLoading(true);
+        } catch (err) {
+            showNotif('Connection failed. Please check your internet.', 'error');
+        } finally {
             setLoading(false);
-        }, 1500);
+        }
     };
 
     return (

@@ -11,9 +11,18 @@ import { Input } from '../components/UI/Input';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { formatCurrency } from '../utils';
-import { getSchemesFromDB, getStaffRequestsFromDB, saveSchemeToDB, deleteSchemeFromDB, deleteStaffRequestFromDB, recordTransactionInDB } from '../services/db';
+import {
+    getSchemesFromDB,
+    getStaffRequestsFromDB,
+    saveSchemeToDB,
+    deleteSchemeFromDB,
+    deleteStaffRequestFromDB,
+    recordTransactionInDB,
+    getAdminSettings,
+    updateAdminSettings
+} from '../services/db';
 
-type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'incentives' | 'staff';
+type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'incentives' | 'staff' | 'settings';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -29,6 +38,7 @@ const AdminDashboard = () => {
     const [depositAmount, setDepositAmount] = useState('');
     const [notification, setNotification] = useState<{ message: string, type: NotificationType } | null>(null);
     const [idToDelete, setIdToDelete] = useState<string | null>(null);
+    const [adminSettings, setAdminSettings] = useState({ adminId: '', password: '', securityPin: '' });
 
     const showNotif = (message: string, type: NotificationType = 'success') => {
         setNotification({ message, type });
@@ -43,6 +53,8 @@ const AdminDashboard = () => {
                 setSchemesList(s);
                 const r = await getStaffRequestsFromDB();
                 setPendingStaff(r);
+                const settings = await getAdminSettings();
+                setAdminSettings(settings);
             } catch (err) {
                 console.error("Failed to load Firebase data:", err);
             } finally {
@@ -64,7 +76,7 @@ const AdminDashboard = () => {
         const amount = parseInt(newScheme.amount);
 
         if (isNaN(duration) || isNaN(amount) || !newScheme.name) {
-            alert("Please enter valid name, duration and amount.");
+            showNotif("Please enter valid name, duration and amount.", 'error');
             return;
         }
 
@@ -143,7 +155,7 @@ const AdminDashboard = () => {
     const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedSchemeForDeposit) {
-            alert("Please select a scheme");
+            showNotif("Please select a scheme", 'error');
             return;
         }
         await recordTransactionInDB({
@@ -162,6 +174,20 @@ const AdminDashboard = () => {
         await deleteStaffRequestFromDB(id.toString());
         setPendingStaff(pendingStaff.filter(staff => staff.id !== id));
         showNotif(`Staff request ${action}d successfully.`, 'info');
+    };
+
+    const handleUpdateSecurity = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoadingData(true);
+        try {
+            await updateAdminSettings(adminSettings);
+            showNotif("Admin Security Settings Updated!");
+            setActiveView('overview');
+        } catch (err) {
+            showNotif("Failed to update security", "error");
+        } finally {
+            setLoadingData(false);
+        }
     };
 
     const renderView = () => {
@@ -321,6 +347,41 @@ const AdminDashboard = () => {
                     </motion.div>
                 );
 
+            case 'settings':
+                return (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                        <div className="flex items-center gap-4 border-b border-border/50 pb-4">
+                            <button onClick={() => setActiveView('overview')} className="text-primary">
+                                <ChevronLeft size={24} />
+                            </button>
+                            <h2 className="text-xl font-display font-bold text-primary">Security Settings</h2>
+                        </div>
+                        <form onSubmit={handleUpdateSecurity} className="space-y-4">
+                            <Input
+                                label="Admin Username"
+                                value={adminSettings.adminId}
+                                onChange={e => setAdminSettings({ ...adminSettings, adminId: e.target.value })}
+                            />
+                            <Input
+                                label="New Admin Password"
+                                type="password"
+                                value={adminSettings.password}
+                                onChange={e => setAdminSettings({ ...adminSettings, password: e.target.value })}
+                            />
+                            <Input
+                                label="Security PIN (4 Digits)"
+                                type="password"
+                                maxLength={4}
+                                value={adminSettings.securityPin}
+                                onChange={e => setAdminSettings({ ...adminSettings, securityPin: e.target.value })}
+                            />
+                            <div className="pt-4">
+                                <Button fullWidth type="submit" loading={loadingData}>Save Security Settings</Button>
+                            </div>
+                        </form>
+                    </motion.div>
+                );
+
             default:
                 return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
@@ -366,16 +427,14 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-border/50">
-                            <h3 className="text-xs font-black text-danger uppercase tracking-[0.2em] mb-4">Danger Zone</h3>
+                            <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-4">Account Security</h3>
                             <Button
                                 variant="outline"
                                 fullWidth
-                                className="bg-danger text-white border-danger hover:bg-danger/90 hover:text-white"
-                                onClick={() => {
-                                    alert("Cloud Database cannot be cleared directly for security. Please use Firebase Console.");
-                                }}
+                                className="border-primary/20 text-primary py-6"
+                                onClick={() => setActiveView('settings')}
                             >
-                                <Shield size={18} className="mr-2" /> DATA SECURITY LOCK
+                                <Shield size={18} className="mr-2" /> MANAGE PASSWORD & PIN
                             </Button>
                         </div>
                     </motion.div>

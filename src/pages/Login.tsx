@@ -47,22 +47,21 @@ const Login = () => {
   const getFriendlyErrorMessage = (error: any) => {
     const code = error.code || '';
     if (code.includes('auth/configuration-not-found')) {
-      return "Phone login is currently being configured. Please use Google Login or try again later.";
+      return "Phone login is being set up. Please use Google Login for now.";
     }
     if (code.includes('auth/invalid-phone-number')) {
-      return "The phone number you entered is invalid. Please check and try again.";
+      return "That phone number doesn't look right. Please double-check it.";
     }
     if (code.includes('auth/too-many-requests')) {
-      return "Too many attempts. Please wait a few minutes before trying again.";
+      return "Too many tries! Please wait a few minutes and try again.";
     }
     if (code.includes('auth/invalid-verification-code')) {
-      return "The OTP code is incorrect. Please check and try again.";
+      return "The code you entered is incorrect. Please try again.";
     }
-    if (code.includes('auth/unauthorized-domain')) {
-      return "Domain Check: Please add 'localhost' to Authorized Domains in your Firebase Console.";
+    if (code.includes('auth/network-request-failed')) {
+      return "Connection trouble. Please check your internet or signal.";
     }
-    // Return the actual code if unknown to help the user debug
-    return `Security Error (${code || 'Unknown'}). Please check your Firebase settings or internet.`;
+    return "Oops! Something went wrong. Please try again in a moment.";
   };
 
   const setupRecaptcha = () => {
