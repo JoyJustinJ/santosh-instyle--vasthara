@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, TrendingUp, Gift, Shield } from 'lucide-react';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { getSchemesFromDB, getAllUsersFromDB } from '../services/db';
-import { cn } from '../utils';
+import { cn, formatCurrency } from '../utils';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -106,54 +106,60 @@ const Home = () => {
           <Sparkles className="text-[#D4AF37]" size={20} />
         </div>
 
-        <Card className="p-0 overflow-hidden border-2 border-[#D4AF37]/30 relative group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+        {schemes.length > 0 ? (
+          <Card className="p-0 overflow-hidden border-2 border-[#D4AF37]/30 relative group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
 
-          <div className="p-6 space-y-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Badge variant="warning" className="bg-[#D4AF37]/10 text-[#B8860B]">POPULAR</Badge>
-                <Badge variant="default">11 MONTHS</Badge>
-              </div>
-              <h4 className="text-2xl font-display font-bold text-primary mt-2">
-                {featuredScheme.name}
-              </h4>
-              <p className="text-sm font-medium text-accent italic">
-                {featuredScheme.tagline}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 py-4 border-y border-border/50">
+            <div className="p-6 space-y-6">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly</p>
-                <p className="text-lg font-bold text-primary">₹{featuredScheme.monthlyAmount}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="warning" className="bg-[#D4AF37]/10 text-[#B8860B]">POPULAR</Badge>
+                  <Badge variant="default">{featuredScheme.duration} MONTHS</Badge>
+                </div>
+                <h4 className="text-2xl font-display font-bold text-primary mt-2">
+                  {featuredScheme.name}
+                </h4>
+                <p className="text-sm font-medium text-accent italic">
+                  {featuredScheme.tagline}
+                </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Maturity</p>
-                <p className="text-lg font-bold text-success">₹{featuredScheme.maturityValue}</p>
-              </div>
-            </div>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() => navigate('/scheme-info')}
-                className="border-primary/20 text-primary"
-              >
-                {t('home.know_more')}
-              </Button>
-              <Button
-                variant="gold"
-                fullWidth
-                onClick={() => navigate('/schemes-list')}
-                className="shadow-card"
-              >
-                {t('home.join_now')}
-              </Button>
+              <div className="grid grid-cols-2 gap-4 py-4 border-y border-border/50">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly</p>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(featuredScheme.monthlyAmount)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Maturity</p>
+                  <p className="text-lg font-bold text-success">{formatCurrency(featuredScheme.maturityValue)}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={() => navigate('/scheme-info')}
+                  className="border-primary/20 text-primary"
+                >
+                  {t('home.know_more')}
+                </Button>
+                <Button
+                  variant="gold"
+                  fullWidth
+                  onClick={() => navigate('/schemes-list')}
+                  className="shadow-card"
+                >
+                  {t('home.join_now')}
+                </Button>
+              </div>
             </div>
+          </Card>
+        ) : (
+          <div className="text-center p-8 bg-surface rounded-3xl border border-dashed border-border">
+            <p className="text-sm text-text-muted">No schemes active at the moment. Please check back later!</p>
           </div>
-        </Card>
+        )}
       </div>
 
       {/* Quick Stats */}

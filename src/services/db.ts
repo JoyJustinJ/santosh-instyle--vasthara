@@ -7,15 +7,6 @@ export const getSchemesFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "schemes"));
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (data.length === 0) {
-            console.log("Empty DB, seeding initial schemes...");
-            for (let s of SCHEMES) {
-                // Remove hardcoded members count when seeding real DB
-                const seedScheme = { ...s, members: 0 };
-                await setDoc(doc(db, "schemes", s.id), seedScheme);
-                data.push(seedScheme);
-            }
-        }
         return data;
     } catch (e) {
         console.warn("Firebase fetching failed, returning constants.", e);
@@ -139,12 +130,12 @@ export const getAdminSettings = async () => {
             return docSnap.data();
         }
         // Default seed if not exists
-        const defaultSettings = { adminId: 'admin', password: 'admin123', securityPin: '0000' };
+        const defaultSettings = { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
         await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
         return defaultSettings;
     } catch (e) {
         console.error("Error getting admin settings:", e);
-        return { adminId: 'admin', password: 'admin123', securityPin: '0000' };
+        return { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
     }
 };
 
@@ -156,3 +147,60 @@ export const updateAdminSettings = async (settings: any) => {
     }
 };
 
+export const getUserPlansFromDB = async (userId: string) => {
+    try {
+        const q = query(collection(db, "user_plans"), where("userId", "==", userId));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+        console.error("Error fetching user plans:", e);
+        return [];
+    }
+};
+
+
+const HARDCODED_ADMIN = { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
+
+export const checkIsAdmin = async (adminId: string) => {
+    // Always match hardcoded admin credentials first (works even if Firestore is offline/stale)
+    if (adminId === HARDCODED_ADMIN.adminId) {
+        // Also update Firestore in background to keep it in sync
+        setDoc(doc(db, "admins", "main_admin"), HARDCODED_ADMIN).catch(() => { });
+        return HARDCODED_ADMIN;
+    }
+    try {
+        const q = query(collection(db, "admins"), where("adminId", "==", adminId));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return querySnapshot.docs[0].data();
+        }
+        return null;
+    } catch (e) {
+        console.error("Error checking admin:", e);
+        return null;
+    }
+};
+
+// ================= ADMIN MANAGEMENT =================
+export const getAllAdminsFromDB = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "admins"));
+        return querySnapshot.docs.map(d => ({ docId: d.id, ...d.data() }));
+    } catch (e) {
+        console.error("Error fetching admins:", e);
+        return [];
+    }
+};
+
+export const deleteAdminFromDB = async (adminDocId: string) => {
+    // Safety: never allow deleting the primary admin document
+    if (adminDocId === 'main_admin') {
+        console.error("Cannot delete the primary admin document.");
+        return;
+    }
+    try {
+        await deleteDoc(doc(db, "admins", adminDocId));
+    } catch (e) {
+        console.error("Error deleting admin:", e);
+    }
+};

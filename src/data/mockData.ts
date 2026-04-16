@@ -45,12 +45,7 @@ export interface MarketRates {
 
 export const MARKET_RATES: MarketRates = {
   current: 8.5,
-  bonus: 2.0,
-  history: [
-    { date: '2024-04-01', rate: 8.0 },
-    { date: '2024-04-05', rate: 8.2 },
-    { date: '2024-04-10', rate: 8.3 },
-    { date: '2024-04-13', rate: 8.5 },
-  ]
+  bonus: 0,
+  history: []
 };
 

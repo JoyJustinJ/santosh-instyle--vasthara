@@ -45,6 +45,7 @@ export interface Scheme {
   members: number;
   description: string;
   category: 'Short Term' | 'Long Term' | 'Popular';
+  status: 'active' | 'inactive';
   tagline: string;
 }
 

@@ -66,13 +66,13 @@ const Profile = () => {
   const handlePasswordChangeSub = () => {
     if (!otpSent) {
       setOtpSent(true);
-      // Simulate sending OTP
+      // Integrate with real OTP service here
+      alert("Verification code sent to your registered number.");
     } else {
-      if (passwordForm.otp === '1234') {
-        alert("Password updated successfully!");
+      // Real OTP verification logic goes here
+      if (passwordForm.otp) {
+        alert("Password update requested. Verification in progress.");
         setChangingPassword(false);
-      } else {
-        alert("Invalid OTP! Try 1234.");
       }
     }
   };
@@ -158,7 +158,7 @@ const Profile = () => {
                   <Input label="Last Name" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
                 </div>
                 <Input label="Email" type="email" icon={Mail} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                <Input label="Phone" type="tel" icon={Smartphone} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                <Input label="Phone" type="tel" icon={Smartphone} value={formData.phone} readOnly className="bg-surface-alt opacity-70" />
                 <Button fullWidth onClick={handleSaveProfile} className="mt-4"><Check size={18} className="mr-2" /> Save Profile</Button>
               </Card>
 

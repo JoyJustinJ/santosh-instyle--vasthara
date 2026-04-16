@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await signOut(auth);
     setIsUnlocked(false);
     sessionStorage.removeItem('vasthara_unlocked_session');
-    localStorage.removeItem('vasthara_pin');
+    // Removed clearing of PIN to maintain UX and prevent redirect race conditions
   };
 
   const unlockApp = () => {

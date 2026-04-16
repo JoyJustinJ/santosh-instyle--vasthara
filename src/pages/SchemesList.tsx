@@ -5,12 +5,22 @@ import { ChevronLeft, Sparkles, ArrowRight, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
-import { SCHEMES } from '../constants';
+import { getSchemesFromDB } from '../services/db';
+import { Scheme } from '../types';
 import { formatCurrency } from '../utils';
 
 const SchemesList = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [schemes, setSchemes] = React.useState<Scheme[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    getSchemesFromDB().then(data => {
+      setSchemes(data.filter((s: any) => s.status === 'active'));
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <motion.div
@@ -34,7 +44,9 @@ const SchemesList = () => {
       </div>
 
       <div className="space-y-6">
-        {SCHEMES.map((scheme, i) => (
+        {loading ? (
+          <div className="flex justify-center py-12 text-text-muted font-bold">Loading plans...</div>
+        ) : schemes.map((scheme, i) => (
           <motion.div
             key={scheme.id}
             initial={{ opacity: 0, y: 20 }}

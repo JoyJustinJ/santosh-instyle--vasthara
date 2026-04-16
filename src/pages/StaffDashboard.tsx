@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, HandCoins, UserCheck, Award, ChevronLeft } from 'lucide-react';
+import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Edit2, Smartphone } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
 import { formatCurrency } from '../utils';
-import { getSchemesFromDB, recordTransactionInDB } from '../services/db';
+import {
+    getSchemesFromDB, getAdminSettings,
+    updateAdminSettings,
+    getUserPlansFromDB,
+    recordTransactionInDB,
+    getUserFromDB,
+    createUserProfile
+} from '../services/db';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
-    const [activeView, setActiveView] = useState<'overview' | 'deposit' | 'referrals'>('overview');
-    const [selectedSchemeForDeposit, setSelectedSchemeForDeposit] = useState('');
+    const [activeView, setActiveView] = useState<'overview' | 'deposit' | 'referrals' | 'customer_lookup'>('overview');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [foundCustomer, setFoundCustomer] = useState<any>(null);
+    const [newPhone, setNewPhone] = useState('');
     const [depositAmount, setDepositAmount] = useState('');
+    const [depositCustomer, setDepositCustomer] = useState('');
+    const [selectedSchemeForDeposit, setSelectedSchemeForDeposit] = useState('');
+    const [customerActiveSchemes, setCustomerActiveSchemes] = useState<any[]>([]);
     const [schemesList, setSchemesList] = useState<any[]>([]);
 
     useEffect(() => {
@@ -29,12 +41,49 @@ const StaffDashboard = () => {
             type: 'receipt',
             amount: parseFloat(depositAmount),
             schemeId: selectedSchemeForDeposit,
-            customerAccount: 'Manual Collection'
+            customerAccount: depositCustomer
         });
         alert("Receipt recorded & customer's plan updated.");
         setSelectedSchemeForDeposit('');
         setDepositAmount('');
+        setDepositCustomer('');
+        setCustomerActiveSchemes([]);
         setActiveView('overview');
+    };
+
+    const handleCustomerLookup = async (id: string) => {
+        setDepositCustomer(id);
+        if (id.length >= 4) {
+            const plans = await getUserPlansFromDB(id);
+            const activeJoinedSchemes = schemesList.filter(s => plans.some((p: any) => p.schemeId === s.id));
+            setCustomerActiveSchemes(activeJoinedSchemes);
+        } else {
+            setCustomerActiveSchemes([]);
+        }
+    };
+
+    const handleCustomerSearch = async () => {
+        if (!searchQuery) return;
+        const res: any = await getUserFromDB(searchQuery);
+        if (res) {
+            setFoundCustomer(res);
+            setNewPhone(res.phone);
+        } else {
+            alert("Customer not found");
+        }
+    };
+
+    const handleUpdatePhone = async () => {
+        if (!newPhone) return;
+        try {
+            const updated = { ...foundCustomer, phone: newPhone };
+            await createUserProfile(updated);
+            alert("Phone number updated successfully!");
+            setFoundCustomer(null);
+            setSearchQuery('');
+        } catch (err) {
+            alert("Update failed");
+        }
     };
 
     const renderView = () => {
@@ -48,7 +97,13 @@ const StaffDashboard = () => {
                         <h2 className="text-xl font-display font-bold text-primary">Manual Cash Receipt</h2>
                     </div>
                     <form onSubmit={handleReceipt} className="space-y-4">
-                        <Input label="Customer ID" placeholder="e.g. V-88291" required />
+                        <Input
+                            label="Customer ID"
+                            placeholder="e.g. V-88291"
+                            required
+                            value={depositCustomer}
+                            onChange={(e) => handleCustomerLookup(e.target.value)}
+                        />
 
                         <div className="flex flex-col gap-1">
                             <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Scheme</label>
@@ -59,9 +114,13 @@ const StaffDashboard = () => {
                                 onChange={(e) => setSelectedSchemeForDeposit(e.target.value)}
                             >
                                 <option value="" disabled>Select a scheme</option>
-                                {schemesList.map((s: any) => (
-                                    <option key={s.id} value={s.id}>{s.name} - {formatCurrency(s.monthlyAmount)}/mo</option>
-                                ))}
+                                {customerActiveSchemes.length > 0 ? (
+                                    customerActiveSchemes.map((s: any) => (
+                                        <option key={s.id} value={s.id}>{s.name} - {formatCurrency(s.monthlyAmount)}/mo</option>
+                                    ))
+                                ) : (
+                                    <option disabled>No joined schemes found</option>
+                                )}
                             </select>
                         </div>
 
@@ -84,6 +143,52 @@ const StaffDashboard = () => {
                     <div className="space-y-3">
                         <p className="text-sm text-text-muted py-4 text-center">Referrals will appear here as you add new customers.</p>
                     </div>
+                </motion.div>
+            );
+        }
+
+        if (activeView === 'customer_lookup') {
+            return (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                    <div className="flex items-center gap-4 border-b border-border/50 pb-4">
+                        <button onClick={() => setActiveView('overview')} className="text-primary">
+                            <ChevronLeft size={24} />
+                        </button>
+                        <h2 className="text-xl font-display font-bold text-primary">Customer Profile Update</h2>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Input
+                            placeholder="Enter Customer Phone"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        <button
+                            onClick={handleCustomerSearch}
+                            className="bg-primary text-white p-3 rounded-xl"
+                        >
+                            <Search size={20} />
+                        </button>
+                    </div>
+
+                    {foundCustomer && (
+                        <Card className="p-6 space-y-6 border-none shadow-card">
+                            <div className="space-y-1">
+                                <h3 className="font-bold text-primary">{foundCustomer.firstName} {foundCustomer.lastName}</h3>
+                                <p className="text-xs text-text-muted">Customer ID: {foundCustomer.id}</p>
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-border">
+                                <Input
+                                    label="Update Phone Number"
+                                    icon={Smartphone}
+                                    value={newPhone}
+                                    onChange={e => setNewPhone(e.target.value)}
+                                />
+                                <Button fullWidth onClick={handleUpdatePhone}>Update Mobile Number</Button>
+                            </div>
+                        </Card>
+                    )}
                 </motion.div>
             );
         }
@@ -130,6 +235,12 @@ const StaffDashboard = () => {
                             <Users size={24} />
                         </div>
                         <p className="text-xs font-bold text-primary">View Referrals</p>
+                    </Card>
+                    <Card onClick={() => setActiveView('customer_lookup')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface col-span-2">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                            <Search size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-primary">Search & Update Customer Phone</p>
                     </Card>
                 </div>
             </motion.div>

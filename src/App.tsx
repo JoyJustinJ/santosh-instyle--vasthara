@@ -26,12 +26,11 @@ import PlanDetail from './pages/PlanDetail';
 import PayEMI from './pages/PayEMI';
 import ContactUs from './pages/ContactUs';
 import AdminDashboard from './pages/AdminDashboard';
-import AdminLogin from './pages/AdminLogin';
 import StaffDashboard from './pages/StaffDashboard';
 
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
-  if (!isAdmin) return <Navigate to="/admin-login" replace />;
+  if (!isAdmin) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -62,7 +61,7 @@ const AppContent = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const hideNavs = ['/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/admin', '/staff', '/admin-login'].includes(location.pathname);
+  const hideNavs = ['/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/admin', '/staff'].includes(location.pathname);
 
   return (
     <div className="mobile-container">
@@ -76,7 +75,7 @@ const AppContent = () => {
             <Route path="/signup" element={<Signup />} />
             <Route path="/otp-verify" element={<OTPVerify />} />
             <Route path="/pin-login" element={<PINLogin />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
+
             <Route path="/admin" element={
               <AdminGuard>
                 <AdminDashboard />

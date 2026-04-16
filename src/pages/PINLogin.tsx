@@ -9,7 +9,7 @@ import { cn } from '../utils';
 const PINLogin = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, unlockApp } = useAuth()!;
+  const { user, unlockApp, logout } = useAuth()!;
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -105,12 +105,12 @@ const PINLogin = () => {
             autoFocus
           />
 
-          <div 
+          <div
             className={cn("flex justify-center gap-6 cursor-pointer", error && "animate-shake")}
             onClick={handleContainerClick}
           >
             {[0, 1, 2, 3].map((i) => (
-              <div 
+              <div
                 key={i}
                 className={cn(
                   "w-14 h-14 rounded-full border-2 border-border flex items-center justify-center transition-all",
@@ -135,7 +135,7 @@ const PINLogin = () => {
           ) : null}
 
           <div className="text-center">
-            <button 
+            <button
               onClick={() => navigate('/otp-verify')}
               className="text-xs font-black text-accent uppercase tracking-[0.2em] hover:underline"
             >
@@ -146,8 +146,11 @@ const PINLogin = () => {
       </div>
 
       <div className="mt-auto text-center py-8">
-        <button 
-          onClick={() => navigate('/login')}
+        <button
+          onClick={async () => {
+            await logout();
+            navigate('/login');
+          }}
           className="text-sm font-bold text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto"
         >
           <Smartphone size={16} /> Use Mobile Number Instead

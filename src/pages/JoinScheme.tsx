@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, CheckCircle2, ShieldCheck, Info, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSchemes } from '../context/SchemeContext';
-import { SCHEMES } from '../constants';
+import { getSchemesFromDB } from '../services/db';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -22,7 +22,23 @@ const JoinScheme = () => {
   const [success, setSuccess] = useState(false);
   const [newAccount, setNewAccount] = useState(null);
 
-  const scheme = SCHEMES.find(s => s.id === planId) || SCHEMES[0];
+  const [scheme, setScheme] = useState<any>(null);
+  const [loadingScheme, setLoadingScheme] = useState(true);
+
+  React.useEffect(() => {
+    getSchemesFromDB().then(data => {
+      const found = data.find((s: any) => s.id === planId && s.status === 'active');
+      if (found) {
+        setScheme(found);
+      } else {
+        // Redirect if scheme is inactive or not found
+        navigate('/schemes');
+      }
+      setLoadingScheme(false);
+    });
+  }, [planId]);
+
+  if (loadingScheme || !scheme) return <div className="p-12 text-center text-text-muted">Verifying plan...</div>;
 
   const handleJoin = async () => {
     if (!agreed) return;
