@@ -219,9 +219,28 @@ const AdminDashboard = () => {
     };
 
     const handleStaffAction = async (id: string, action: 'approve' | 'reject') => {
+        if (action === 'approve') {
+            const request = pendingStaff.find(s => s.id === id);
+            if (request) {
+                // Create user profile for the approved staff
+                await createUserProfile({
+                    phone: request.phone,
+                    firstName: request.name.split(' ')[0] || request.name,
+                    lastName: request.name.split(' ').slice(1).join(' ') || '',
+                    branch: request.branch,
+                    role: 'staff',
+                    password: 'password123', // Default password for new staff
+                    pin: '1234',            // Default PIN for new staff
+                    status: 'active'
+                });
+                showNotif(`Staff account created for ${request.name}. Password: password123`, 'success');
+            }
+        }
         await deleteStaffRequestFromDB(id.toString());
         setPendingStaff(pendingStaff.filter(staff => staff.id !== id));
-        showNotif(`Staff request ${action}d successfully.`, 'info');
+        if (action === 'reject') {
+            showNotif(`Staff request rejected.`, 'info');
+        }
     };
 
     const handleUpdateSecurity = async (e: React.FormEvent) => {

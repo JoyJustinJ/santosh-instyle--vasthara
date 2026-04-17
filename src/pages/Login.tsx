@@ -116,7 +116,13 @@ const Login = () => {
       }
 
       // ── 2. Existing regular user / staff ───────────────────────────────────
-      const userDoc: any = await getUserFromDB(formData.phone);
+      let userDoc: any = await getUserFromDB(formData.phone);
+
+      // Try with +91 if not found
+      if (!userDoc && !formData.phone.startsWith('+') && formData.phone.length === 10) {
+        userDoc = await getUserFromDB(`+91${formData.phone}`);
+      }
+
       if (userDoc) {
         const pinMatch = formData.password === userDoc.password || formData.password === userDoc.pin;
         if (formData.password && pinMatch) {

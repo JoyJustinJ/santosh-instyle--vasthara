@@ -6,6 +6,7 @@ import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
 import { formatCurrency } from '../utils';
+import { useAuth } from '../context/AuthContext';
 import {
     getSchemesFromDB, getAdminSettings,
     updateAdminSettings,
@@ -17,6 +18,15 @@ import {
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
+    const { user } = useAuth()!;
+
+    // Protection: Only staff can access
+    useEffect(() => {
+        if (!user || user.role !== 'staff') {
+            navigate('/home');
+        }
+    }, [user, navigate]);
+
     const [activeView, setActiveView] = useState<'overview' | 'deposit' | 'referrals' | 'customer_lookup'>('overview');
     const [searchQuery, setSearchQuery] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<any>(null);
@@ -205,20 +215,20 @@ const StaffDashboard = () => {
 
                 {/* Staff Stats */}
                 <div className="bg-primary rounded-2xl p-6 text-white relative overflow-hidden shadow-card">
-                    <div className="relative z-10 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Award size={20} className="text-[#D4AF37]" />
-                            <h4 className="font-display font-bold text-lg">My Performance</h4>
-                        </div>
-                        <div className="flex justify-between items-end">
+                    <div className="flex justify-between items-start">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <Award size={20} className="text-[#D4AF37]" />
+                                <h4 className="font-display font-bold text-lg">Hello, {user?.firstName || 'Staff'}</h4>
+                            </div>
                             <div>
                                 <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Incentives Earned</p>
                                 <p className="text-3xl font-bold">₹0</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Referrals</p>
-                                <p className="text-xl font-bold">0 Customers</p>
-                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Referrals</p>
+                            <p className="text-xl font-bold">0 Customers</p>
                         </div>
                     </div>
                 </div>
