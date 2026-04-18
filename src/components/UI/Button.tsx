@@ -4,27 +4,27 @@ import { cn } from '../../utils';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   className?: string;
-  variant?: 'primary' | 'accent' | 'outline' | 'ghost' | 'gold' | 'danger';
+  variant?: 'primary' | 'accent' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   loading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  className = '', 
-  variant = 'primary', 
-  size = 'md', 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  className = '',
+  variant = 'primary',
+  size = 'md',
   fullWidth = false,
   loading = false,
-  ...props 
+  ...props
 }) => {
   const variants = {
     primary: 'bg-primary text-white hover:bg-opacity-90',
     accent: 'bg-accent text-white hover:bg-opacity-90',
     outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white',
     ghost: 'text-primary hover:bg-surface',
-    gold: 'bg-[#D4AF37] text-white hover:bg-[#C5A028]',
+
     danger: 'bg-danger text-white hover:bg-opacity-90',
   };
 

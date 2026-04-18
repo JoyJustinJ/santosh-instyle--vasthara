@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, TrendingUp, Gift, Shield } from 'lucide-react';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
+import { useAuth } from '../context/AuthContext';
 import { getSchemesFromDB, getAllUsersFromDB } from '../services/db';
 import { cn, formatCurrency } from '../utils';
 
@@ -15,10 +16,16 @@ const Home = () => {
   const [schemes, setSchemes] = useState<any[]>([]);
   const [userCount, setUserCount] = useState(0);
 
+  const { user } = useAuth()!;
+
   useEffect(() => {
-    getSchemesFromDB().then(setSchemes);
+    if (user?.role === 'staff') {
+      navigate('/staff', { replace: true });
+      return;
+    }
+    getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
     getAllUsersFromDB().then(users => setUserCount(users.length));
-  }, []);
+  }, [user, navigate]);
 
   const slides = [
     {
@@ -103,17 +110,17 @@ const Home = () => {
           <h3 className="text-lg font-display font-bold text-primary tracking-tight">
             {t('home.featured_scheme')}
           </h3>
-          <Sparkles className="text-[#D4AF37]" size={20} />
+          <Sparkles className="text-accent" size={20} />
         </div>
 
         {schemes.length > 0 ? (
-          <Card className="p-0 overflow-hidden border-2 border-[#D4AF37]/30 relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+          <Card className="p-0 overflow-hidden border-2 border-accent/20 relative group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
 
             <div className="p-6 space-y-6">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Badge variant="warning" className="bg-[#D4AF37]/10 text-[#B8860B]">POPULAR</Badge>
+                  <Badge variant="warning">POPULAR</Badge>
                   <Badge variant="default">{featuredScheme.duration} MONTHS</Badge>
                 </div>
                 <h4 className="text-2xl font-display font-bold text-primary mt-2">
@@ -145,7 +152,7 @@ const Home = () => {
                   {t('home.know_more')}
                 </Button>
                 <Button
-                  variant="gold"
+                  variant="accent"
                   fullWidth
                   onClick={() => navigate('/schemes-list')}
                   className="shadow-card"
@@ -169,8 +176,8 @@ const Home = () => {
             <TrendingUp size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Bonus Rate</p>
-            <p className="text-lg font-bold text-primary">8.5%</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Available Plans</p>
+            <p className="text-lg font-bold text-primary">{schemes.length}</p>
           </div>
         </Card>
         <Card className="bg-surface border-none p-5 space-y-3">

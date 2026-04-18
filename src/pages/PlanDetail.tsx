@@ -147,7 +147,6 @@ const PlanDetail = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold text-accent">+{tx.bonusPoints || 15} pts</p>
                   <p className="text-[9px] font-black text-success uppercase tracking-widest">Success</p>
                 </div>
               </Card>

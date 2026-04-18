@@ -87,8 +87,8 @@ const MySchemes = () => {
                         <p className="text-2xl font-bold text-primary">{formatCurrency(plan.totalPaid)}</p>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Bonus Points</p>
-                        <p className="text-lg font-bold text-accent">{plan.bonusPoints || 0} pts</p>
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Payments Due</p>
+                        <p className="text-lg font-bold text-accent">{plan.monthsPaid}/{plan.duration}</p>
                       </div>
                     </div>
 
@@ -134,9 +134,9 @@ const MySchemes = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Total Points</p>
+                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Active Plans</p>
                 <p className="text-xl font-bold">
-                  {userSchemes.reduce((acc, curr) => acc + (curr.bonusPoints || 0), 0)} pts
+                  {userSchemes.length}
                 </p>
               </div>
             </div>

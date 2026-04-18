@@ -11,8 +11,8 @@ const KnowMore = () => {
   const faqs = [
     { q: "How do I join the scheme?", a: "You can join by selecting a plan and paying your first installment through the app or at any of our branches." },
     { q: "What happens if I miss a payment?", a: "You can pay the missed installment in the next month. However, consistent payments are recommended for maximum benefits." },
-    { q: "Can I redeem before 11 months?", a: "Early closure is possible after 6 months, but gift benefits and wastage waivers may not apply." },
-    { q: "Is my money safe?", a: "Yes, Vasthara is a trusted name with over 20 years of excellence in the jewelry industry." }
+    { q: "Can I redeem before the scheme duration ends?", a: "Early closure is possible after 6 months, but gift benefits and waivers may not apply." },
+    { q: "Is my money safe?", a: "Yes, Vasthara is a trusted name with over 20 years of excellence in savings and finance." }
   ];
 
   return (
@@ -24,28 +24,28 @@ const KnowMore = () => {
     >
       {/* Hero */}
       <div className="relative h-64 bg-primary overflow-hidden">
-        <img 
-          src="https://picsum.photos/seed/jewelry/800/600" 
-          alt="Jewelry" 
+        <img
+          src="https://picsum.photos/seed/savings/800/600"
+          alt="Savings Plans"
           className="w-full h-full object-cover opacity-40"
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />
-        
-        <button 
-          onClick={() => navigate(-1)} 
+
+        <button
+          onClick={() => navigate(-1)}
           className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white"
         >
           <ChevronLeft size={20} />
         </button>
 
         <div className="absolute bottom-8 left-8 right-8">
-          <Badge variant="warning" className="bg-[#D4AF37] text-white border-none mb-2">FEATURED</Badge>
+          <Badge variant="warning" className="bg-accent text-white border-none mb-2">FEATURED</Badge>
           <h1 className="text-3xl font-display font-bold text-white leading-tight">
-            Swarna Dharaa Plus
+            Vasthara Savings Plan
           </h1>
           <p className="text-white/70 text-sm font-medium mt-1">
-            The smartest way to save for your dream jewelry.
+            The smartest way to save for your future.
           </p>
         </div>
       </div>
@@ -57,12 +57,12 @@ const KnowMore = () => {
             About the Scheme
           </h2>
           <p className="text-text-secondary leading-relaxed text-sm">
-            Swarna Dharaa Plus is a unique 11-month savings plan designed to help you accumulate wealth for your jewelry purchases. By contributing a fixed amount every month, you not only save money but also earn exclusive rewards and waivers on making charges.
+            Vasthara Savings Plan is a flexible monthly savings scheme designed to help you accumulate wealth. By contributing a fixed amount every month, you not only save money but also receive exclusive rewards and benefits upon completion.
           </p>
-          
+
           <div className="grid grid-cols-1 gap-4 mt-6">
             {[
-              { title: "100% Wastage Waiver", desc: "No making charges on selected jewelry items at maturity.", icon: ShieldCheck },
+              { title: "Zero Hidden Charges", desc: "No extra fees or deductions on your savings at maturity.", icon: ShieldCheck },
               { title: "Surprise Gift Box", desc: "Receive a premium gift box upon successful completion.", icon: Gift },
               { title: "Flexible Redemption", desc: "Redeem your savings at any Vasthara branch across India.", icon: TrendingUp }
             ].map((item, i) => (
@@ -88,7 +88,7 @@ const KnowMore = () => {
             {[
               { step: "01", title: "Choose a Plan", desc: "Select a monthly installment amount that suits your budget (₹1000, ₹2000, or ₹3000)." },
               { step: "02", title: "Pay Monthly", desc: "Pay your installments consistently for 11 months through our secure app." },
-              { step: "03", title: "Redeem Jewelry", desc: "After 11 months, visit our store to purchase your favorite jewelry with exclusive benefits." }
+              { step: "03", title: "Redeem Benefits", desc: "After completing your plan, visit our branch to collect your maturity amount with exclusive completion benefits." }
             ].map((item, i) => (
               <div key={i} className="flex gap-6 relative">
                 <div className="w-10 h-10 rounded-full bg-white border-2 border-accent flex items-center justify-center text-accent font-black text-xs shrink-0 z-10">
@@ -122,9 +122,9 @@ const KnowMore = () => {
         </section>
 
         <div className="pt-4">
-          <Button 
-            fullWidth 
-            size="lg" 
+          <Button
+            fullWidth
+            size="lg"
             onClick={() => navigate('/schemes-list')}
             className="shadow-card h-16 text-base"
           >

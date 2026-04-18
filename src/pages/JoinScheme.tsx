@@ -131,7 +131,7 @@ const JoinScheme = () => {
       </div>
 
       <div className="space-y-6">
-        <Card className="p-0 overflow-hidden border-2 border-[#D4AF37]/20">
+        <Card className="p-0 overflow-hidden border-2 border-accent/20">
           <div className="bg-surface p-4 border-b border-border/50 flex justify-between items-center">
             <h3 className="font-display font-bold text-primary">{scheme.name}</h3>
             <Badge variant="warning" className="bg-amber-50 text-amber-600">11 MONTHS</Badge>
@@ -173,7 +173,7 @@ const JoinScheme = () => {
                 className="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-accent"
               />
               <label htmlFor="terms" className="text-xs font-medium text-text-secondary leading-relaxed">
-                I agree to the <button className="text-accent font-bold hover:underline">Terms & Conditions</button> of the Swarna Dharaa Plus scheme.
+                I agree to the <button className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme.
               </label>
             </div>
 

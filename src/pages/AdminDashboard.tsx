@@ -75,6 +75,7 @@ const AdminDashboard = () => {
                 setPendingStaff(r);
                 const settings = await getAdminSettings();
                 setAdminSettings(settings);
+                await loadStaffList();
             } catch (err) {
                 console.error("Failed to load Firebase data:", err);
             } finally {

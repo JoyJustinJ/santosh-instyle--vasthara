@@ -1,25 +1,40 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { SCHEMES } from '../constants';
 import { getTransactionsFromDB, recordTransactionInDB } from '../services/db';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const SchemeContext = createContext();
 
 export const SchemeProvider = ({ children }) => {
   const [userSchemes, setUserSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Sync with Firestore
+  // Track logged-in user
   useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setCurrentUserId(firebaseUser ? firebaseUser.uid : null);
+    });
+    return () => unsub();
+  }, []);
+
+  // Sync user_schemes filtered to only the logged-in user
+  useEffect(() => {
+    if (!currentUserId) {
+      setUserSchemes([]);
+      setLoading(false);
+      return;
+    }
     const unsub = onSnapshot(collection(db, "user_schemes"), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Filter by user ID if needed, but for now we'll filter in the component or keep simple
+      const data = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter((s: any) => s.userId === currentUserId);
       setUserSchemes(data);
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [currentUserId]);
 
   const joinScheme = async (scheme: any, planId: string, userId: string) => {
     const newEntry = {
@@ -29,7 +44,6 @@ export const SchemeProvider = ({ children }) => {
       enrollmentDate: new Date().toISOString(),
       monthsPaid: 0,
       totalPaid: 0,
-      bonusPoints: 0,
       status: 'Active',
       branch: 'Krishnagiri',
       group: 'Batch-A'
@@ -46,7 +60,6 @@ export const SchemeProvider = ({ children }) => {
         await updateDoc(schemeRef, {
           monthsPaid: (current.monthsPaid || 0) + 1,
           totalPaid: (current.totalPaid || 0) + payment.amount,
-          bonusPoints: (current.bonusPoints || 0) + 15
         });
         await recordTransactionInDB({
           userId,

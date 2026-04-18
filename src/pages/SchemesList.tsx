@@ -67,7 +67,6 @@ const SchemesList = () => {
                   <div className="space-y-1">
                     <div className="flex gap-2">
                       <Badge variant="default">{scheme.duration} MONTHS</Badge>
-                      <Badge variant="warning" className="bg-amber-50 text-amber-600 border-amber-100">GIFT BOX</Badge>
                     </div>
                     <h3 className="text-xl font-display font-bold text-primary mt-2">
                       {scheme.name}
