@@ -21,6 +21,7 @@ export const SideDrawer = ({ isOpen, onClose }) => {
   const menuItems = [
     { label: 'Home', icon: Home, path: '/home' },
     { label: 'My Profile', icon: User, path: '/profile' },
+    { label: 'Payment Methods', icon: Tag, path: '/my-schemes' },
     { label: 'About Us', icon: Info, path: '/about' },
     { label: 'Our Stores', icon: Store, path: '/stores' },
     { label: 'Contact Us', icon: Phone, path: '/contact' },

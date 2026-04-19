@@ -15,6 +15,7 @@ const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [schemes, setSchemes] = useState<any[]>([]);
   const [userCount, setUserCount] = useState(0);
+  const [showNotification, setShowNotification] = useState(false);
 
   const { user } = useAuth()!;
 
@@ -26,6 +27,14 @@ const Home = () => {
     getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
     getAllUsersFromDB().then(users => setUserCount(users.length));
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Randomly show the notification after between 3 to 10 seconds.
+    const timeout = setTimeout(() => setShowNotification(true), 1000 * (3 + Math.random() * 7));
+    // Auto-hide after 8 seconds
+    const hideTimeout = setTimeout(() => setShowNotification(false), 1000 * 15);
+    return () => { clearTimeout(timeout); clearTimeout(hideTimeout); };
+  }, []);
 
   const slides = [
     {
@@ -210,6 +219,28 @@ const Home = () => {
           ))}
         </div>
       </div>
+      <AnimatePresence>
+        {showNotification && featuredScheme && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-6 right-6 bg-primary text-white p-4 rounded-2xl shadow-card z-50 flex items-center justify-between cursor-pointer"
+            onClick={() => navigate('/schemes-list')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <Sparkles size={20} className="text-[#D4AF37]" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Trending Scheme</p>
+                <p className="text-sm font-bold truncate pr-4">Check out our famous "{featuredScheme.name}" plan!</p>
+              </div>
+            </div>
+            <ArrowRight size={20} className="text-white opacity-80" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

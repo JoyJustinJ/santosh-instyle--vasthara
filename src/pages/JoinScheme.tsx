@@ -134,7 +134,7 @@ const JoinScheme = () => {
         <Card className="p-0 overflow-hidden border-2 border-accent/20">
           <div className="bg-surface p-4 border-b border-border/50 flex justify-between items-center">
             <h3 className="font-display font-bold text-primary">{scheme.name}</h3>
-            <Badge variant="warning" className="bg-amber-50 text-amber-600">11 MONTHS</Badge>
+            <Badge variant="warning" className="bg-amber-50 text-amber-600">{scheme.duration} MONTHS</Badge>
           </div>
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -144,7 +144,7 @@ const JoinScheme = () => {
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Payable</p>
-                <p className="text-xl font-bold text-primary">{formatCurrency(scheme.maturityValue)}</p>
+                <p className="text-xl font-bold text-primary">{formatCurrency(scheme.monthlyAmount * scheme.duration)}</p>
               </div>
             </div>
 

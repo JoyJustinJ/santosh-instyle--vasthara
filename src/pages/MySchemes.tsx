@@ -130,7 +130,7 @@ const MySchemes = () => {
               <div>
                 <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Combined Balance</p>
                 <p className="text-3xl font-bold">
-                  {formatCurrency(userSchemes.reduce((acc, curr) => acc + curr.totalPaid, 0))}
+                  {formatCurrency(userSchemes.reduce((acc, curr) => acc + (curr.totalPaid || (curr.monthsPaid * curr.monthlyAmount) || 0), 0))}
                 </p>
               </div>
               <div className="text-right">

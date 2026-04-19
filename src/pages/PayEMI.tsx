@@ -27,6 +27,7 @@ const PayEMI = () => {
   const [staffReferral, setStaffReferral] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showQR, setShowQR] = useState(false);
 
   const togglePlan = (id: string) => {
     setSelectedPlans(prev =>
@@ -41,6 +42,10 @@ const PayEMI = () => {
 
   const handlePayment = async () => {
     if (selectedPlans.length === 0 || !paymentMethod) return;
+    setShowQR(true);
+  };
+
+  const handleQRScanned = async () => {
     setLoading(true);
 
     const payments = selectedPlans.map(id => {
@@ -50,6 +55,7 @@ const PayEMI = () => {
 
     try {
       await payEMI(payments, user?.id || user?.phone);
+      setShowQR(false);
       setSuccess(true);
     } catch (err) {
       console.error(err);
@@ -58,6 +64,50 @@ const PayEMI = () => {
       setLoading(false);
     }
   };
+
+  if (showQR) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="page-transition-wrapper p-8 flex flex-col items-center justify-center min-h-screen text-center space-y-6"
+      >
+        <div className="space-y-2">
+          <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
+            Scan to Pay
+          </h2>
+          <p className="text-sm font-medium text-text-secondary">
+            Open any UPI App to complete your payment
+          </p>
+        </div>
+
+        <Card className="bg-white p-6 inline-block border border-border shadow-subtle rounded-3xl relative overflow-hidden">
+          <img
+            src="/tis.jpg"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://img.freepik.com/premium-vector/qr-code-scan-me-icon-smartphone-symbol-vector-illustration_538002-3029.jpg";
+            }}
+            className="w-64 h-64 object-contain rounded-xl"
+            alt="Payment QR Code"
+          />
+          {/* Replace this placeholder with the requested image source if stored locally, e.g., `/qr-code.png` or `tis` image */}
+          <div className="absolute inset-0 border-4 border-transparent border-t-accent rounded-3xl animate-spin" style={{ animationDuration: '3s' }} />
+        </Card>
+
+        <div className="space-y-4 pt-4 w-full">
+          <Button fullWidth size="lg" loading={loading} onClick={handleQRScanned}>
+            I Have Paid
+          </Button>
+          <button
+            onClick={() => setShowQR(false)}
+            className="text-xs font-black text-text-muted uppercase tracking-widest hover:text-primary transition-colors"
+          >
+            Cancel Payment
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (success) {
     return (
@@ -176,22 +226,10 @@ const PayEMI = () => {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Staff Recommendation</h3>
-          <Input
-            placeholder="Staff ID (Optional)"
-            icon={Users}
-            value={staffReferral}
-            onChange={(e) => setStaffReferral(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-4">
           <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Payment Method</h3>
           <div className="space-y-3">
             {[
-              { id: 'upi', label: 'UPI (GPay, PhonePe, Paytm)', icon: Smartphone },
-              { id: 'card', label: 'Debit / Credit Card', icon: CreditCard },
-              { id: 'net', label: 'Net Banking', icon: Landmark },
+              { id: 'upi', label: 'UPI (GPay, PhonePe, Paytm)', icon: Smartphone }
             ].map((method) => (
               <button
                 key={method.id}
