@@ -29,7 +29,7 @@ import {
     deleteAdminFromDB
 } from '../services/db';
 
-type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'incentives' | 'staff' | 'staff_mgmt' | 'customer_update' | 'settings';
+type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'incentives' | 'transactions' | 'staff' | 'staff_mgmt' | 'customer_update' | 'settings';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -358,6 +358,59 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleDownloadCSV = async () => {
+        if (filteredIncentives.length === 0) return;
+
+        // Fetch all users once and build a lookup map by phone (which is the user doc ID)
+        const allUsers = await getAllUsersFromDB();
+        const userMap: Record<string, any> = {};
+        allUsers.forEach((u: any) => {
+            userMap[u.id] = u;
+            if (u.phone) userMap[u.phone] = u;
+        });
+
+        // Build a scheme name lookup from already-loaded schemesList
+        const schemeMap: Record<string, string> = {};
+        schemesList.forEach((s: any) => {
+            schemeMap[s.id] = s.name;
+        });
+
+        const headers = ["Transaction ID", "Customer Name", "Phone Number", "Amount (₹)", "Date", "Transaction Type", "Scheme Name"];
+
+        const rows = filteredIncentives.map(tx => {
+            const accountKey = tx.customerAccount || tx.userPhone || tx.accountId || '';
+            const user = userMap[accountKey];
+            const customerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : accountKey;
+            const phone = user?.phone || accountKey;
+            const schemeName = schemeMap[tx.schemeId] || tx.schemeId || 'N/A';
+
+            return [
+                tx.id || 'N/A',
+                `"${customerName}"`,
+                phone,
+                tx.amount || 0,
+                tx.date || new Date(tx.timestamp).toLocaleDateString(),
+                (tx.type || 'unknown').toUpperCase(),
+                `"${schemeName}"`
+            ];
+        });
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `Transactions_${incentiveRange.start}_to_${incentiveRange.end}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const renderView = () => {
         switch (activeView) {
             case 'create_scheme':
@@ -530,7 +583,7 @@ const AdminDashboard = () => {
                                 )}
                             </div>
 
-                            <Button fullWidth variant="outline" className="mt-4" disabled={filteredIncentives.length === 0}>
+                            <Button fullWidth variant="outline" className="mt-4" disabled={filteredIncentives.length === 0} onClick={handleDownloadCSV}>
                                 Download Full CSV Report
                             </Button>
                         </div>
@@ -791,6 +844,58 @@ const AdminDashboard = () => {
                     </motion.div>
                 );
 
+            case 'transactions':
+                return (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                        <div className="flex items-center gap-4 border-b border-border/50 pb-4">
+                            <button onClick={() => setActiveView('overview')} className="text-primary">
+                                <ChevronLeft size={24} />
+                            </button>
+                            <h2 className="text-xl font-display font-bold text-primary">Download Transactions</h2>
+                        </div>
+                        <div className="space-y-6">
+                            <p className="text-sm border-l-4 border-accent pl-3 text-text-secondary">
+                                Select a custom date range to generate and download a full CSV report of all customer transactions.
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Start Date"
+                                    type="date"
+                                    value={incentiveRange.start}
+                                    onChange={(e) => setIncentiveRange({ ...incentiveRange, start: e.target.value })}
+                                />
+                                <Input
+                                    label="End Date"
+                                    type="date"
+                                    value={incentiveRange.end}
+                                    onChange={(e) => setIncentiveRange({ ...incentiveRange, end: e.target.value })}
+                                />
+                            </div>
+                            <Button fullWidth onClick={handleFilterIncentives} loading={loadingData}>
+                                Fetch Transactions
+                            </Button>
+                            {filteredIncentives.length > 0 && (
+                                <>
+                                    <p className="text-xs text-center text-success font-bold">
+                                        ✓ {filteredIncentives.length} transactions found for selected period.
+                                    </p>
+                                    <Button
+                                        fullWidth
+                                        variant="outline"
+                                        className="border-accent text-accent"
+                                        onClick={handleDownloadCSV}
+                                    >
+                                        <FileText size={18} className="mr-2 inline" /> Download CSV Report
+                                    </Button>
+                                </>
+                            )}
+                            {filteredIncentives.length === 0 && !loadingData && incentiveRange.start && incentiveRange.end && (
+                                <p className="text-sm text-center text-text-muted py-4">No transactions found for this period.</p>
+                            )}
+                        </div>
+                    </motion.div>
+                );
+
             default:
                 return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
@@ -820,6 +925,12 @@ const AdminDashboard = () => {
                                     <HandCoins size={24} />
                                 </div>
                                 <p className="text-xs font-bold text-primary">Manual Cash Deposit</p>
+                            </Card>
+                            <Card onClick={() => setActiveView('transactions')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                                <div className="w-12 h-12 rounded-xl bg-success-light text-success flex items-center justify-center">
+                                    <FileText size={24} />
+                                </div>
+                                <p className="text-xs font-bold text-primary">Transactions</p>
                             </Card>
                             <Card onClick={() => setActiveView('incentives')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
                                 <div className="w-12 h-12 rounded-xl bg-success-light text-success flex items-center justify-center">
