@@ -3,21 +3,15 @@ import { getTransactionsFromDB, recordTransactionInDB } from '../services/db';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from './AuthContext';
 
 const SchemeContext = createContext();
 
 export const SchemeProvider = ({ children }) => {
   const [userSchemes, setUserSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  // Track logged-in user
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setCurrentUserId(firebaseUser ? firebaseUser.uid : null);
-    });
-    return () => unsub();
-  }, []);
+  const { user } = useAuth() as any;
+  const currentUserId = user?.id || user?.phone;
 
   // Sync user_schemes filtered to only the logged-in user
   useEffect(() => {

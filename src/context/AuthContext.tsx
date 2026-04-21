@@ -23,7 +23,10 @@ const AuthContext = createContext<{
 } | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(() => {
+    const saved = localStorage.getItem('vasthara_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(() => {
     return sessionStorage.getItem('vasthara_unlocked_session') === 'true';
@@ -51,8 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(basicData);
         }
       } else {
-        setUser(null);
-        localStorage.removeItem('vasthara_user');
+        // Only clear if there's no manual user stored (don't wipe out manual logins!)
+        if (!localStorage.getItem('vasthara_user')) {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
@@ -73,12 +78,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await signOut(auth);
     setIsUnlocked(false);
     sessionStorage.removeItem('vasthara_unlocked_session');
-    // Removed clearing of PIN to maintain UX and prevent redirect race conditions
+
+    // Clear user state and manual login session
+    setUser(null);
+    localStorage.removeItem('vasthara_user');
+    localStorage.removeItem('vasthara_pin'); // Optional: usually mobile number login resets PIN or implies full re-auth
   };
 
   const unlockApp = () => {
     setIsUnlocked(true);
     sessionStorage.setItem('vasthara_unlocked_session', 'true');
+  };
+
+  const handleSetUser = (userData: any) => {
+    setUser(userData);
+    if (userData) {
+      localStorage.setItem('vasthara_user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('vasthara_user');
+    }
   };
 
   return (
@@ -90,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       loginWithPhone,
       logout,
       unlockApp,
-      setUser
+      setUser: handleSetUser
     }}>
       {children}
     </AuthContext.Provider>

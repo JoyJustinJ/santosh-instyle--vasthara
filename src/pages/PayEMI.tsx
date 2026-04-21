@@ -66,6 +66,9 @@ const PayEMI = () => {
   };
 
   if (showQR) {
+    const upiLink = `upi://pay?pa=jkjustin1805-2@oksbi&pn=Vasthara&am=${totalAmount}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(upiLink)}`;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -74,33 +77,36 @@ const PayEMI = () => {
       >
         <div className="space-y-2">
           <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
-            Scan to Pay
+            Pay Amount: {formatCurrency(totalAmount)}
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Open any UPI App to complete your payment
+            Scan the QR or click below to pay via GPay/PhonePe
           </p>
         </div>
 
         <Card className="bg-white p-6 inline-block border border-border shadow-subtle rounded-3xl relative overflow-hidden">
           <img
-            src="/tis.jpg"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://img.freepik.com/premium-vector/qr-code-scan-me-icon-smartphone-symbol-vector-illustration_538002-3029.jpg";
-            }}
+            src={qrUrl}
             className="w-64 h-64 object-contain rounded-xl"
             alt="Payment QR Code"
           />
-          {/* Replace this placeholder with the requested image source if stored locally, e.g., `/qr-code.png` or `tis` image */}
           <div className="absolute inset-0 border-4 border-transparent border-t-accent rounded-3xl animate-spin" style={{ animationDuration: '3s' }} />
         </Card>
 
         <div className="space-y-4 pt-4 w-full">
-          <Button fullWidth size="lg" loading={loading} onClick={handleQRScanned}>
-            I Have Paid
+          <a href={upiLink} className="w-full block">
+            <Button fullWidth size="lg" className="bg-[#1A73E8] hover:bg-[#1557B0] text-white shadow-card">
+              <Smartphone size={20} className="mr-2" /> Open UPI App
+            </Button>
+          </a>
+
+          <Button fullWidth size="lg" loading={loading} onClick={handleQRScanned} className="bg-success hover:bg-green-700 shadow-card">
+            <CheckCircle2 size={20} className="mr-2" /> I Have Paid
           </Button>
+
           <button
             onClick={() => setShowQR(false)}
-            className="text-xs font-black text-text-muted uppercase tracking-widest hover:text-primary transition-colors"
+            className="text-xs font-black text-text-muted uppercase tracking-widest hover:text-primary transition-colors mt-2"
           >
             Cancel Payment
           </button>
