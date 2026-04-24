@@ -41,7 +41,7 @@ export const SchemeProvider = ({ children }) => {
       monthsPaid: 1,
       totalPaid: scheme.monthlyAmount,
       status: 'active',
-      branch: 'Krishnagiri',
+      branch: 'Hosur',
       group: 'Batch-A'
     };
     await setDoc(doc(db, "user_schemes", newEntry.accountId), newEntry);

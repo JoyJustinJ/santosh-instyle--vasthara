@@ -220,7 +220,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Primary Branch</p>
-                      <p className="text-sm font-bold text-primary">{user?.branch || 'Krishnagiri'}</p>
+                      <p className="text-sm font-bold text-primary">{user?.branch || 'Hosur'}</p>
                     </div>
                   </div>
                 </div>

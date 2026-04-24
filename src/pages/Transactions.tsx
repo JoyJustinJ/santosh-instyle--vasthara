@@ -102,9 +102,8 @@ const Transactions = () => {
                                 <table>
                                     <tr>
                                         <td>
-                                            Vasthara Financial Services<br>
-                                            Main Branch<br>
-                                            Krishnagiri
+                                            Santosh instyle<br>
+                                            Hosur
                                         </td>
                                         <td>
                                             Customer: ${user?.firstName} ${user?.lastName}<br>
