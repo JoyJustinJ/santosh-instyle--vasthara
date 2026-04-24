@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  MessageSquare, 
+import {
+  ChevronLeft,
+  Phone,
+  Mail,
+  MapPin,
+  MessageSquare,
   Clock,
   ChevronRight,
   ExternalLink
@@ -19,9 +19,7 @@ const ContactUs = () => {
   const navigate = useNavigate();
 
   const branches = [
-    { name: 'Krishnagiri (Main)', address: '123, Gandhi Road, Krishnagiri - 635001', phone: '04343-234567' },
-    { name: 'Hosur Branch', address: '45, Denkanikottai Road, Hosur - 635109', phone: '04344-245678' },
-    { name: 'Dharmapuri Branch', address: '89, Salem Main Road, Dharmapuri - 636701', phone: '0427-2567890' },
+    { name: 'Hosur Branch', address: 'Nethaji Road, Hosur, Tamil Nadu 635109', phone: '098400 77747' },
   ];
 
   return (
@@ -46,7 +44,7 @@ const ContactUs = () => {
           </div>
           <div>
             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Call Us</p>
-            <p className="text-sm font-bold text-primary">1800-123-4567</p>
+            <p className="text-sm font-bold text-primary">98400 77747</p>
           </div>
         </Card>
         <Card className="p-5 flex flex-col items-center text-center space-y-3 border-none bg-success-light/30">
@@ -55,7 +53,7 @@ const ContactUs = () => {
           </div>
           <div>
             <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">WhatsApp</p>
-            <p className="text-sm font-bold text-primary">+91 94916 95000</p>
+            <p className="text-sm font-bold text-primary">+91 98400 77747</p>
           </div>
         </Card>
       </div>
@@ -66,12 +64,12 @@ const ContactUs = () => {
           <h3 className="text-lg font-display font-bold text-primary">Send us a message</h3>
           <p className="text-xs text-text-secondary">We'll get back to you within 24 hours.</p>
         </div>
-        
+
         <div className="space-y-4">
           <Input label="Subject" placeholder="Query regarding payment" />
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Message</label>
-            <textarea 
+            <textarea
               className="w-full h-32 bg-surface border-2 border-border rounded-xl p-4 font-medium outline-none focus:border-accent resize-none"
               placeholder="Type your message here..."
             />
@@ -116,9 +114,14 @@ const ContactUs = () => {
       {/* Footer Info */}
       <div className="text-center space-y-4 pt-8">
         <div className="flex justify-center gap-6 text-text-muted">
-          <button className="hover:text-primary transition-colors">Facebook</button>
-          <button className="hover:text-primary transition-colors">Instagram</button>
-          <button className="hover:text-primary transition-colors">Twitter</button>
+          <a
+            href="https://www.instagram.com/santhosh_instyle"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary transition-colors cursor-pointer"
+          >
+            Instagram
+          </a>
         </div>
         <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
           © 2024 Vasthara Jewelry. All Rights Reserved.

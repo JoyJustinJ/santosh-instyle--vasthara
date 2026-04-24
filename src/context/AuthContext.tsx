@@ -15,6 +15,8 @@ const AuthContext = createContext<{
   user: any;
   loading: boolean;
   isUnlocked: boolean;
+  isBiometricEnabled: boolean;
+  setBiometricEnabled: (enabled: boolean) => void;
   loginWithGoogle: () => Promise<void>;
   loginWithPhone: (phoneNumber: string, appVerifier: any) => Promise<ConfirmationResult>;
   logout: () => Promise<void>;
@@ -29,7 +31,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(() => {
-    return sessionStorage.getItem('vasthara_unlocked_session') === 'true';
+    return localStorage.getItem('vasthara_unlocked_session') === 'true';
+  });
+  const [isBiometricEnabled, setBiometricEnabledState] = useState(() => {
+    return localStorage.getItem('vasthara_biometric_enabled') === 'true';
   });
 
   useEffect(() => {
@@ -77,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
     setIsUnlocked(false);
-    sessionStorage.removeItem('vasthara_unlocked_session');
+    localStorage.removeItem('vasthara_unlocked_session');
 
     // Clear user state and manual login session
     setUser(null);
@@ -87,7 +92,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const unlockApp = () => {
     setIsUnlocked(true);
-    sessionStorage.setItem('vasthara_unlocked_session', 'true');
+    localStorage.setItem('vasthara_unlocked_session', 'true');
+  };
+
+  const setBiometricEnabled = (enabled: boolean) => {
+    setBiometricEnabledState(enabled);
+    localStorage.setItem('vasthara_biometric_enabled', enabled ? 'true' : 'false');
   };
 
   const handleSetUser = (userData: any) => {
@@ -104,6 +114,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       loading,
       isUnlocked,
+      isBiometricEnabled,
+      setBiometricEnabled,
       loginWithGoogle,
       loginWithPhone,
       logout,

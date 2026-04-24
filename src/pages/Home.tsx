@@ -6,7 +6,9 @@ import { ArrowRight, Sparkles, TrendingUp, Gift, Shield } from 'lucide-react';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { useAuth } from '../context/AuthContext';
-import { getSchemesFromDB, getAllUsersFromDB } from '../services/db';
+import { useSchemes } from '../context/SchemeContext';
+import { useNotification } from '../context/NotificationContext';
+import { getSchemesFromDB, getAllUsersFromDB, getTransactionsFromDB } from '../services/db';
 import { cn, formatCurrency } from '../utils';
 
 const Home = () => {
@@ -14,10 +16,11 @@ const Home = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [schemes, setSchemes] = useState<any[]>([]);
-  const [userCount, setUserCount] = useState(0);
-  const [showNotification, setShowNotification] = useState(false);
+  const [showPromo, setShowPromo] = useState(false);
 
   const { user } = useAuth()!;
+  const { userSchemes } = useSchemes() as any;
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     if (user?.role === 'staff') {
@@ -25,14 +28,36 @@ const Home = () => {
       return;
     }
     getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
-    getAllUsersFromDB().then(users => setUserCount(users.length));
-  }, [user, navigate]);
+
+    // Payment Reminders
+    if (userSchemes.length > 0) {
+      const checkDues = async () => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        for (const scheme of userSchemes) {
+          const txs = await getTransactionsFromDB(scheme.accountId);
+          const hasPaidThisMonth = txs.some((tx: any) => {
+            const date = tx.timestamp?.toDate ? tx.timestamp.toDate() : new Date(tx.timestamp);
+            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+          });
+
+          if (!hasPaidThisMonth) {
+            showNotification(`Reminder: Monthly installment for "${scheme.name}" is due.`, 'warning');
+            break; // Just show one reminder
+          }
+        }
+      };
+      checkDues();
+    }
+  }, [user, navigate, userSchemes, showNotification]);
 
   useEffect(() => {
-    // Randomly show the notification after between 3 to 10 seconds.
-    const timeout = setTimeout(() => setShowNotification(true), 1000 * (3 + Math.random() * 7));
-    // Auto-hide after 8 seconds
-    const hideTimeout = setTimeout(() => setShowNotification(false), 1000 * 15);
+    // Randomly show the promo after between 3 to 10 seconds.
+    const timeout = setTimeout(() => setShowPromo(true), 1000 * (3 + Math.random() * 7));
+    // Auto-hide after 15 seconds
+    const hideTimeout = setTimeout(() => setShowPromo(false), 1000 * 15);
     return () => { clearTimeout(timeout); clearTimeout(hideTimeout); };
   }, []);
 
@@ -43,14 +68,9 @@ const Home = () => {
       bg: "bg-gradient-to-br from-[#FDFCFB] to-[#E2D1C3]"
     },
     {
-      title: "Exclusive Akshaya Tritiya Offers",
-      sub: "Join any plan today and get zero processing fees",
+      title: "Premium Money Savings Plans",
+      sub: "Secure your future with our exclusive plans",
       bg: "bg-gradient-to-br from-[#EEF2FD] to-[#CFD9DF]"
-    },
-    {
-      title: `Join ${userCount > 0 ? userCount : 'our'} Happy Families`,
-      sub: "Trusted by generations for secure savings",
-      bg: "bg-gradient-to-br from-[#F7F8FA] to-[#D5D4D0]"
     }
   ];
 
@@ -179,23 +199,14 @@ const Home = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="px-6 grid grid-cols-2 gap-4">
-        <Card className="bg-surface border-none p-5 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-            <TrendingUp size={20} />
+      <div className="px-6">
+        <Card className="bg-surface border-none p-5 space-y-3 flex flex-col items-center text-center">
+          <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+            <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Available Plans</p>
-            <p className="text-lg font-bold text-primary">{schemes.length}</p>
-          </div>
-        </Card>
-        <Card className="bg-surface border-none p-5 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-success-light text-success flex items-center justify-center">
-            <Gift size={20} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Active Users</p>
-            <p className="text-lg font-bold text-primary">{userCount}</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Available Investment Plans</p>
+            <p className="text-2xl font-bold text-primary">{schemes.length}</p>
           </div>
         </Card>
       </div>
@@ -220,7 +231,7 @@ const Home = () => {
         </div>
       </div>
       <AnimatePresence>
-        {showNotification && featuredScheme && (
+        {showPromo && featuredScheme && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

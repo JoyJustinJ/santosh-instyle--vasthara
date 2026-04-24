@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useSchemes } from '../context/SchemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -21,6 +22,7 @@ const PayEMI = () => {
   const navigate = useNavigate();
   const { userSchemes, payEMI } = useSchemes() as any;
   const { user } = useAuth();
+  const { showNotification } = useNotification();
 
   const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -55,11 +57,12 @@ const PayEMI = () => {
 
     try {
       await payEMI(payments, user?.id || user?.phone);
+      showNotification("Payment successful! Your plans have been updated.", "success");
       setShowQR(false);
       setSuccess(true);
     } catch (err) {
       console.error(err);
-      alert("Payment failed. Please try again.");
+      showNotification("Payment failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -218,7 +221,6 @@ const PayEMI = () => {
                     </div>
                     <div>
                       <h4 className="font-bold text-primary text-sm">{s.name}</h4>
-                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{s.accountId}</p>
                     </div>
                   </div>
                   <div className="text-right">

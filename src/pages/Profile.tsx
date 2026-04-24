@@ -80,7 +80,7 @@ const Profile = () => {
   const menuItems = [
     { label: 'Security & PIN', icon: Shield, path: '/profile/security' },
     { label: 'Notifications', icon: Bell, path: '/profile/notifications' },
-    { label: 'Payment Methods', icon: CreditCard, path: '/profile/payments' },
+    { label: 'Transactions', icon: CreditCard, path: '/transactions' },
   ];
 
   return (

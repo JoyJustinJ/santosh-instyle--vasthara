@@ -54,7 +54,6 @@ const PlanDetail = () => {
           </button>
           <div>
             <h1 className="text-xl font-display font-bold text-primary tracking-tight">Plan Details</h1>
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{plan.accountId}</p>
           </div>
         </div>
         <button className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center text-text-muted hover:text-accent transition-colors">

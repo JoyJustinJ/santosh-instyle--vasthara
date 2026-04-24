@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle2, ShieldCheck, Info, FileText } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, ShieldCheck, Info, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSchemes } from '../context/SchemeContext';
+import { useNotification } from '../context/NotificationContext';
 import { getSchemesFromDB } from '../services/db';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
 import { formatCurrency } from '../utils';
+
+// Steps: 'details' → 'payment' → 'success'
+type Step = 'details' | 'payment' | 'success';
 
 const JoinScheme = () => {
   const navigate = useNavigate();
@@ -16,11 +20,12 @@ const JoinScheme = () => {
   const planId = searchParams.get('plan');
   const { user } = useAuth();
   const { joinScheme } = useSchemes() as any;
+  const { showNotification } = useNotification();
 
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [newAccount, setNewAccount] = useState(null);
+  const [step, setStep] = useState<Step>('details');
+  const [newAccount, setNewAccount] = useState<any>(null);
 
   const [scheme, setScheme] = useState<any>(null);
   const [loadingScheme, setLoadingScheme] = useState(true);
@@ -31,7 +36,6 @@ const JoinScheme = () => {
       if (found) {
         setScheme(found);
       } else {
-        // Redirect if scheme is inactive or not found
         navigate('/schemes');
       }
       setLoadingScheme(false);
@@ -40,24 +44,81 @@ const JoinScheme = () => {
 
   if (loadingScheme || !scheme) return <div className="p-12 text-center text-text-muted">Verifying plan...</div>;
 
-  const handleJoin = async () => {
-    if (!agreed) return;
+  // ── Step 2: UPI Payment screen ──────────────────────────────────────────────
+  const handleJoinAfterPayment = async () => {
     setLoading(true);
-
-    // Call Firebase join event
     try {
-      const account = await joinScheme(scheme, planId, user?.id || user?.phone);
+      const account = await joinScheme(scheme, planId, user?.phone || user?.id);
       setNewAccount(account);
-      setSuccess(true);
+      showNotification(`Successfully joined ${scheme.name}!`, "success");
+      setStep('success');
     } catch (err) {
       console.error(err);
-      alert("Failed to join scheme. Please try again.");
+      showNotification("Failed to join scheme. Please try again.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
+  if (step === 'payment') {
+    const upiLink = `upi://pay?pa=jkjustin1805-2@oksbi&pn=Vasthara&am=${scheme.monthlyAmount}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(upiLink)}`;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="page-transition-wrapper p-8 flex flex-col items-center justify-center min-h-screen text-center space-y-6"
+      >
+        <div className="space-y-2">
+          <p className="text-xs font-black text-accent uppercase tracking-[0.2em]">First Month Payment</p>
+          <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
+            Pay {formatCurrency(scheme.monthlyAmount)}
+          </h2>
+          <p className="text-sm font-medium text-text-secondary">
+            Scan the QR or tap Open UPI App to pay your first instalment and activate the scheme.
+          </p>
+        </div>
+
+        <Card className="bg-white p-6 inline-block border border-border shadow-subtle rounded-3xl relative overflow-hidden">
+          <img
+            src={qrUrl}
+            className="w-64 h-64 object-contain rounded-xl"
+            alt="Payment QR Code"
+          />
+          <div className="absolute inset-0 border-4 border-transparent border-t-accent rounded-3xl animate-spin" style={{ animationDuration: '3s' }} />
+        </Card>
+
+        <div className="space-y-4 pt-4 w-full">
+          <a href={upiLink} className="w-full block">
+            <Button fullWidth size="lg" className="bg-[#1A73E8] hover:bg-[#1557B0] text-white shadow-card">
+              <Smartphone size={20} className="mr-2" /> Open UPI App
+            </Button>
+          </a>
+
+          <Button
+            fullWidth
+            size="lg"
+            loading={loading}
+            onClick={handleJoinAfterPayment}
+            className="bg-success hover:bg-green-700 shadow-card"
+          >
+            <CheckCircle2 size={20} className="mr-2" /> I Have Paid — Activate Scheme
+          </Button>
+
+          <button
+            onClick={() => setStep('details')}
+            className="text-xs font-black text-text-muted uppercase tracking-widest hover:text-primary transition-colors mt-2"
+          >
+            Go Back
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ── Step 3: Success ──────────────────────────────────────────────────────────
+  if (step === 'success') {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -75,10 +136,10 @@ const JoinScheme = () => {
 
         <div className="space-y-2">
           <h2 className="text-3xl font-display font-bold text-primary tracking-tight">
-            Successfully Enrolled!
+            Scheme Activated!
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Welcome to the {scheme.name} family.
+            Your first instalment has been recorded. Welcome to {scheme.name}!
           </p>
         </div>
 
@@ -89,15 +150,30 @@ const JoinScheme = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Account No</p>
-              <p className="text-sm font-bold text-primary">{newAccount?.accountId}</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Plan Name</p>
+              <p className="text-sm font-bold text-primary">{scheme.name}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Start Date</p>
-              <p className="text-sm font-bold text-primary">13-04-2024</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Months Paid</p>
+              <p className="text-sm font-bold text-primary">1 / {scheme.duration}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Amount Paid</p>
+              <p className="text-sm font-bold text-success">{formatCurrency(scheme.monthlyAmount)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Next Due</p>
+              <p className="text-sm font-bold text-accent">Flexible</p>
             </div>
           </div>
         </Card>
+
+        <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 w-full">
+          <Info size={16} className="mt-0.5 shrink-0" />
+          <p className="text-xs font-medium leading-relaxed text-left">
+            Your first month is recorded. Your next instalment can be paid at your convenience within the next monthly cycle.
+          </p>
+        </div>
 
         <div className="w-full space-y-4 pt-4">
           <Button fullWidth size="lg" onClick={() => navigate('/my-schemes')}>
@@ -114,6 +190,7 @@ const JoinScheme = () => {
     );
   }
 
+  // ── Step 1: Details & Agreement ─────────────────────────────────────────────
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -155,6 +232,17 @@ const JoinScheme = () => {
           </div>
         </Card>
 
+        {/* First payment notice */}
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+          <Info size={16} className="text-amber-600 mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">First Month Payment Required</p>
+            <p className="text-xs text-amber-600 leading-relaxed">
+              To activate this scheme you must pay <strong>{formatCurrency(scheme.monthlyAmount)}</strong> now as your first instalment. Future instalments can be paid monthly at your convenience.
+            </p>
+          </div>
+        </div>
+
         <div className="space-y-6">
           <Input
             label="Account Name"
@@ -173,15 +261,8 @@ const JoinScheme = () => {
                 className="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-accent"
               />
               <label htmlFor="terms" className="text-xs font-medium text-text-secondary leading-relaxed">
-                I agree to the <button className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme.
+                I agree to the <button className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme and authorise the first month payment of {formatCurrency(scheme.monthlyAmount)}.
               </label>
-            </div>
-
-            <div className="bg-surface rounded-2xl p-4 flex items-start gap-3">
-              <Info size={16} className="text-text-muted mt-0.5 shrink-0" />
-              <p className="text-[10px] text-text-muted leading-relaxed">
-                By joining this plan, you authorize Vasthara to create a new savings account in your name. Installments must be paid before the 10th of every month.
-              </p>
             </div>
           </div>
         </div>
@@ -192,11 +273,10 @@ const JoinScheme = () => {
           fullWidth
           size="lg"
           disabled={!agreed}
-          loading={loading}
-          onClick={handleJoin}
+          onClick={() => setStep('payment')}
           className="h-16 shadow-card"
         >
-          JOIN PLAN
+          PROCEED TO PAY &amp; JOIN
         </Button>
       </div>
     </motion.div>

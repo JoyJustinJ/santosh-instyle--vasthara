@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     Shield, Trash2, Plus, Users, Landmark, FileText,
-    ChevronLeft, HandCoins, CheckCircle, XCircle, Edit2, Save, X, Search, Smartphone
+    ChevronLeft, HandCoins, CheckCircle, XCircle, Edit2, Save, X, Search, Smartphone, LogOut
 } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -11,6 +11,7 @@ import { Input } from '../components/UI/Input';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { formatCurrency, cn } from '../utils';
+import { useAuth } from '../context/AuthContext';
 import {
     getSchemesFromDB,
     getStaffRequestsFromDB,
@@ -28,12 +29,17 @@ import {
     getAllAdminsFromDB,
     deleteAdminFromDB
 } from '../services/db';
+import { useNotification } from '../context/NotificationContext';
+import { db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'incentives' | 'transactions' | 'staff' | 'staff_mgmt' | 'customer_update' | 'settings';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth()!;
     const [activeView, setActiveView] = useState<ViewState>('overview');
+    const { showNotification } = useNotification();
 
     // DB State
     const [schemesList, setSchemesList] = useState<any[]>([]);
@@ -41,7 +47,7 @@ const AdminDashboard = () => {
     const [loadingData, setLoadingData] = useState(true);
 
     const [newScheme, setNewScheme] = useState({ name: '', duration: '', amount: '' });
-    const [selectedSchemeForDeposit, setSelectedSchemeForDeposit] = useState('');
+    const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
     const [depositAmount, setDepositAmount] = useState('');
     const [depositCustomer, setDepositCustomer] = useState('');
     const [customerActiveSchemes, setCustomerActiveSchemes] = useState<any[]>([]);
@@ -61,9 +67,7 @@ const AdminDashboard = () => {
     const [adminsList, setAdminsList] = useState<any[]>([]);
 
     const showNotif = (message: string, type: NotificationType = 'success') => {
-        setNotification({ message, type });
-        // Auto close after 4 seconds
-        setTimeout(() => setNotification(null), 4000);
+        showNotification(message, type);
     };
 
     useEffect(() => {
@@ -190,32 +194,92 @@ const AdminDashboard = () => {
 
     const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedSchemeForDeposit) {
-            showNotif("Please select a scheme", 'error');
+        if (selectedPlans.length === 0) {
+            showNotif("Please select at least one scheme", 'error');
             return;
         }
-        await recordTransactionInDB({
-            type: 'deposit',
-            amount: parseFloat(depositAmount),
-            schemeId: selectedSchemeForDeposit,
-            customerAccount: depositCustomer
-        });
-        showNotif("Cash deposit recorded successfully!");
-        setSelectedSchemeForDeposit('');
-        setDepositAmount('');
-        setDepositCustomer('');
-        setCustomerActiveSchemes([]);
-        setActiveView('overview');
+
+        const amt = parseFloat(depositAmount);
+        const expectedTotal = customerActiveSchemes
+            .filter(s => selectedPlans.includes(s.accountId))
+            .reduce((acc, s) => acc + s.monthlyAmount, 0);
+
+        if (amt < expectedTotal) {
+            const ok = window.confirm(`You entered ₹${amt} but selected schemes require ₹${expectedTotal}. Continue anyway?`);
+            if (!ok) return;
+        }
+
+        try {
+            for (const accountId of selectedPlans) {
+                const s = customerActiveSchemes.find(p => p.accountId === accountId);
+                if (!s) continue;
+
+                const paid = s.monthlyAmount;
+                const schemeRef = doc(db, "user_schemes", accountId);
+                await updateDoc(schemeRef, {
+                    monthsPaid: (s.monthsPaid || 0) + 1,
+                    totalPaid: (s.totalPaid || 0) + paid,
+                });
+
+                await recordTransactionInDB({
+                    userId: depositCustomer,
+                    customerAccount: depositCustomer,
+                    schemeName: s.name || s.schemeName || 'Purchase Plan',
+                    accountId: accountId,
+                    schemeId: accountId,
+                    amount: paid,
+                    type: 'deposit',
+                    status: 'Success',
+                    method: 'CASH',
+                    recordedBy: 'admin'
+                });
+            }
+
+            showNotification("Cash deposit recorded successfully!", 'success');
+            setSelectedPlans([]);
+            setDepositAmount('');
+            setDepositCustomer('');
+            setCustomerActiveSchemes([]);
+            setActiveView('overview');
+        } catch (err) {
+            console.error(err);
+            showNotification("Deposit failed. Please try again.", 'error');
+        }
+    };
+
+    const togglePlan = (accountId: string) => {
+        let newSelection = [];
+        if (selectedPlans.includes(accountId)) {
+            newSelection = selectedPlans.filter(id => id !== accountId);
+        } else {
+            newSelection = [...selectedPlans, accountId];
+        }
+        setSelectedPlans(newSelection);
+
+        const sum = customerActiveSchemes
+            .filter(s => newSelection.includes(s.accountId))
+            .reduce((acc, s) => acc + s.monthlyAmount, 0);
+        setDepositAmount(sum > 0 ? sum.toString() : '');
     };
 
     const handleCustomerLookup = async (id: string) => {
         setDepositCustomer(id);
-        if (id.length >= 4) {
-            const plans = await getUserPlansFromDB(id);
-            const activeJoinedSchemes = schemesList.filter(s => plans.some((p: any) => p.schemeId === s.id));
-            setCustomerActiveSchemes(activeJoinedSchemes);
+        if (id.length >= 10) {
+            const userProfile = await getUserFromDB(id);
+            if (userProfile) {
+                const userId = userProfile.id || id;
+                const plans = await getUserPlansFromDB(userId);
+                setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
+            } else {
+                const plans = await getUserPlansFromDB(id);
+                setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
+            }
+            setSelectedPlans([]);
+            setDepositAmount('');
         } else {
             setCustomerActiveSchemes([]);
+            setSelectedPlans([]);
+            setDepositAmount('');
         }
     };
 
@@ -344,13 +408,34 @@ const AdminDashboard = () => {
         try {
             const allTx = await getTransactionsFromDB();
             const start = new Date(incentiveRange.start).getTime();
-            const end = new Date(incentiveRange.end).getTime();
+            // Set end time to the end of the day (23:59:59)
+            const endDateObj = new Date(incentiveRange.end);
+            endDateObj.setHours(23, 59, 59, 999);
+            const end = endDateObj.getTime();
 
             const filtered = allTx.filter((tx: any) => {
                 const txTime = new Date(tx.timestamp).getTime();
                 return txTime >= start && txTime <= end;
             });
-            setFilteredIncentives(filtered);
+
+            const allUsers = await getAllUsersFromDB();
+            const userMap: Record<string, any> = {};
+            allUsers.forEach((u: any) => {
+                userMap[u.id] = u;
+                if (u.phone) userMap[u.phone] = u;
+            });
+
+            const augmentedFiltered = filtered.map((tx: any) => {
+                const accountKey = tx.customerAccount || tx.userPhone || tx.accountId || '';
+                const user = userMap[accountKey];
+                return {
+                    ...tx,
+                    customerName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : accountKey,
+                    customerPhone: user?.phone || accountKey
+                };
+            });
+
+            setFilteredIncentives(augmentedFiltered);
         } catch (err) {
             showNotif("Error fetching reports", "error");
         } finally {
@@ -369,20 +454,31 @@ const AdminDashboard = () => {
             if (u.phone) userMap[u.phone] = u;
         });
 
+        // Build a scheme name lookup from user_schemes to handle accountId -> name
+        const { collection, getDocs } = await import('firebase/firestore');
+        const userSchemesSnap = await getDocs(collection(db, "user_schemes"));
+        const accountSchemeMap: Record<string, string> = {};
+        userSchemesSnap.docs.forEach(d => {
+            const data = d.data();
+            accountSchemeMap[d.id] = data.name || data.schemeName || 'Investment Plan';
+        });
+
         // Build a scheme name lookup from already-loaded schemesList
         const schemeMap: Record<string, string> = {};
         schemesList.forEach((s: any) => {
             schemeMap[s.id] = s.name;
         });
 
-        const headers = ["Transaction ID", "Customer Name", "Phone Number", "Amount (₹)", "Date", "Transaction Type", "Scheme Name"];
+        const headers = ["Transaction ID", "Customer Name", "Phone Number", "Amount (₹)", "Date", "Transaction Type", "Method", "Recorded By", "Scheme Name"];
 
         const rows = filteredIncentives.map(tx => {
-            const accountKey = tx.customerAccount || tx.userPhone || tx.accountId || '';
+            const accountKey = tx.userId || tx.customerAccount || tx.userPhone || tx.accountId || '';
             const user = userMap[accountKey];
-            const customerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : accountKey;
-            const phone = user?.phone || accountKey;
-            const schemeName = schemeMap[tx.schemeId] || tx.schemeId || 'N/A';
+            const customerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : (tx.userName || accountKey);
+            const phone = user?.phone || tx.userPhone || (accountKey.match(/^\d+$/) ? accountKey : 'N/A');
+
+            // Try resolving scheme name from transaction property, then account map, then master scheme map
+            const schemeName = tx.schemeName || accountSchemeMap[tx.accountId] || schemeMap[tx.schemeId] || tx.schemeId || 'N/A';
 
             return [
                 tx.id || 'N/A',
@@ -391,6 +487,8 @@ const AdminDashboard = () => {
                 tx.amount || 0,
                 tx.date || new Date(tx.timestamp).toLocaleDateString(),
                 (tx.type || 'unknown').toUpperCase(),
+                (tx.method || 'UPI').toUpperCase(),
+                tx.recordedBy || 'System',
                 `"${schemeName}"`
             ];
         });
@@ -507,31 +605,48 @@ const AdminDashboard = () => {
                         </div>
                         <form onSubmit={handleDeposit} className="space-y-4">
                             <Input
-                                label="Customer ID / Phone"
+                                label="Customer Phone"
                                 placeholder="e.g. 9876543210"
                                 required
                                 value={depositCustomer}
                                 onChange={(e) => handleCustomerLookup(e.target.value)}
                             />
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Scheme</label>
-                                <select
-                                    required
-                                    className="px-4 py-3 bg-surface border border-border/50 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all w-full text-base font-medium"
-                                    value={selectedSchemeForDeposit}
-                                    onChange={(e) => setSelectedSchemeForDeposit(e.target.value)}
-                                >
-                                    <option value="" disabled>Select a scheme</option>
-                                    {customerActiveSchemes.length > 0 ? (
-                                        customerActiveSchemes.map(s => (
-                                            <option key={s.id} value={s.id}>{s.name} - {formatCurrency(s.monthlyAmount)}/mo</option>
-                                        ))
-                                    ) : (
-                                        <option disabled>No joined schemes found for this customer</option>
-                                    )}
-                                </select>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Schemes</label>
+                                {customerActiveSchemes.length > 0 ? (
+                                    customerActiveSchemes.map((s: any) => (
+                                        <Card
+                                            key={s.accountId}
+                                            onClick={() => togglePlan(s.accountId)}
+                                            className={cn(
+                                                "p-4 border-2 transition-all cursor-pointer",
+                                                selectedPlans.includes(s.accountId) ? "border-accent bg-accent-light/30" : "border-border/50"
+                                            )}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn(
+                                                        "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                                                        selectedPlans.includes(s.accountId) ? "border-accent bg-accent" : "border-border"
+                                                    )}>
+                                                        {selectedPlans.includes(s.accountId) && <CheckCircle size={14} className="text-white" />}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-primary text-sm">{s.name}</h4>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
+                                                    <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))
+                                ) : depositCustomer.length >= 4 ? (
+                                    <p className="text-sm text-text-muted px-4 py-6 border border-border/50 bg-white rounded-xl text-center">No active schemes found for this customer.</p>
+                                ) : null}
                             </div>
-                            <Input label="Amount Received (₹)" type="number" required value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
+                            <Input label="Total Cash Collected (₹)" type="number" required value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
                             <Input label="Reference Notes" placeholder="Receipt number, etc (optional)" />
                             <Button fullWidth className="mt-4 bg-success text-white" type="submit">Confirm Deposit</Button>
                         </form>
@@ -573,8 +688,8 @@ const AdminDashboard = () => {
                                         {filteredIncentives.map((tx) => (
                                             <Card key={tx.id} className="p-3 border-none shadow-subtle flex justify-between items-center bg-white">
                                                 <div>
-                                                    <p className="text-xs font-bold text-primary">{tx.customerAccount}</p>
-                                                    <p className="text-[10px] text-text-muted">{tx.date} • {tx.type.toUpperCase()}</p>
+                                                    <p className="text-xs font-bold text-primary">{tx.customerName}</p>
+                                                    <p className="text-[10px] text-text-muted">{tx.customerPhone || tx.userPhone} • {tx.date} • {tx.type.toUpperCase()}</p>
                                                 </div>
                                                 <p className="text-sm font-bold text-success">{formatCurrency(tx.amount)}</p>
                                             </Card>
@@ -618,7 +733,6 @@ const AdminDashboard = () => {
                             <Card className="p-6 space-y-6 border-none shadow-card">
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-primary">{foundCustomer.firstName} {foundCustomer.lastName}</h3>
-                                    <p className="text-xs text-text-muted">Account ID: {foundCustomer.id}</p>
                                 </div>
 
                                 <div className="space-y-4 pt-4 border-t border-border">
@@ -900,8 +1014,11 @@ const AdminDashboard = () => {
                 return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                         <div className="flex items-center gap-4 border-b border-border/50 pb-4">
-                            <button onClick={() => navigate('/login')} className="p-2 -ml-2 text-primary">
-                                <ChevronLeft size={24} />
+                            <button onClick={async () => {
+                                await logout();
+                                navigate('/login');
+                            }} className="p-2 -ml-2 text-primary">
+                                <LogOut size={24} />
                             </button>
                             <Shield className="text-accent" size={28} />
                             <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Admin Console</h1>

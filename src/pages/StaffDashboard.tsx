@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Edit2, Smartphone } from 'lucide-react';
+import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, LogOut } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
-import { formatCurrency } from '../utils';
+import { formatCurrency, cn } from '../utils';
 import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import {
-    getSchemesFromDB, getAdminSettings,
-    updateAdminSettings,
+    getSchemesFromDB,
     getUserPlansFromDB,
     recordTransactionInDB,
-    getUserFromDB,
-    createUserProfile
+    getUserFromDB
 } from '../services/db';
+import { useNotification } from '../context/NotificationContext';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
-    const { user } = useAuth()!;
+    const { user, logout } = useAuth()!;
+    const { showNotification } = useNotification();
 
     // Protection: Only staff can access
     useEffect(() => {
@@ -30,10 +32,11 @@ const StaffDashboard = () => {
     const [activeView, setActiveView] = useState<'overview' | 'deposit' | 'referrals' | 'customer_lookup'>('overview');
     const [searchQuery, setSearchQuery] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<any>(null);
-    const [newPhone, setNewPhone] = useState('');
+
     const [depositAmount, setDepositAmount] = useState('');
     const [depositCustomer, setDepositCustomer] = useState('');
-    const [selectedSchemeForDeposit, setSelectedSchemeForDeposit] = useState('');
+    const [depositCustomerProfile, setDepositCustomerProfile] = useState<any>(null);
+    const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
     const [customerActiveSchemes, setCustomerActiveSchemes] = useState<any[]>([]);
     const [schemesList, setSchemesList] = useState<any[]>([]);
 
@@ -43,33 +46,99 @@ const StaffDashboard = () => {
 
     const handleReceipt = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedSchemeForDeposit) {
-            alert("Please select a scheme");
+        if (selectedPlans.length === 0) {
+            showNotification("Please select at least one scheme", "error");
             return;
         }
-        await recordTransactionInDB({
-            type: 'receipt',
-            amount: parseFloat(depositAmount),
-            schemeId: selectedSchemeForDeposit,
-            customerAccount: depositCustomer
-        });
-        alert("Receipt recorded & customer's plan updated.");
-        setSelectedSchemeForDeposit('');
-        setDepositAmount('');
-        setDepositCustomer('');
-        setCustomerActiveSchemes([]);
-        setActiveView('overview');
+
+        const amt = parseFloat(depositAmount);
+        const expectedTotal = customerActiveSchemes
+            .filter(s => selectedPlans.includes(s.accountId))
+            .reduce((acc, s) => acc + s.monthlyAmount, 0);
+
+        if (amt < expectedTotal) {
+            const ok = window.confirm(`You entered ₹${amt} but selected schemes require ₹${expectedTotal}. Continue anyway?`);
+            if (!ok) return;
+        }
+
+        try {
+            for (const accountId of selectedPlans) {
+                const s = customerActiveSchemes.find(p => p.accountId === accountId);
+                if (!s) continue;
+
+                const paid = s.monthlyAmount;
+                const schemeRef = doc(db, "user_schemes", accountId);
+                await updateDoc(schemeRef, {
+                    monthsPaid: (s.monthsPaid || 0) + 1,
+                    totalPaid: (s.totalPaid || 0) + paid,
+                });
+
+                await recordTransactionInDB({
+                    userId: depositCustomer,
+                    userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
+                    schemeName: s.name || s.schemeName || 'Purchase Plan',
+                    accountId: accountId,
+                    amount: paid,
+                    type: 'deposit',
+                    status: 'Success',
+                    method: 'CASH',
+                    recordedBy: user?.id || 'staff'
+                });
+            }
+
+            showNotification("Receipt recorded & customer's plan(s) updated.", "success");
+            setSelectedPlans([]);
+            setDepositAmount('');
+            setDepositCustomer('');
+            setDepositCustomerProfile(null);
+            setCustomerActiveSchemes([]);
+            setActiveView('overview');
+        } catch (error) {
+            console.error(error);
+            showNotification("Failed to record receipt.", "error");
+        }
     };
 
     const handleCustomerLookup = async (id: string) => {
         setDepositCustomer(id);
-        if (id.length >= 4) {
-            const plans = await getUserPlansFromDB(id);
-            const activeJoinedSchemes = schemesList.filter(s => plans.some((p: any) => p.schemeId === s.id));
-            setCustomerActiveSchemes(activeJoinedSchemes);
+        if (id.length >= 10) {
+            try {
+                // Try to find the user by phone
+                const userProfile = await getUserFromDB(id);
+                if (userProfile) {
+                    setDepositCustomerProfile(userProfile);
+                    const plans = await getUserPlansFromDB(id);
+                    setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
+                } else {
+                    setDepositCustomerProfile(null);
+                    setCustomerActiveSchemes([]);
+                }
+            } catch (err) {
+                console.error("Error fetching customer info:", err);
+            }
+            setSelectedPlans([]);
+            setDepositAmount('');
         } else {
+            setDepositCustomerProfile(null);
             setCustomerActiveSchemes([]);
+            setSelectedPlans([]);
+            setDepositAmount('');
         }
+    };
+
+    const togglePlan = (accountId: string) => {
+        let newSelection = [];
+        if (selectedPlans.includes(accountId)) {
+            newSelection = selectedPlans.filter(id => id !== accountId);
+        } else {
+            newSelection = [...selectedPlans, accountId];
+        }
+        setSelectedPlans(newSelection);
+
+        const sum = customerActiveSchemes
+            .filter(s => newSelection.includes(s.accountId))
+            .reduce((acc, s) => acc + s.monthlyAmount, 0);
+        setDepositAmount(sum > 0 ? sum.toString() : '');
     };
 
     const handleCustomerSearch = async () => {
@@ -77,24 +146,12 @@ const StaffDashboard = () => {
         const res: any = await getUserFromDB(searchQuery);
         if (res) {
             setFoundCustomer(res);
-            setNewPhone(res.phone);
         } else {
             alert("Customer not found");
         }
     };
 
-    const handleUpdatePhone = async () => {
-        if (!newPhone) return;
-        try {
-            const updated = { ...foundCustomer, phone: newPhone };
-            await createUserProfile(updated);
-            alert("Phone number updated successfully!");
-            setFoundCustomer(null);
-            setSearchQuery('');
-        } catch (err) {
-            alert("Update failed");
-        }
-    };
+
 
     const renderView = () => {
         if (activeView === 'deposit') {
@@ -108,33 +165,62 @@ const StaffDashboard = () => {
                     </div>
                     <form onSubmit={handleReceipt} className="space-y-4">
                         <Input
-                            label="Customer ID"
-                            placeholder="e.g. V-88291"
+                            label="Customer Phone"
+                            placeholder="e.g. 9876543210"
                             required
                             value={depositCustomer}
                             onChange={(e) => handleCustomerLookup(e.target.value)}
                         />
 
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Scheme</label>
-                            <select
-                                required
-                                className="px-4 py-3 bg-surface border border-border/50 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all w-full text-base font-medium"
-                                value={selectedSchemeForDeposit}
-                                onChange={(e) => setSelectedSchemeForDeposit(e.target.value)}
-                            >
-                                <option value="" disabled>Select a scheme</option>
-                                {customerActiveSchemes.length > 0 ? (
-                                    customerActiveSchemes.map((s: any) => (
-                                        <option key={s.id} value={s.id}>{s.name} - {formatCurrency(s.monthlyAmount)}/mo</option>
-                                    ))
-                                ) : (
-                                    <option disabled>No joined schemes found</option>
-                                )}
-                            </select>
+                        {depositCustomerProfile && (
+                            <div className="bg-success-light/20 border border-success/30 rounded-xl p-3 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success">
+                                    <UserCheck size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-success uppercase tracking-widest">Verified Customer</p>
+                                    <p className="font-bold text-primary">{depositCustomerProfile.firstName} {depositCustomerProfile.lastName}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Schemes</label>
+                            {customerActiveSchemes.length > 0 ? (
+                                customerActiveSchemes.map((s: any) => (
+                                    <Card
+                                        key={s.accountId}
+                                        onClick={() => togglePlan(s.accountId)}
+                                        className={cn(
+                                            "p-4 border-2 transition-all cursor-pointer",
+                                            selectedPlans.includes(s.accountId) ? "border-accent bg-accent-light/30" : "border-border/50"
+                                        )}
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                                                    selectedPlans.includes(s.accountId) ? "border-accent bg-accent" : "border-border"
+                                                )}>
+                                                    {selectedPlans.includes(s.accountId) && <CheckCircle2 size={14} className="text-white" />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-primary text-sm">{s.name}</h4>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
+                                                <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))
+                            ) : depositCustomer.length >= 4 ? (
+                                <p className="text-sm text-text-muted px-4 py-6 border border-border/50 bg-white rounded-xl text-center">No active schemes found for this customer.</p>
+                            ) : null}
                         </div>
 
-                        <Input label="Cash Amount (₹)" type="number" required value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
+                        <Input label="Total Cash Collected (₹)" type="number" required value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
                         <Button fullWidth className="mt-4 bg-success text-white" type="submit">Submit Cash Collection</Button>
                     </form>
                 </motion.div>
@@ -185,17 +271,14 @@ const StaffDashboard = () => {
                         <Card className="p-6 space-y-6 border-none shadow-card">
                             <div className="space-y-1">
                                 <h3 className="font-bold text-primary">{foundCustomer.firstName} {foundCustomer.lastName}</h3>
-                                <p className="text-xs text-text-muted">Customer ID: {foundCustomer.id}</p>
                             </div>
 
-                            <div className="space-y-4 pt-4 border-t border-border">
-                                <Input
-                                    label="Update Phone Number"
-                                    icon={Smartphone}
-                                    value={newPhone}
-                                    onChange={e => setNewPhone(e.target.value)}
-                                />
-                                <Button fullWidth onClick={handleUpdatePhone}>Update Mobile Number</Button>
+                            <div className="pt-4 border-t border-border space-y-1">
+                                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Mobile Number</p>
+                                <p className="text-sm font-bold text-primary flex items-center gap-2">
+                                    <Smartphone size={14} /> {foundCustomer.phone}
+                                </p>
+                                <p className="text-[10px] text-text-muted mt-1">Contact admin to change phone number.</p>
                             </div>
                         </Card>
                     )}
@@ -206,8 +289,11 @@ const StaffDashboard = () => {
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div className="flex items-center gap-4 border-b border-border/50 pb-4">
-                    <button onClick={() => navigate('/login')} className="p-2 -ml-2 text-primary">
-                        <ChevronLeft size={24} />
+                    <button onClick={async () => {
+                        await logout();
+                        navigate('/login');
+                    }} className="p-2 -ml-2 text-primary">
+                        <LogOut size={24} />
                     </button>
                     <UserCheck className="text-accent" size={28} />
                     <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Staff Console</h1>
@@ -250,7 +336,7 @@ const StaffDashboard = () => {
                         <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                             <Search size={24} />
                         </div>
-                        <p className="text-xs font-bold text-primary">Search & Update Customer Phone</p>
+                        <p className="text-xs font-bold text-primary">Customer Lookup</p>
                     </Card>
                 </div>
             </motion.div>

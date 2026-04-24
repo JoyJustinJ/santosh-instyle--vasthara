@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Smartphone, Lock, Globe, ChevronDown, UserSquare2, Building2, ChevronLeft, Shield } from 'lucide-react';
+import { Smartphone, Lock, Globe, ChevronDown, UserSquare2, Building2, ChevronLeft, Shield, Fingerprint } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/UI/Input';
@@ -10,6 +10,12 @@ import { Notification, NotificationType } from '../components/UI/Notification';
 import { getUserFromDB, saveStaffRequestToDB } from '../services/db';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
+import {
+  biometricSupported,
+  generateChallenge,
+  base64urlToBuffer
+} from '../utils/biometrics';
+
 
 // ── Hardcoded admin fallback (matches Firestore seed) ──────────────────────
 const ADMIN_ID = '9345578962';
@@ -19,7 +25,7 @@ const ADMIN_PIN = '4444';
 const Login = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user } = useAuth()!;
+  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user, isBiometricEnabled: biometricEnabled } = useAuth()!;
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<'login' | 'staff_request' | 'otp_verify'>('login');
@@ -100,16 +106,13 @@ const Login = () => {
 
         if (formData.password === expectedPass && formData.securityPin === expectedPin) {
           localStorage.setItem('is_admin_authenticated', 'true');
-          // Primary admin = the one whose Firestore doc is "main_admin"
-          // checkIsAdmin returns the HARDCODED_ADMIN object (no docId field) for the primary admin
-          // Secondary admins are stored as "admin_xxxxx" docs and have a docId field set
           const isPrimary = !adminData?.docId || adminData.docId === 'main_admin';
           localStorage.setItem('is_primary_admin', isPrimary ? 'true' : 'false');
           setLoading(false);
           navigate('/admin');
           return;
         } else {
-          showNotif('Invalid Admin Password or Security PIN', 'error');
+          showNotif('Invalid Password or Access Key', 'error');
           setLoading(false);
           return;
         }
@@ -118,7 +121,6 @@ const Login = () => {
       // ── 2. Existing regular user / staff ───────────────────────────────────
       let userDoc: any = await getUserFromDB(formData.phone);
 
-      // Try with +91 if not found
       if (!userDoc && !formData.phone.startsWith('+') && formData.phone.length === 10) {
         userDoc = await getUserFromDB(`+91${formData.phone}`);
       }
@@ -128,6 +130,8 @@ const Login = () => {
         if (formData.password && pinMatch) {
           setUser(userDoc);
           unlockApp();
+          // Store phone for future biometric re-login
+          localStorage.setItem('vasthara_last_phone', userDoc.phone);
           setLoading(false);
           navigate(userDoc.role === 'staff' ? '/staff' : '/home');
           return;
@@ -151,6 +155,39 @@ const Login = () => {
     setLoading(false);
   };
 
+  const handleBiometricLogin = async () => {
+    const credId = localStorage.getItem('vasthara_biometric_credId');
+    const storedPhone = localStorage.getItem('vasthara_last_phone');
+    if (!credId || !biometricSupported()) return;
+
+    setLoading(true);
+    try {
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge: generateChallenge(),
+          allowCredentials: [{ id: base64urlToBuffer(credId), type: 'public-key' }],
+          userVerification: 'required',
+          timeout: 60000,
+        },
+      });
+
+      if (assertion && storedPhone) {
+        const userDoc: any = await getUserFromDB(storedPhone);
+        if (userDoc) {
+          setUser(userDoc);
+          unlockApp();
+          navigate(userDoc.role === 'staff' ? '/staff' : '/home');
+          showNotif('Logged in with Biometrics', 'success');
+        } else {
+          showNotif('User data not found. Please log in manually once.', 'error');
+        }
+      }
+    } catch (err) {
+      showNotif('Biometric verification failed', 'error');
+    }
+    setLoading(false);
+  };
+
   // ── OTP verify ─────────────────────────────────────────────────────────────
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +196,6 @@ const Login = () => {
     setLoading(true);
     try {
       await confirmationResult.confirm(formData.otp);
-      // Firebase auth state change → AuthContext handles the rest
     } catch (err: any) {
       showNotif(getFriendlyError(err));
     }
@@ -185,12 +221,11 @@ const Login = () => {
       status: 'pending',
     });
     setLoading(false);
-    showNotif('Request sent! Admin must approve your access.', 'success');
+    showNotif('Request sent! Management must approve your access.', 'success');
     setStaffForm({ name: '', branch: '', phone: '' });
     setViewMode('login');
   };
 
-  // ── "Change number" resets everything back to the login form ───────────────
   const handleBackToLogin = () => {
     setViewMode('login');
     setFormData({ phone: '', password: '', otp: '', securityPin: '' });
@@ -234,7 +269,6 @@ const Login = () => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
-        {/* Logo */}
         <div className="flex flex-col items-center">
           <div className="w-20 h-20 bg-primary rounded-[28px] flex items-center justify-center shadow-card relative overflow-hidden">
             <span className="text-white text-5xl font-display font-bold">V</span>
@@ -244,20 +278,18 @@ const Login = () => {
         </div>
 
         <AnimatePresence mode="wait">
-
-          {/* ── Login form ──────────────────────────────────────────────────── */}
           {viewMode === 'login' && (
             <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full space-y-8">
               <div className="w-full space-y-2 text-center">
                 <h2 className="text-2xl font-display font-bold text-text-primary tracking-tight">Welcome Back</h2>
-                <p className="text-sm font-medium text-text-secondary">Login with phone or admin ID to continue</p>
+                <p className="text-sm font-medium text-text-secondary">Login with phone to continue</p>
               </div>
 
               <div className="w-full space-y-6">
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
                   <Input
-                    label="Phone / Admin ID"
-                    placeholder="Enter number or admin ID"
+                    label="Phone Number"
+                    placeholder="Enter phone number"
                     icon={Smartphone}
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -271,10 +303,9 @@ const Login = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
-                  {/* Security PIN — visible when admin phone is entered */}
                   {isAdminPhone(formData.phone) && (
                     <Input
-                      label="Security PIN (Admins Only)"
+                      label="Access Key"
                       type="password"
                       placeholder="0000"
                       maxLength={4}
@@ -302,6 +333,16 @@ const Login = () => {
                   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                   <span className="text-sm font-bold text-text-primary">Google Account</span>
                 </button>
+
+                {biometricEnabled && biometricSupported() && localStorage.getItem('vasthara_biometric_credId') && (
+                  <button
+                    onClick={handleBiometricLogin}
+                    className="w-full h-14 mt-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center gap-3 hover:bg-primary/10 transition-all text-primary"
+                  >
+                    <Fingerprint size={20} />
+                    <span className="text-sm font-bold">Login with Biometrics</span>
+                  </button>
+                )}
               </div>
 
               <div className="text-center space-y-4">
@@ -318,7 +359,6 @@ const Login = () => {
             </motion.div>
           )}
 
-          {/* ── OTP verify ─────────────────────────────────────────────────── */}
           {viewMode === 'otp_verify' && (
             <motion.div key="otp" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full space-y-12">
               <div className="w-full space-y-2 text-center">
@@ -342,7 +382,6 @@ const Login = () => {
             </motion.div>
           )}
 
-          {/* ── Staff request ───────────────────────────────────────────────── */}
           {viewMode === 'staff_request' && (
             <motion.div key="staff" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full space-y-8">
               <div className="w-full space-y-2 text-center">
@@ -360,7 +399,6 @@ const Login = () => {
               </form>
             </motion.div>
           )}
-
         </AnimatePresence>
       </div>
 

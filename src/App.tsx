@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SchemeProvider } from './context/SchemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 import './i18n/config';
 
 // Layout Components
@@ -16,15 +17,18 @@ import Signup from './pages/Signup';
 import OTPVerify from './pages/OTPVerify';
 import PINSetup from './pages/PINSetup';
 import PINLogin from './pages/PINLogin';
+import SecuritySettings from './pages/SecuritySettings';
 import Home from './pages/Home';
 import KnowMore from './pages/KnowMore';
 import SchemesList from './pages/SchemesList';
 import JoinScheme from './pages/JoinScheme';
 import Profile from './pages/Profile';
 import MySchemes from './pages/MySchemes';
+import Transactions from './pages/Transactions';
 import PlanDetail from './pages/PlanDetail';
 import PayEMI from './pages/PayEMI';
 import ContactUs from './pages/ContactUs';
+import OurStores from './pages/OurStores';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 
@@ -120,6 +124,18 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/profile/security" element={
+              <ProtectedRoute>
+                <SecuritySettings />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/transactions" element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            } />
+
             <Route path="/my-schemes" element={
               <ProtectedRoute>
                 <MySchemes />
@@ -144,6 +160,12 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/stores" element={
+              <ProtectedRoute>
+                <OurStores />
+              </ProtectedRoute>
+            } />
+
             <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
         </AnimatePresence>
@@ -157,9 +179,11 @@ const AppContent = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <SchemeProvider>
-        <AppContent />
-      </SchemeProvider>
+      <NotificationProvider>
+        <SchemeProvider>
+          <AppContent />
+        </SchemeProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

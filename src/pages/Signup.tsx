@@ -25,7 +25,8 @@ const Signup = () => {
     city: '',
     pincode: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    verifyMethod: 'phone' as 'phone' | 'email'
   });
   const [errors, setErrors] = useState<any>({});
   const [passwordStrength, setPasswordStrength] = useState('');
@@ -230,13 +231,44 @@ const Signup = () => {
               error={errors.confirmPassword}
             />
           </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Verification Method</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, verifyMethod: 'phone' })}
+                className={cn(
+                  "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                  formData.verifyMethod === 'phone' ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-text-muted"
+                )}
+              >
+                <Smartphone size={20} />
+                <span className="text-[10px] font-black uppercase tracking-wider">SMS / OTP</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, verifyMethod: 'email' })}
+                className={cn(
+                  "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                  formData.verifyMethod === 'email' ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-text-muted"
+                )}
+              >
+                <Mail size={20} />
+                <span className="text-[10px] font-black uppercase tracking-wider">Email Link</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-text-muted text-center px-4 italic">
+              * Note: For the preview, both methods will use a 6-digit test code (123456).
+            </p>
+          </div>
         </Card>
 
         <Button fullWidth size="lg" loading={loading} className="shadow-card">
           {t('signup.submit_btn')}
         </Button>
       </form>
-    </motion.div>
+    </motion.div >
   );
 };
 

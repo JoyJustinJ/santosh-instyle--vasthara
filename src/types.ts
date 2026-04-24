@@ -55,6 +55,6 @@ export interface UserPlan {
   userId: string;
   monthsPaid: number;
   totalPaid: number;
-  status: 'active' | 'matured' | 'closed';
+  status: 'pending_activation' | 'active' | 'matured' | 'closed';
   startDate: string;
 }

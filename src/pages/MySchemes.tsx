@@ -71,9 +71,6 @@ const MySchemes = () => {
                       <h3 className="text-xl font-display font-bold text-primary mt-2">
                         {plan.name}
                       </h3>
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">
-                        ID: {plan.accountId}
-                      </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text-muted group-hover:bg-accent-light group-hover:text-accent transition-colors">
                       <ChevronRight size={20} />

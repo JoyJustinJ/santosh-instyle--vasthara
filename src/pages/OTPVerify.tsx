@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Smartphone, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { Smartphone, ChevronLeft, CheckCircle2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
@@ -15,7 +15,18 @@ const OTPVerify = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
+  const [verifyMethod, setVerifyMethod] = useState<'phone' | 'email'>('phone');
+  const [targetValue, setTargetValue] = useState('');
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    const pendingData = localStorage.getItem('pending_signup');
+    if (pendingData) {
+      const data = JSON.parse(pendingData);
+      setVerifyMethod(data.verifyMethod || 'phone');
+      setTargetValue(data.verifyMethod === 'email' ? data.email : data.phone);
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,7 +92,7 @@ const OTPVerify = () => {
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="relative">
           <div className="w-24 h-24 bg-accent-light rounded-[32px] flex items-center justify-center text-accent">
-            <Smartphone size={48} strokeWidth={1.5} />
+            {verifyMethod === 'email' ? <Mail size={48} strokeWidth={1.5} /> : <Smartphone size={48} strokeWidth={1.5} />}
           </div>
           <motion.div
             animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
@@ -94,10 +105,13 @@ const OTPVerify = () => {
 
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-display font-bold text-primary tracking-tight">
-            {t('otp.title')}
+            {verifyMethod === 'email' ? 'Verify Email' : t('otp.title')}
           </h1>
           <p className="text-sm font-medium text-text-secondary">
-            {t('otp.subtext', { phone: '+91 XXXXXX5000' })}
+            {verifyMethod === 'email'
+              ? `We've sent a code to ${targetValue}`
+              : t('otp.subtext', { phone: `+91 ${targetValue.slice(-4).padStart(targetValue.length, '*')}` })
+            }
           </p>
         </div>
 
