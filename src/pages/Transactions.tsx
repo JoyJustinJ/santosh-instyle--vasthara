@@ -20,9 +20,10 @@ const Transactions = () => {
         if (user) {
             try {
                 // Fetch transactions and plans/schemes for mapping
+                const userId = user.id || user.phone;
                 const [txData, userPlans, allSchemes] = await Promise.all([
-                    getTransactionsFromDB(user.phone),
-                    getUserPlansFromDB(user.phone),
+                    userId ? getTransactionsFromDB(userId) : Promise.resolve([]),
+                    user.phone ? getUserPlansFromDB(user.phone) : Promise.resolve([]),
                     getSchemesFromDB()
                 ]);
 
@@ -106,8 +107,8 @@ const Transactions = () => {
                                             Hosur
                                         </td>
                                         <td>
-                                            Customer: ${user?.firstName} ${user?.lastName}<br>
-                                            Phone: +91 ${user?.phone}<br>
+                                            Username: ${user?.firstName} ${user?.lastName}<br>
+                                            Phone Number: +91 ${user?.phone}<br>
                                         </td>
                                     </tr>
                                 </table>

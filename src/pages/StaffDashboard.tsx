@@ -62,6 +62,7 @@ const StaffDashboard = () => {
         }
 
         try {
+            const userId = depositCustomerProfile?.id || depositCustomer;
             for (const accountId of selectedPlans) {
                 const s = customerActiveSchemes.find(p => p.accountId === accountId);
                 if (!s) continue;
@@ -74,7 +75,7 @@ const StaffDashboard = () => {
                 });
 
                 await recordTransactionInDB({
-                    userId: depositCustomer,
+                    userId: userId,
                     userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
                     accountId: accountId,
@@ -107,7 +108,7 @@ const StaffDashboard = () => {
                 const userProfile = await getUserFromDB(id);
                 if (userProfile) {
                     setDepositCustomerProfile(userProfile);
-                    const plans = await getUserPlansFromDB(id);
+                    const plans = await getUserPlansFromDB(userProfile.id);
                     setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
                 } else {
                     setDepositCustomerProfile(null);

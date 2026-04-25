@@ -52,7 +52,8 @@ const AdminDashboard = () => {
     const [depositCustomer, setDepositCustomer] = useState('');
     const [customerActiveSchemes, setCustomerActiveSchemes] = useState<any[]>([]);
     const [incentiveRange, setIncentiveRange] = useState({ start: '', end: '' });
-    const [filteredIncentives, setFilteredIncentives] = useState<any[]>([]);
+    const [transactionReport, setTransactionReport] = useState<any[]>([]);
+    const [referralStats, setReferralStats] = useState<any[]>([]);
     const [notification, setNotification] = useState<{ message: string, type: NotificationType } | null>(null);
     const [idToDelete, setIdToDelete] = useState<string | null>(null);
     const [adminSettings, setAdminSettings] = useState({ adminId: '', password: '', securityPin: '' });
@@ -69,6 +70,12 @@ const AdminDashboard = () => {
     const showNotif = (message: string, type: NotificationType = 'success') => {
         showNotification(message, type);
     };
+
+    useEffect(() => {
+        if (activeView === 'incentives') {
+            fetchReferralStats();
+        }
+    }, [activeView]);
 
     useEffect(() => {
         const fetchDB = async () => {
@@ -210,6 +217,7 @@ const AdminDashboard = () => {
         }
 
         try {
+            const userId = foundCustomer?.id || depositCustomer;
             for (const accountId of selectedPlans) {
                 const s = customerActiveSchemes.find(p => p.accountId === accountId);
                 if (!s) continue;
@@ -222,8 +230,8 @@ const AdminDashboard = () => {
                 });
 
                 await recordTransactionInDB({
-                    userId: depositCustomer,
-                    customerAccount: depositCustomer,
+                    userId: userId,
+                    customerAccount: userId,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
                     accountId: accountId,
                     schemeId: accountId,
@@ -267,7 +275,8 @@ const AdminDashboard = () => {
         if (id.length >= 10) {
             const userProfile = await getUserFromDB(id);
             if (userProfile) {
-                const userId = userProfile.id || id;
+                setFoundCustomer(userProfile);
+                const userId = userProfile.id;
                 const plans = await getUserPlansFromDB(userId);
                 setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
             } else {
@@ -399,7 +408,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleFilterIncentives = async () => {
+    const handleFilterTransactions = async () => {
         if (!incentiveRange.start || !incentiveRange.end) {
             showNotif("Please select both start and end dates", 'error');
             return;
@@ -426,16 +435,16 @@ const AdminDashboard = () => {
             });
 
             const augmentedFiltered = filtered.map((tx: any) => {
-                const accountKey = tx.customerAccount || tx.userPhone || tx.accountId || '';
+                const accountKey = tx.userId || tx.customerAccount || tx.userPhone || tx.accountId || '';
                 const user = userMap[accountKey];
                 return {
                     ...tx,
-                    customerName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : accountKey,
+                    customerName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : (tx.userName || accountKey),
                     customerPhone: user?.phone || accountKey
                 };
             });
 
-            setFilteredIncentives(augmentedFiltered);
+            setTransactionReport(augmentedFiltered);
         } catch (err) {
             showNotif("Error fetching reports", "error");
         } finally {
@@ -443,8 +452,33 @@ const AdminDashboard = () => {
         }
     };
 
+    const fetchReferralStats = async () => {
+        setLoadingData(true);
+        try {
+            const users = await getAllUsersFromDB();
+            const staffReferrals: Record<string, any[]> = {};
+            users.forEach((u: any) => {
+                if (u.referralStaff) {
+                    const key = u.referralStaff.toLowerCase().trim();
+                    if (!staffReferrals[key]) staffReferrals[key] = [];
+                    staffReferrals[key].push(u);
+                }
+            });
+            const performanceData = Object.entries(staffReferrals).map(([name, refs]) => ({
+                name: name.charAt(0).toUpperCase() + name.slice(1),
+                count: refs.length,
+                referrals: refs
+            })).sort((a, b) => b.count - a.count);
+            setReferralStats(performanceData);
+        } catch (err) {
+            showNotif("Error fetching referral stats", "error");
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
     const handleDownloadCSV = async () => {
-        if (filteredIncentives.length === 0) return;
+        if (transactionReport.length === 0) return;
 
         // Fetch all users once and build a lookup map by phone (which is the user doc ID)
         const allUsers = await getAllUsersFromDB();
@@ -471,7 +505,7 @@ const AdminDashboard = () => {
 
         const headers = ["Transaction ID", "Customer Name", "Phone Number", "Amount (₹)", "Date", "Transaction Type", "Method", "Recorded By", "Scheme Name"];
 
-        const rows = filteredIncentives.map(tx => {
+        const rows = transactionReport.map(tx => {
             const accountKey = tx.userId || tx.customerAccount || tx.userPhone || tx.accountId || '';
             const user = userMap[accountKey];
             const customerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : (tx.userName || accountKey);
@@ -502,7 +536,34 @@ const AdminDashboard = () => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `Transactions_${incentiveRange.start}_to_${incentiveRange.end}.csv`);
+        link.setAttribute("download", `Transactions_${incentiveRange.start || 'Report'}_to_${incentiveRange.end || 'Report'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleDownloadReferralCSV = () => {
+        if (referralStats.length === 0) return;
+
+        const headers = ["Staff Name", "Referral Count", "Estimated Incentive (₹)", "Customer List"];
+        const rows = referralStats.map(s => [
+            s.name,
+            s.count,
+            s.count * 100,
+            `"${s.referrals.map((r: any) => `${r.firstName} ${r.lastName} (${r.phone})`).join(', ')}"`
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `Referral_Incentives_${new Date().toLocaleDateString()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -675,39 +736,21 @@ const AdminDashboard = () => {
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Staff Performance</h3>
                                     <button
-                                        onClick={async () => {
-                                            setLoadingData(true);
-                                            const users = await getAllUsersFromDB();
-                                            const staffReferrals: Record<string, any[]> = {};
-                                            users.forEach((u: any) => {
-                                                if (u.referralStaff) {
-                                                    const key = u.referralStaff.toLowerCase().trim();
-                                                    if (!staffReferrals[key]) staffReferrals[key] = [];
-                                                    staffReferrals[key].push(u);
-                                                }
-                                            });
-                                            const performanceData = Object.entries(staffReferrals).map(([name, refs]) => ({
-                                                name: name.charAt(0).toUpperCase() + name.slice(1),
-                                                count: refs.length,
-                                                referrals: refs
-                                            })).sort((a, b) => b.count - a.count);
-                                            setFilteredIncentives(performanceData);
-                                            setLoadingData(false);
-                                        }}
+                                        onClick={fetchReferralStats}
                                         className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
                                     >
                                         Update Stats
                                     </button>
                                 </div>
 
-                                {filteredIncentives.length === 0 ? (
+                                {referralStats.length === 0 ? (
                                     <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-border/50">
                                         <Users className="mx-auto text-text-muted/30 mb-2" size={32} />
                                         <p className="text-sm text-text-muted px-8">Click "Update Stats" to view current referral data.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {filteredIncentives.map((staff) => (
+                                        {referralStats.map((staff) => (
                                             <Card key={staff.name} className="p-4 border-none shadow-subtle bg-white">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div>
@@ -737,8 +780,8 @@ const AdminDashboard = () => {
                                 fullWidth
                                 variant="outline"
                                 className="mt-4"
-                                disabled={filteredIncentives.length === 0}
-                                onClick={handleDownloadCSV}
+                                disabled={referralStats.length === 0}
+                                onClick={handleDownloadReferralCSV}
                             >
                                 Download Referral Report (CSV)
                             </Button>
@@ -1026,13 +1069,13 @@ const AdminDashboard = () => {
                                     onChange={(e) => setIncentiveRange({ ...incentiveRange, end: e.target.value })}
                                 />
                             </div>
-                            <Button fullWidth onClick={handleFilterIncentives} loading={loadingData}>
+                            <Button fullWidth onClick={handleFilterTransactions} loading={loadingData}>
                                 Fetch Transactions
                             </Button>
-                            {filteredIncentives.length > 0 && (
+                            {transactionReport.length > 0 && (
                                 <>
                                     <p className="text-xs text-center text-success font-bold">
-                                        ✓ {filteredIncentives.length} transactions found for selected period.
+                                        ✓ {transactionReport.length} transactions found for selected period.
                                     </p>
                                     <Button
                                         fullWidth
@@ -1044,7 +1087,7 @@ const AdminDashboard = () => {
                                     </Button>
                                 </>
                             )}
-                            {filteredIncentives.length === 0 && !loadingData && incentiveRange.start && incentiveRange.end && (
+                            {transactionReport.length === 0 && !loadingData && incentiveRange.start && incentiveRange.end && (
                                 <p className="text-sm text-center text-text-muted py-4">No transactions found for this period.</p>
                             )}
                         </div>

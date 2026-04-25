@@ -13,6 +13,7 @@ import {
 import { useSchemes } from '../context/SchemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { getTransactionsFromDB } from '../services/db';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -30,6 +31,32 @@ const PayEMI = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [paidPlanIds, setPaidPlanIds] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const checkPaidPlans = async () => {
+      if (!userSchemes || userSchemes.length === 0) return;
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const alreadyPaid: string[] = [];
+
+      for (const scheme of userSchemes) {
+        const txs = await getTransactionsFromDB(undefined, scheme.accountId);
+        const hasPaidThisMonth = txs.some((tx: any) => {
+          const date = tx.timestamp?.toDate ? tx.timestamp.toDate() : new Date(tx.timestamp);
+          return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+        if (hasPaidThisMonth) {
+          alreadyPaid.push(scheme.accountId);
+        }
+      }
+      setPaidPlanIds(alreadyPaid);
+    };
+
+    checkPaidPlans();
+  }, [userSchemes]);
 
   const togglePlan = (id: string) => {
     setSelectedPlans(prev =>
@@ -202,34 +229,44 @@ const PayEMI = () => {
           <div className="space-y-3">
             {userSchemes.length === 0 ? (
               <p className="text-sm text-text-muted px-2">You don't have any active plans yet.</p>
-            ) : userSchemes.map((s: any) => (
-              <Card
-                key={s.accountId}
-                onClick={() => togglePlan(s.accountId)}
-                className={cn(
-                  "p-4 border-2 transition-all cursor-pointer",
-                  selectedPlans.includes(s.accountId) ? "border-accent bg-accent-light/30" : "border-border/50"
-                )}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
-                      selectedPlans.includes(s.accountId) ? "border-accent bg-accent" : "border-border"
-                    )}>
-                      {selectedPlans.includes(s.accountId) && <CheckCircle2 size={14} className="text-white" />}
+            ) : userSchemes.map((s: any) => {
+              const isPaid = paidPlanIds.includes(s.accountId);
+              return (
+                <Card
+                  key={s.accountId}
+                  onClick={() => !isPaid && togglePlan(s.accountId)}
+                  className={cn(
+                    "p-4 border-2 transition-all cursor-pointer relative",
+                    selectedPlans.includes(s.accountId) ? "border-accent bg-accent-light/30" : "border-border/50",
+                    isPaid && "opacity-60 cursor-not-allowed bg-surface grayscale-[0.5]"
+                  )}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                        selectedPlans.includes(s.accountId) ? "border-accent bg-accent" : "border-border",
+                        isPaid && "border-success bg-success"
+                      )}>
+                        {selectedPlans.includes(s.accountId) && !isPaid && <CheckCircle2 size={14} className="text-white" />}
+                        {isPaid && <CheckCircle2 size={14} className="text-white" />}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-primary text-sm">{s.name}</h4>
+                        {isPaid && <p className="text-[10px] text-success font-bold uppercase tracking-wider">Already Paid This Month</p>}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-primary text-sm">{s.name}</h4>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
+                      <p className={cn(
+                        "text-[9px] font-black uppercase tracking-widest",
+                        isPaid ? "text-success" : "text-accent"
+                      )}>{isPaid ? "Paid" : "Due"}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
-                    <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
 

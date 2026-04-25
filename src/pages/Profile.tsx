@@ -24,7 +24,7 @@ import { Input } from '../components/UI/Input';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, login: updateUserContext, logout } = useAuth();
+  const { user, setUser: updateUserContext, logout } = useAuth()!;
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({

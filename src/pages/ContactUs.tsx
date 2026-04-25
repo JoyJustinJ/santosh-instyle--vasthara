@@ -19,7 +19,7 @@ const ContactUs = () => {
   const navigate = useNavigate();
 
   const branches = [
-    { name: 'Hosur Branch', address: 'Nethaji Road, Hosur, Tamil Nadu 635109', phone: '098400 77747' },
+    { name: 'Santosh Instyle', address: 'Nethaji Road, Hosur, Tamil Nadu 635109', phone: '098400 77747' },
   ];
 
   return (
@@ -94,7 +94,10 @@ const ContactUs = () => {
                     <p className="text-xs text-text-secondary mt-1 leading-relaxed">{branch.address}</p>
                   </div>
                 </div>
-                <button className="text-accent p-1">
+                <button
+                  className="text-accent p-1"
+                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.name + ' ' + branch.address)}`, '_blank')}
+                >
                   <ExternalLink size={18} />
                 </button>
               </div>

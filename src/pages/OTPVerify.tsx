@@ -6,10 +6,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
 import { createUserProfile } from '../services/db';
+import { useAuth } from '../context/AuthContext';
 
 const OTPVerify = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { checkEmailVerification, sendVerificationEmail, user } = useAuth()!;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -18,6 +20,7 @@ const OTPVerify = () => {
   const [verifyMethod, setVerifyMethod] = useState<'phone' | 'email'>('phone');
   const [targetValue, setTargetValue] = useState('');
   const inputRefs = useRef([]);
+  const pollInterval = useRef<any>(null);
 
   useEffect(() => {
     const pendingData = localStorage.getItem('pending_signup');
@@ -34,6 +37,38 @@ const OTPVerify = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (verifyMethod === 'email' && !success) {
+      pollInterval.current = setInterval(async () => {
+        const isVerified = await checkEmailVerification();
+        if (isVerified) {
+          handleSuccess();
+        }
+      }, 3000);
+    }
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current);
+    };
+  }, [verifyMethod, success]);
+
+  const handleSuccess = async () => {
+    if (success) return;
+    setSuccess(true);
+    if (pollInterval.current) clearInterval(pollInterval.current);
+
+    const pendingData = localStorage.getItem('pending_signup');
+    if (pendingData && (user || verifyMethod === 'phone')) {
+      const userData = JSON.parse(pendingData);
+      // Keep password for custom phone-based login, remove confirmPassword only
+      const { confirmPassword, verifyMethod: _, ...profileData } = userData;
+      const finalUserId = user?.id || profileData.phone;
+      await createUserProfile(finalUserId, profileData);
+      localStorage.removeItem('pending_signup');
+    }
+
+    setTimeout(() => navigate('/pin-setup'), 2000);
+  };
 
   const handleChange = (index, value) => {
     if (isNaN(value)) return;
@@ -53,26 +88,40 @@ const OTPVerify = () => {
     }
   };
 
-  const handleVerify = () => {
+  const handleResend = async () => {
+    setTimer(30);
+    if (verifyMethod === 'email') {
+      await sendVerificationEmail();
+    }
+    // For phone, existing simulation or logic would go here
+  };
+
+  const handleVerifyManual = async () => {
+    if (verifyMethod === 'email') {
+      setLoading(true);
+      const isVerified = await checkEmailVerification();
+      if (isVerified) {
+        await handleSuccess();
+      } else {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      }
+      setLoading(false);
+      return;
+    }
+
     const code = otp.join('');
     if (code.length < 6) return;
 
     setLoading(true);
-    // Simulate verification
+    // Simulate verification for phone
     setTimeout(async () => {
       if (code === '123456') {
-        const pendingData = localStorage.getItem('pending_signup');
-        if (pendingData) {
-          const userData = JSON.parse(pendingData);
-          await createUserProfile(userData);
-          localStorage.removeItem('pending_signup');
-        }
-        setSuccess(true);
-        setTimeout(() => navigate('/login'), 2000);
+        await handleSuccess();
       } else {
         setError(true);
         setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0].focus();
+        if (inputRefs.current[0]) inputRefs.current[0].focus();
       }
       setLoading(false);
     }, 1500);
@@ -116,28 +165,36 @@ const OTPVerify = () => {
         </div>
 
         <div className="w-full space-y-8">
-          <div className={cn("flex justify-between gap-2", error && "animate-shake")}>
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => (inputRefs.current[i] = el)}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                className={cn(
-                  "w-12 h-16 bg-surface border-2 border-border rounded-xl text-center text-2xl font-bold text-primary focus:border-accent focus:bg-white outline-none transition-all",
-                  error && "border-danger text-danger"
-                )}
-              />
-            ))}
-          </div>
+          {verifyMethod === 'phone' ? (
+            <div className={cn("flex justify-between gap-2", error && "animate-shake")}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => (inputRefs.current[i] = el)}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  className={cn(
+                    "w-12 h-16 bg-surface border-2 border-border rounded-xl text-center text-2xl font-bold text-primary focus:border-accent focus:bg-white outline-none transition-all",
+                    error && "border-danger text-danger"
+                  )}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center p-6 bg-accent/5 rounded-2xl border-2 border-accent/20">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Please click the verification link sent to your email. We'll automatically detect when you're verified.
+              </p>
+            </div>
+          )}
 
           {error && (
             <p className="text-center text-xs font-bold text-danger uppercase tracking-widest">
-              Invalid OTP. Try again.
+              {verifyMethod === 'email' ? 'Not verified yet. Please check your email.' : 'Invalid OTP. Try again.'}
             </p>
           )}
 
@@ -148,7 +205,7 @@ const OTPVerify = () => {
               </p>
             ) : (
               <button
-                onClick={() => setTimer(30)}
+                onClick={handleResend}
                 className="text-xs font-black text-accent uppercase tracking-[0.2em] hover:underline"
               >
                 {t('otp.resend_btn')}
@@ -157,8 +214,8 @@ const OTPVerify = () => {
           </div>
         </div>
 
-        <Button fullWidth size="lg" loading={loading} onClick={handleVerify}>
-          {t('otp.verify_btn')}
+        <Button fullWidth size="lg" loading={loading} onClick={handleVerifyManual}>
+          {verifyMethod === 'email' ? 'Check Status' : t('otp.verify_btn')}
         </Button>
       </div>
 

@@ -69,14 +69,22 @@ export const recordTransactionInDB = async (transaction: any) => {
     }
 };
 
-export const getTransactionsFromDB = async (userId?: string) => {
+export const getTransactionsFromDB = async (userId?: string, accountId?: string) => {
     try {
-        let q = collection(db, "transactions");
-        const querySnapshot = await getDocs(q);
-        let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (userId === "" || accountId === "") return [];
+
+        let q = query(collection(db, "transactions"));
+
         if (userId) {
-            results = results.filter((t: any) => t.userId === userId);
+            q = query(q, where("userId", "==", userId));
         }
+
+        if (accountId) {
+            q = query(q, where("accountId", "==", accountId));
+        }
+
+        const querySnapshot = await getDocs(q);
+        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         return results;
     } catch (e) {
         console.error("Error fetching transactions:", e);
@@ -85,25 +93,48 @@ export const getTransactionsFromDB = async (userId?: string) => {
 };
 
 // ================= USERS =================
-export const createUserProfile = async (userData: any) => {
+export const createUserProfile = async (uidOrData: any, userData?: any) => {
     try {
-        await setDoc(doc(db, "users", userData.phone), {
-            ...userData,
-            createdAt: new Date().toISOString(),
-            balance: 0,
-            savings: 0
+        let uid: string;
+        let data: any;
+
+        if (typeof uidOrData === 'string' && userData) {
+            uid = uidOrData;
+            data = userData;
+        } else {
+            data = uidOrData;
+            uid = data.id || data.uid || data.phone;
+        }
+
+        if (!uid) throw new Error("No UID or ID provided for user profile");
+
+        await setDoc(doc(db, "users", uid), {
+            ...data,
+            id: uid,
+            createdAt: data.createdAt || new Date().toISOString(),
+            balance: data.balance !== undefined ? data.balance : 0,
+            savings: data.savings !== undefined ? data.savings : 0
         });
     } catch (e) {
         console.error("Error creating user profile:", e);
     }
 };
 
-export const getUserFromDB = async (phone: string) => {
+export const getUserFromDB = async (uidOrPhone: string) => {
     try {
-        const docRef = doc(db, "users", phone);
+        // 1. Try UID (Doc ID)
+        const docRef = doc(db, "users", uidOrPhone);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() };
+        }
+
+        // 2. Try Phone field
+        const q = query(collection(db, "users"), where("phone", "==", uidOrPhone));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const docData = querySnapshot.docs[0];
+            return { id: docData.id, ...docData.data() };
         }
         return null;
     } catch (e) {
@@ -112,9 +143,24 @@ export const getUserFromDB = async (phone: string) => {
     }
 };
 
-export const updateUserPIN = async (phone: string, pin: string) => {
+export const getUserByPhone = async (phone: string) => {
     try {
-        const docRef = doc(db, "users", phone);
+        const q = query(collection(db, "users"), where("phone", "==", phone));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
+        return null;
+    } catch (e) {
+        console.error("Error getting user by phone:", e);
+        return null;
+    }
+};
+
+export const updateUserPIN = async (uid: string, pin: string) => {
+    try {
+        const docRef = doc(db, "users", uid);
         await setDoc(docRef, { pin }, { merge: true });
     } catch (e) {
         console.error("Error updating user PIN:", e);
@@ -211,5 +257,47 @@ export const deleteAdminFromDB = async (adminDocId: string) => {
         await deleteDoc(doc(db, "admins", adminDocId));
     } catch (e) {
         console.error("Error deleting admin:", e);
+    }
+};
+// ================= NOTIFICATIONS =================
+export const getNotificationsFromDB = async (userId: string) => {
+    try {
+        const q = query(
+            collection(db, "notifications"),
+            where("userId", "==", userId)
+        );
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    } catch (e) {
+        console.error("Error fetching notifications:", e);
+        return [];
+    }
+};
+
+export const deleteNotificationFromDB = async (notificationId: string) => {
+    try {
+        await deleteDoc(doc(db, "notifications", notificationId));
+    } catch (e) {
+        console.error("Error deleting notification:", e);
+    }
+};
+
+export const clearAllNotificationsFromDB = async (userId: string) => {
+    try {
+        const q = query(collection(db, "notifications"), where("userId", "==", userId));
+        const querySnapshot = await getDocs(q);
+        const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, "notifications", d.id)));
+        await Promise.all(deletePromises);
+    } catch (e) {
+        console.error("Error clearing notifications:", e);
+    }
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+    try {
+        await setDoc(doc(db, "notifications", notificationId), { read: true }, { merge: true });
+    } catch (e) {
+        console.error("Error marking notification as read:", e);
     }
 };

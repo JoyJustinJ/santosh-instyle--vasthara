@@ -9,6 +9,7 @@ import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { validateEmail, validatePhone, cn } from '../utils';
+import { useAuth } from '../context/AuthContext';
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -50,7 +51,9 @@ const Signup = () => {
     else setPasswordStrength('medium');
   }, [formData.password]);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const { signupWithEmail, sendVerificationEmail } = useAuth()!;
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: any = {};
 
@@ -67,12 +70,27 @@ const Signup = () => {
     }
 
     setLoading(true);
-    // Simulate OTP sending
-    setTimeout(() => {
-      localStorage.setItem('pending_signup', JSON.stringify(formData));
-      navigate('/otp-verify');
+    try {
+      if (formData.verifyMethod === 'email') {
+        // Real Firebase Email Signup
+        await signupWithEmail(formData.email, formData.password);
+        await sendVerificationEmail();
+
+        localStorage.setItem('pending_signup', JSON.stringify(formData));
+        navigate('/otp-verify');
+      } else {
+        // Simulate OTP sending for phone (existing behavior)
+        setTimeout(() => {
+          localStorage.setItem('pending_signup', JSON.stringify(formData));
+          navigate('/otp-verify');
+          setLoading(false);
+        }, 1500);
+      }
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      showNotif(err.message || "Failed to create account. Please try again.");
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

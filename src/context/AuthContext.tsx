@@ -6,7 +6,10 @@ import {
   signOut,
   signInWithPhoneNumber,
   RecaptchaVerifier,
-  ConfirmationResult
+  ConfirmationResult,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  reload
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -19,6 +22,9 @@ const AuthContext = createContext<{
   setBiometricEnabled: (enabled: boolean) => void;
   loginWithGoogle: () => Promise<void>;
   loginWithPhone: (phoneNumber: string, appVerifier: any) => Promise<ConfirmationResult>;
+  signupWithEmail: (email: string, pass: string) => Promise<any>;
+  sendVerificationEmail: () => Promise<void>;
+  checkEmailVerification: () => Promise<boolean>;
   logout: () => Promise<void>;
   unlockApp: () => void;
   setUser: (user: any) => void;
@@ -43,18 +49,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Sync with Firestore user profile
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (userDoc.exists()) {
-          const userData = { id: firebaseUser.uid, ...userDoc.data() };
+          const userData = {
+            id: firebaseUser.uid,
+            ...userDoc.data(),
+            emailVerified: firebaseUser.emailVerified
+          };
           setUser(userData);
           localStorage.setItem('vasthara_user', JSON.stringify(userData));
         } else {
-          // New user from Google/Phone - missing profile info
+          // New user from Google/Phone/Email - missing profile info
           const basicData = {
             id: firebaseUser.uid,
             firstName: firebaseUser.displayName?.split(' ')[0] || 'User',
             lastName: firebaseUser.displayName?.split(' ')[1] || '',
             email: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
-            role: 'customer'
+            role: 'customer',
+            emailVerified: firebaseUser.emailVerified
           };
           setUser(basicData);
         }
@@ -77,6 +88,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loginWithPhone = async (phoneNumber: string, appVerifier: any) => {
     return await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+  };
+
+  const signupWithEmail = async (email: string, pass: string) => {
+    return await createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const sendVerificationEmail = async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    }
+  };
+
+  const checkEmailVerification = async () => {
+    if (auth.currentUser) {
+      await reload(auth.currentUser);
+      return auth.currentUser.emailVerified;
+    }
+    return false;
   };
 
   const logout = async () => {
@@ -118,6 +147,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setBiometricEnabled,
       loginWithGoogle,
       loginWithPhone,
+      signupWithEmail,
+      sendVerificationEmail,
+      checkEmailVerification,
       logout,
       unlockApp,
       setUser: handleSetUser

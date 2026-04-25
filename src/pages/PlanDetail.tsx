@@ -30,7 +30,7 @@ const PlanDetail = () => {
 
   React.useEffect(() => {
     if (accountId) {
-      getTransactionsFromDB(accountId).then(data => {
+      getTransactionsFromDB(undefined, accountId).then(data => {
         setTransactions(data);
         setLoading(false);
       });

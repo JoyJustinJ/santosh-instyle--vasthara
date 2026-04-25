@@ -38,7 +38,7 @@ const Home = () => {
         let dueCount = 0;
 
         for (const scheme of userSchemes) {
-          const txs = await getTransactionsFromDB(scheme.accountId);
+          const txs = await getTransactionsFromDB(undefined, scheme.accountId);
           const hasPaidThisMonth = txs.some((tx: any) => {
             const date = tx.timestamp?.toDate ? tx.timestamp.toDate() : new Date(tx.timestamp);
             return date.getMonth() === currentMonth && date.getFullYear() === currentYear;

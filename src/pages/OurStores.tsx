@@ -14,7 +14,7 @@ const OurStores = () => {
     const navigate = useNavigate();
 
     const branches = [
-        { name: 'Hosur Branch', address: 'Nethaji Road, Hosur, Tamil Nadu 635109', phone: '098400 77747' },
+        { name: 'Santosh Instyle', address: 'Nethaji Road, Hosur, Tamil Nadu 635109', phone: '098400 77747' },
     ];
 
     return (
@@ -33,7 +33,7 @@ const OurStores = () => {
 
             <div className="space-y-6">
                 <p className="text-sm text-text-secondary leading-relaxed px-2">
-                    Visit any of our physical stores to explore our exclusive collections and speak with our jewelry experts.
+                    Visit any of our physical stores to explore our exclusive collections and speak with our experts.
                 </p>
 
                 <div className="grid gap-6">
@@ -43,7 +43,10 @@ const OurStores = () => {
                                 <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:text-white transition-colors duration-300">
                                     <MapPin size={24} />
                                 </div>
-                                <button className="text-text-muted hover:text-accent transition-colors">
+                                <button
+                                    className="text-text-muted hover:text-accent transition-colors"
+                                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.name + ' ' + branch.address)}`, '_blank')}
+                                >
                                     <ExternalLink size={20} />
                                 </button>
                             </div>
@@ -73,8 +76,11 @@ const OurStores = () => {
             </div>
 
             {/* Map Placeholder or Visual */}
-            <Card className="p-4 bg-surface-alt border-none h-48 flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center opacity-40" />
+            <Card
+                className="p-4 bg-surface-alt border-none h-48 flex items-center justify-center relative overflow-hidden cursor-pointer group"
+                onClick={() => window.open('https://www.google.com/maps/search/?api=1&query=Santhosh+Instyle+Nethaji+Road+Hosur+Tamil+Nadu+635109', '_blank')}
+            >
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" />
                 <div className="relative z-10 text-center">
                     <p className="text-xs font-black text-primary uppercase tracking-[0.2em]">View on Google Maps</p>
                 </div>

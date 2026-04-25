@@ -6,15 +6,18 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
 
+import { useNotification } from '../context/NotificationContext';
 import { updateUserPIN } from '../services/db';
 
 const PINSetup = () => {
   const navigate = useNavigate();
   const { unlockApp, user } = useAuth()!;
+  const { showNotification } = useNotification();
   const [step, setStep] = useState(1); // 1: Set, 2: Confirm
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentVal = step === 1 ? pin : confirmPin;
@@ -33,8 +36,8 @@ const PINSetup = () => {
     setError(false);
   };
 
-  const isChangeMode = new URLSearchParams(window.location.search).get('mode') === 'change';
-  const fromSettings = isChangeMode || document.referrer.includes('security-settings');
+  const queryParams = new URLSearchParams(window.location.search);
+  const isChangeMode = queryParams.get('mode') === 'change';
 
   const handleNext = async () => {
     if (currentVal.length < 4) return;
@@ -43,22 +46,30 @@ const PINSetup = () => {
       setStep(2);
     } else {
       if (pin === confirmPin) {
-        localStorage.setItem('vasthara_pin', pin);
+        setLoading(true);
+        try {
+          // Store locally for quick access
+          localStorage.setItem('vasthara_pin', pin);
 
-        // Persist to DB if user is logged in
-        if (user?.phone) {
-          try {
-            await updateUserPIN(user.phone, pin);
-          } catch (e) {
-            console.error("Failed to sync PIN with database", e);
+          // Persist to DB if user is logged in
+          const userId = user?.id || user?.uid || user?.phone;
+          if (userId) {
+            await updateUserPIN(userId, pin);
           }
-        }
 
-        if (isChangeMode) {
-          navigate('/security-settings');
-        } else {
-          unlockApp();
-          navigate('/home');
+          showNotification(isChangeMode ? "PIN changed successfully!" : "Security PIN set successfully!", "success");
+
+          if (isChangeMode) {
+            navigate('/security-settings');
+          } else {
+            unlockApp();
+            navigate('/home');
+          }
+        } catch (e) {
+          console.error("Failed to sync PIN with database", e);
+          showNotification("Failed to update PIN. Please try again.", "error");
+        } finally {
+          setLoading(false);
         }
       } else {
         setError(true);
@@ -77,13 +88,14 @@ const PINSetup = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="page-transition-wrapper p-8 flex flex-col min-h-screen"
+      className="page-transition-wrapper p-8 flex flex-col min-h-screen bg-surface"
     >
-      {step === 2 && (
-        <button onClick={() => setStep(1)} className="p-2 -ml-2 text-primary self-start mb-8">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary hover:bg-white rounded-full transition-colors">
           <ChevronLeft size={24} />
         </button>
-      )}
+        {isChangeMode && <h1 className="text-lg font-display font-bold text-primary">Security</h1>}
+      </div>
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="w-24 h-24 bg-accent-light rounded-[32px] flex items-center justify-center text-accent">

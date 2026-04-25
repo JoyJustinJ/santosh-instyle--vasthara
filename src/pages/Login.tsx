@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
 import { Notification, NotificationType } from '../components/UI/Notification';
-import { getUserFromDB, saveStaffRequestToDB } from '../services/db';
+import { getUserFromDB, getUserByPhone, saveStaffRequestToDB } from '../services/db';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
 import {
@@ -127,10 +127,10 @@ const Login = () => {
       }
 
       // ── 2. Existing regular user / staff ───────────────────────────────────
-      let userDoc: any = await getUserFromDB(formData.phone);
+      let userDoc: any = await getUserByPhone(formData.phone);
 
       if (!userDoc && !formData.phone.startsWith('+') && formData.phone.length === 10) {
-        userDoc = await getUserFromDB(`+91${formData.phone}`);
+        userDoc = await getUserByPhone(`+91${formData.phone}`);
       }
 
       if (userDoc) {
@@ -181,7 +181,7 @@ const Login = () => {
       });
 
       if (assertion && storedPhone) {
-        const userDoc: any = await getUserFromDB(storedPhone);
+        const userDoc: any = await getUserByPhone(storedPhone);
         if (userDoc) {
           setUser(userDoc);
           unlockApp();
