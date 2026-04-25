@@ -660,46 +660,87 @@ const AdminDashboard = () => {
                             <button onClick={() => setActiveView('overview')} className="text-primary">
                                 <ChevronLeft size={24} />
                             </button>
-                            <h2 className="text-xl font-display font-bold text-primary">Incentives & Reports</h2>
+                            <h2 className="text-xl font-display font-bold text-primary">Referral Incentives</h2>
                         </div>
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Start Date"
-                                    type="date"
-                                    value={incentiveRange.start}
-                                    onChange={(e) => setIncentiveRange({ ...incentiveRange, start: e.target.value })}
-                                />
-                                <Input
-                                    label="End Date"
-                                    type="date"
-                                    value={incentiveRange.end}
-                                    onChange={(e) => setIncentiveRange({ ...incentiveRange, end: e.target.value })}
-                                />
+                            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                                <h3 className="text-xs font-black text-primary uppercase tracking-widest mb-1">Incentive Structure</h3>
+                                <p className="text-[10px] text-text-secondary leading-relaxed">
+                                    Staff members receive incentives for each new customer account created using their referral name.
+                                    Individual rewards are calculated based on the customer's active scheme installments.
+                                </p>
                             </div>
-                            <Button fullWidth onClick={handleFilterIncentives} loading={loadingData}>Generate Report</Button>
 
                             <div className="pt-4 space-y-3">
-                                <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Transaction History</h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Staff Performance</h3>
+                                    <button
+                                        onClick={async () => {
+                                            setLoadingData(true);
+                                            const users = await getAllUsersFromDB();
+                                            const staffReferrals: Record<string, any[]> = {};
+                                            users.forEach((u: any) => {
+                                                if (u.referralStaff) {
+                                                    const key = u.referralStaff.toLowerCase().trim();
+                                                    if (!staffReferrals[key]) staffReferrals[key] = [];
+                                                    staffReferrals[key].push(u);
+                                                }
+                                            });
+                                            const performanceData = Object.entries(staffReferrals).map(([name, refs]) => ({
+                                                name: name.charAt(0).toUpperCase() + name.slice(1),
+                                                count: refs.length,
+                                                referrals: refs
+                                            })).sort((a, b) => b.count - a.count);
+                                            setFilteredIncentives(performanceData);
+                                            setLoadingData(false);
+                                        }}
+                                        className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
+                                    >
+                                        Update Stats
+                                    </button>
+                                </div>
+
                                 {filteredIncentives.length === 0 ? (
-                                    <p className="text-sm text-text-muted py-4 text-center">No transactions found for this period.</p>
+                                    <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-border/50">
+                                        <Users className="mx-auto text-text-muted/30 mb-2" size={32} />
+                                        <p className="text-sm text-text-muted px-8">Click "Update Stats" to view current referral data.</p>
+                                    </div>
                                 ) : (
-                                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                                        {filteredIncentives.map((tx) => (
-                                            <Card key={tx.id} className="p-3 border-none shadow-subtle flex justify-between items-center bg-white">
-                                                <div>
-                                                    <p className="text-xs font-bold text-primary">{tx.customerName}</p>
-                                                    <p className="text-[10px] text-text-muted">{tx.customerPhone || tx.userPhone} • {tx.date} • {tx.type.toUpperCase()}</p>
+                                    <div className="space-y-3">
+                                        {filteredIncentives.map((staff) => (
+                                            <Card key={staff.name} className="p-4 border-none shadow-subtle bg-white">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <div>
+                                                        <h4 className="font-bold text-primary">{staff.name}</h4>
+                                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">{staff.count} Active Referrals</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm font-black text-accent">₹{staff.count * 100}</p>
+                                                        <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">Est. Incentive</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-sm font-bold text-success">{formatCurrency(tx.amount)}</p>
+                                                <div className="space-y-1 pt-3 border-t border-border/30">
+                                                    {staff.referrals.map((ref: any) => (
+                                                        <div key={ref.id} className="flex justify-between items-center text-[10px]">
+                                                            <span className="font-bold text-text-secondary">{ref.firstName} {ref.lastName}</span>
+                                                            <span className="text-text-muted">{ref.phone}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </Card>
                                         ))}
                                     </div>
                                 )}
                             </div>
 
-                            <Button fullWidth variant="outline" className="mt-4" disabled={filteredIncentives.length === 0} onClick={handleDownloadCSV}>
-                                Download Full CSV Report
+                            <Button
+                                fullWidth
+                                variant="outline"
+                                className="mt-4"
+                                disabled={filteredIncentives.length === 0}
+                                onClick={handleDownloadCSV}
+                            >
+                                Download Referral Report (CSV)
                             </Button>
                         </div>
                     </motion.div>

@@ -26,6 +26,7 @@ const Signup = () => {
     pincode: '',
     password: '',
     confirmPassword: '',
+    referralStaff: '',
     verifyMethod: 'phone' as 'phone' | 'email'
   });
   const [errors, setErrors] = useState<any>({});
@@ -230,6 +231,19 @@ const Signup = () => {
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               error={errors.confirmPassword}
             />
+          </div>
+
+          <div className="pt-4 border-t border-border/50">
+            <Input
+              label="Staff Referral Name (Optional)"
+              placeholder="Enter staff name for incentives"
+              icon={User}
+              value={formData.referralStaff}
+              onChange={(e) => setFormData({ ...formData, referralStaff: e.target.value })}
+            />
+            <p className="text-[10px] text-text-muted mt-2 ml-1 italic">
+              If a staff member helped you sign up, enter their name here.
+            </p>
           </div>
 
           <div className="space-y-3">

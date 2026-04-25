@@ -80,7 +80,7 @@ const SecuritySettings = () => {
                     <Button
                         variant="outline"
                         fullWidth
-                        onClick={() => navigate('/pin-setup')}
+                        onClick={() => navigate('/pin-setup?mode=change')}
                         className="justify-between"
                     >
                         Change PIN

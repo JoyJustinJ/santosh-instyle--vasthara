@@ -6,9 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
 
+import { updateUserPIN } from '../services/db';
+
 const PINSetup = () => {
   const navigate = useNavigate();
-  const { unlockApp } = useAuth()!;
+  const { unlockApp, user } = useAuth()!;
   const [step, setStep] = useState(1); // 1: Set, 2: Confirm
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -31,7 +33,10 @@ const PINSetup = () => {
     setError(false);
   };
 
-  const handleNext = () => {
+  const isChangeMode = new URLSearchParams(window.location.search).get('mode') === 'change';
+  const fromSettings = isChangeMode || document.referrer.includes('security-settings');
+
+  const handleNext = async () => {
     if (currentVal.length < 4) return;
 
     if (step === 1) {
@@ -39,8 +44,22 @@ const PINSetup = () => {
     } else {
       if (pin === confirmPin) {
         localStorage.setItem('vasthara_pin', pin);
-        unlockApp();
-        navigate('/home');
+
+        // Persist to DB if user is logged in
+        if (user?.phone) {
+          try {
+            await updateUserPIN(user.phone, pin);
+          } catch (e) {
+            console.error("Failed to sync PIN with database", e);
+          }
+        }
+
+        if (isChangeMode) {
+          navigate('/security-settings');
+        } else {
+          unlockApp();
+          navigate('/home');
+        }
       } else {
         setError(true);
         setConfirmPin('');
@@ -73,11 +92,11 @@ const PINSetup = () => {
 
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-display font-bold text-primary tracking-tight">
-            {step === 1 ? "Set Your Security PIN" : "Confirm Your PIN"}
+            {step === 1 ? (isChangeMode ? "Change Your Security PIN" : "Set Your Security PIN") : "Confirm Your PIN"}
           </h1>
           <p className="text-sm font-medium text-text-secondary">
-            {step === 1 
-              ? "Choose a 4-digit PIN to log in quickly next time" 
+            {step === 1
+              ? "Choose a 4-digit PIN to log in quickly next time"
               : "Re-enter your PIN to verify"}
           </p>
         </div>
@@ -95,12 +114,12 @@ const PINSetup = () => {
             autoFocus
           />
 
-          <div 
+          <div
             className={cn("flex justify-center gap-6 cursor-pointer", error && "animate-shake")}
             onClick={handleContainerClick}
           >
             {[0, 1, 2, 3].map((i) => (
-              <div 
+              <div
                 key={i}
                 className={cn(
                   "w-14 h-14 rounded-full border-2 border-border flex items-center justify-center transition-all",
@@ -120,9 +139,9 @@ const PINSetup = () => {
           )}
         </div>
 
-        <Button 
-          fullWidth 
-          size="lg" 
+        <Button
+          fullWidth
+          size="lg"
           onClick={handleNext}
           disabled={currentVal.length < 4}
         >

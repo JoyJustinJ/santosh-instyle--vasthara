@@ -30,11 +30,12 @@ const Home = () => {
     getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
 
     // Payment Reminders
-    if (userSchemes.length > 0) {
+    if (userSchemes && userSchemes.length > 0) {
       const checkDues = async () => {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
+        let dueCount = 0;
 
         for (const scheme of userSchemes) {
           const txs = await getTransactionsFromDB(scheme.accountId);
@@ -44,22 +45,19 @@ const Home = () => {
           });
 
           if (!hasPaidThisMonth) {
-            showNotification(`Reminder: Monthly installment for "${scheme.name}" is due.`, 'warning');
-            break; // Just show one reminder
+            dueCount++;
           }
+        }
+
+        if (dueCount > 0) {
+          showNotification(`Payment Alert: You have ${dueCount} installment${dueCount > 1 ? 's' : ''} due for this month.`, 'warning');
         }
       };
       checkDues();
     }
   }, [user, navigate, userSchemes, showNotification]);
 
-  useEffect(() => {
-    // Randomly show the promo after between 3 to 10 seconds.
-    const timeout = setTimeout(() => setShowPromo(true), 1000 * (3 + Math.random() * 7));
-    // Auto-hide after 15 seconds
-    const hideTimeout = setTimeout(() => setShowPromo(false), 1000 * 15);
-    return () => { clearTimeout(timeout); clearTimeout(hideTimeout); };
-  }, []);
+  // Removed random promo effect
 
   const slides = [
     {

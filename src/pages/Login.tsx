@@ -48,7 +48,15 @@ const Login = () => {
 
   // If already logged in as a normal user, go home
   useEffect(() => {
-    if (user) navigate('/home');
+    if (user) {
+      navigate('/home');
+    } else {
+      // Auto-trigger biometric login if available and enabled
+      const credId = localStorage.getItem('vasthara_biometric_credId');
+      if (biometricEnabled && biometricSupported() && credId) {
+        handleBiometricLogin();
+      }
+    }
   }, [user]);
 
   const toggleLang = (lang: string) => {
@@ -130,8 +138,9 @@ const Login = () => {
         if (formData.password && pinMatch) {
           setUser(userDoc);
           unlockApp();
-          // Store phone for future biometric re-login
+          // Store phone and pin for future biometric re-login and route protection
           localStorage.setItem('vasthara_last_phone', userDoc.phone);
+          localStorage.setItem('vasthara_pin', userDoc.pin || userDoc.password);
           setLoading(false);
           navigate(userDoc.role === 'staff' ? '/staff' : '/home');
           return;

@@ -112,6 +112,15 @@ export const getUserFromDB = async (phone: string) => {
     }
 };
 
+export const updateUserPIN = async (phone: string, pin: string) => {
+    try {
+        const docRef = doc(db, "users", phone);
+        await setDoc(docRef, { pin }, { merge: true });
+    } catch (e) {
+        console.error("Error updating user PIN:", e);
+    }
+};
+
 export const getAllUsersFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "users"));
