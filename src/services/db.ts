@@ -217,23 +217,29 @@ export const getUserPlansFromDB = async (userId: string) => {
 const HARDCODED_ADMIN = { adminId: '9840077747', name: 'BENIN', role: 'admin', password: 'benin123', securityPin: '4444' };
 
 export const checkIsAdmin = async (adminId: string) => {
-    // Always match hardcoded admin credentials first (works even if Firestore is offline/stale)
-    if (adminId === HARDCODED_ADMIN.adminId) {
-        // Also update Firestore in background to keep it in sync
-        setDoc(doc(db, "admins", "main_admin"), HARDCODED_ADMIN).catch(() => { });
-        return HARDCODED_ADMIN;
-    }
     try {
         const q = query(collection(db, "admins"), where("adminId", "==", adminId));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             return querySnapshot.docs[0].data();
         }
-        return null;
     } catch (e) {
         console.error("Error checking admin:", e);
-        return null;
     }
+
+    // Fallback to hardcoded admin credentials if DB fails or admin not found
+    if (adminId === HARDCODED_ADMIN.adminId) {
+        // Also update Firestore in background to keep it in sync but ONLY if it doesn't exist
+        getDoc(doc(db, "admins", "main_admin")).then((docSnap) => {
+            if (!docSnap.exists()) {
+                setDoc(doc(db, "admins", "main_admin"), HARDCODED_ADMIN).catch(() => { });
+            }
+        }).catch(() => {});
+        
+        return HARDCODED_ADMIN;
+    }
+    
+    return null;
 };
 
 // ================= ADMIN MANAGEMENT =================

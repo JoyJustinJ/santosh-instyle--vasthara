@@ -117,7 +117,7 @@ const AdminDashboard = () => {
             name: newScheme.name,
             duration: duration,
             monthlyAmount: amount,
-            maturityValue: amount * duration + 500,
+            maturityValue: amount * duration,
             members: 0,
             description: 'New custom scheme',
             category: 'Custom',
@@ -174,7 +174,7 @@ const AdminDashboard = () => {
                     name: editForm.name,
                     duration: duration,
                     monthlyAmount: amount,
-                    maturityValue: amount * duration + 500
+                    maturityValue: amount * duration
                 };
                 await saveSchemeToDB(newParams);
                 return newParams;

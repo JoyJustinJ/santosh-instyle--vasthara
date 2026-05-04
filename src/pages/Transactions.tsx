@@ -20,7 +20,8 @@ const Transactions = () => {
         if (user) {
             try {
                 // Fetch transactions and plans/schemes for mapping
-                const userId = user.id || user.phone;
+                // Use user.phone to match how transactions are recorded in joinScheme/payEMI
+                const userId = user.phone || user.id;
                 const [txData, userPlans, allSchemes] = await Promise.all([
                     userId ? getTransactionsFromDB(userId) : Promise.resolve([]),
                     user.phone ? getUserPlansFromDB(user.phone) : Promise.resolve([]),
