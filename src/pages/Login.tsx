@@ -18,7 +18,7 @@ import {
 
 
 // ── Hardcoded admin fallback (matches Firestore seed) ──────────────────────
-const ADMIN_ID = '9345578962';
+const ADMIN_ID = '9840077747';
 const ADMIN_PASS = 'benin123';
 const ADMIN_PIN = '4444';
 
@@ -85,29 +85,34 @@ const Login = () => {
   };
 
   // ── Helper: is the typed phone the admin number? ──────────────────────────
-  const isAdminPhone = (phone: string) =>
-    phone === ADMIN_ID || (phone.length >= 5 && !phone.match(/^\d+$/));
+  const isAdminPhone = (phone: string) => {
+    const sanitized = phone.replace(/[\s-]/g, '');
+    return sanitized === ADMIN_ID || (sanitized.length >= 5 && !sanitized.match(/^\d+$/));
+  };
 
   // ── Main submit ────────────────────────────────────────────────────────────
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!formData.phone) { setErrors({ phone: 'Required' }); return; }
+    
+    // Sanitize phone input (remove spaces and dashes)
+    const sanitizedPhone = formData.phone.replace(/[\s-]/g, '');
+    if (!sanitizedPhone) { setErrors({ phone: 'Required' }); return; }
 
     setLoading(true);
     try {
       // ── 1. Admin check (Firestore first, then hardcoded fallback) ──────────
       const { checkIsAdmin } = await import('../services/db');
-      const adminData: any = await checkIsAdmin(formData.phone);
+      const adminData: any = await checkIsAdmin(sanitizedPhone);
 
       // Admin identified in Firestore OR matched the hardcoded credentials
-      const isAdminById = adminData && adminData.adminId === formData.phone;
+      const isAdminById = adminData && adminData.adminId === sanitizedPhone;
       const isHardcodedAdmin =
-        formData.phone === ADMIN_ID &&
+        sanitizedPhone === ADMIN_ID &&
         formData.password === ADMIN_PASS &&
         formData.securityPin === ADMIN_PIN;
 
-      if (isAdminById || (formData.phone === ADMIN_ID && isAdminPhone(formData.phone))) {
+      if (isAdminById || (sanitizedPhone === ADMIN_ID && isAdminPhone(sanitizedPhone))) {
         // Verify credentials
         const expectedPass = adminData?.password ?? ADMIN_PASS;
         const expectedPin = adminData?.securityPin ?? ADMIN_PIN;
@@ -127,10 +132,10 @@ const Login = () => {
       }
 
       // ── 2. Existing regular user / staff ───────────────────────────────────
-      let userDoc: any = await getUserByPhone(formData.phone);
+      let userDoc: any = await getUserByPhone(sanitizedPhone);
 
-      if (!userDoc && !formData.phone.startsWith('+') && formData.phone.length === 10) {
-        userDoc = await getUserByPhone(`+91${formData.phone}`);
+      if (!userDoc && !sanitizedPhone.startsWith('+') && sanitizedPhone.length === 10) {
+        userDoc = await getUserByPhone(`+91${sanitizedPhone}`);
       }
 
       if (userDoc) {
@@ -154,7 +159,7 @@ const Login = () => {
       // ── 3. New user → OTP flow ─────────────────────────────────────────────
       setupRecaptcha();
       const appVerifier = (window as any).recaptchaVerifier;
-      const formatted = formData.phone.startsWith('+') ? formData.phone : `+91${formData.phone}`;
+      const formatted = sanitizedPhone.startsWith('+') ? sanitizedPhone : `+91${sanitizedPhone}`;
       const confirmation = await loginWithPhone(formatted, appVerifier);
       setConfirmationResult(confirmation);
       setViewMode('otp_verify');

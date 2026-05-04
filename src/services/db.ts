@@ -185,12 +185,12 @@ export const getAdminSettings = async () => {
             return docSnap.data();
         }
         // Default seed if not exists
-        const defaultSettings = { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
+        const defaultSettings = { adminId: '9840077747', password: 'benin123', securityPin: '4444' };
         await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
         return defaultSettings;
     } catch (e) {
         console.error("Error getting admin settings:", e);
-        return { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
+        return { adminId: '9840077747', password: 'benin123', securityPin: '4444' };
     }
 };
 
