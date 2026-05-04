@@ -214,7 +214,7 @@ export const getUserPlansFromDB = async (userId: string) => {
 };
 
 
-const HARDCODED_ADMIN = { adminId: '9345578962', password: 'benin123', securityPin: '4444' };
+const HARDCODED_ADMIN = { adminId: '9840077747', name: 'BENIN', role: 'admin', password: 'benin123', securityPin: '4444' };
 
 export const checkIsAdmin = async (adminId: string) => {
     // Always match hardcoded admin credentials first (works even if Firestore is offline/stale)
