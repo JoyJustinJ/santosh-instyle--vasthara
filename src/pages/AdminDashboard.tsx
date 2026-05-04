@@ -277,8 +277,19 @@ const AdminDashboard = () => {
             if (userProfile) {
                 setFoundCustomer(userProfile);
                 const userId = userProfile.id;
-                const plans = await getUserPlansFromDB(userId);
-                setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
+                
+                // Fetch plans using BOTH ID and Phone
+                const plansById = await getUserPlansFromDB(userId);
+                let plansByPhone: any[] = [];
+                if (userProfile.phone && userProfile.phone !== userId) {
+                    plansByPhone = await getUserPlansFromDB(userProfile.phone);
+                }
+                
+                const combinedPlans = [...plansById, ...plansByPhone];
+                // remove duplicates by accountId
+                const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => t.accountId === v.accountId) === i);
+                
+                setCustomerActiveSchemes(uniquePlans.filter((p: any) => p.status !== 'completed'));
             } else {
                 const plans = await getUserPlansFromDB(id);
                 setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));

@@ -108,11 +108,19 @@ const StaffDashboard = () => {
                 const userProfile = await getUserFromDB(id);
                 if (userProfile) {
                     setDepositCustomerProfile(userProfile);
-                    const plans = await getUserPlansFromDB(userProfile.id);
-                    setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
+                    const plansById = await getUserPlansFromDB(userProfile.id);
+                    let plansByPhone: any[] = [];
+                    if (userProfile.phone && userProfile.phone !== userProfile.id) {
+                        plansByPhone = await getUserPlansFromDB(userProfile.phone);
+                    }
+                    const combinedPlans = [...plansById, ...plansByPhone];
+                    const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => t.accountId === v.accountId) === i);
+                    
+                    setCustomerActiveSchemes(uniquePlans.filter((p: any) => p.status !== 'completed'));
                 } else {
                     setDepositCustomerProfile(null);
-                    setCustomerActiveSchemes([]);
+                    const plans = await getUserPlansFromDB(id);
+                    setCustomerActiveSchemes(plans.filter((p: any) => p.status !== 'completed'));
                 }
             } catch (err) {
                 console.error("Error fetching customer info:", err);
