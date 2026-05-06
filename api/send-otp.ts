@@ -33,11 +33,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { phone } = req.body;
+  const { phone: rawPhone } = req.body;
 
-  if (!phone) {
+  if (!rawPhone) {
     return res.status(400).json({ error: 'Phone number is required' });
   }
+
+  // Normalize: strip non-digits, add 91 prefix for 10-digit Indian numbers
+  const digits = rawPhone.replace(/[^\d]/g, '');
+  const phone = digits.length === 10 ? `91${digits}` : digits;
 
   // 1. Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();

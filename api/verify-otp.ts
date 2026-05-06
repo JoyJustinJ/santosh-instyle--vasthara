@@ -32,11 +32,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { phone, otp } = req.body;
+  const { phone: rawPhone, otp } = req.body;
 
-  if (!phone || !otp) {
+  if (!rawPhone || !otp) {
     return res.status(400).json({ error: 'Phone and OTP are required' });
   }
+
+  // Normalize phone to match the key used when OTP was stored
+  const digits = rawPhone.replace(/[^\d]/g, '');
+  const phone = digits.length === 10 ? `91${digits}` : digits;
 
   try {
     const otpDoc = await db.collection('otps').doc(phone).get();

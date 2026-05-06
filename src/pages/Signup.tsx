@@ -303,7 +303,7 @@ const Signup = () => {
               </button>
             </div>
             <p className="text-[10px] text-text-muted text-center px-4 italic">
-              * Note: For the preview, both methods will use a 6-digit test code (123456).
+              * SMS OTP: A 6-digit code will be sent to your mobile number.
             </p>
           </div>
         </Card>

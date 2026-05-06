@@ -5,14 +5,14 @@ import { Smartphone, ChevronLeft, CheckCircle2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
-import { createUserProfile } from '../services/db';
-import { useAuth } from '../context/AuthContext';
 import { sendOTP, verifyOTP } from '../services/sms';
+import { createUserProfile, getUserByPhone } from '../services/db';
+import { useAuth } from '../context/AuthContext';
 
 const OTPVerify = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { checkEmailVerification, sendVerificationEmail, user } = useAuth()!;
+  const { checkEmailVerification, sendVerificationEmail, user, setUser, unlockApp } = useAuth()!;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -61,19 +61,28 @@ const OTPVerify = () => {
     const pendingData = localStorage.getItem('pending_signup');
     if (pendingData) {
       const userData = JSON.parse(pendingData);
-      // Remove fields not needed in the profile
       const { confirmPassword, verifyMethod: _, ...profileData } = userData;
       // For phone-based signup: ALWAYS use the phone number as the document ID.
-      // Never use user?.id here as it may be a stale auth session from a different user,
-      // which would cause the new profile to overwrite that user's data.
       const finalUserId = verifyMethod === 'phone'
         ? profileData.phone
         : (user?.id || profileData.phone);
-      await createUserProfile(finalUserId, {
-        ...profileData,
-        id: finalUserId,
-      });
+      const finalProfile = { ...profileData, id: finalUserId };
+      await createUserProfile(finalUserId, finalProfile);
       localStorage.removeItem('pending_signup');
+
+      // For phone-based signup: load the profile into AuthContext so
+      // ProtectedRoute doesn't redirect back to /login
+      if (verifyMethod === 'phone') {
+        const saved = await getUserByPhone(profileData.phone);
+        if (saved) {
+          setUser(saved);
+          localStorage.setItem('vasthara_user', JSON.stringify(saved));
+        } else {
+          setUser(finalProfile);
+          localStorage.setItem('vasthara_user', JSON.stringify(finalProfile));
+        }
+        // Don't unlock yet — PIN setup will unlock after PIN is confirmed
+      }
     }
 
     setTimeout(() => navigate('/set-pin'), 2000);

@@ -57,17 +57,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(userData);
           localStorage.setItem('vasthara_user', JSON.stringify(userData));
         } else {
-          // New user from Google/Phone/Email - missing profile info
-          const basicData = {
+          // New Google/Email user — create a basic profile in Firestore automatically
+          const basicData: any = {
             id: firebaseUser.uid,
             firstName: firebaseUser.displayName?.split(' ')[0] || 'User',
-            lastName: firebaseUser.displayName?.split(' ')[1] || '',
+            lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
             email: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
             role: 'customer',
-            emailVerified: firebaseUser.emailVerified
+            emailVerified: firebaseUser.emailVerified,
+            createdAt: new Date().toISOString(),
+            balance: 0,
+            savings: 0
           };
+          // Only auto-create profile for Google sign-in (has displayName or email but no pending_signup)
+          // For email+OTP flow, OTPVerify will handle profile creation from pending_signup
+          const hasPendingSignup = !!localStorage.getItem('pending_signup');
+          if (!hasPendingSignup) {
+            try {
+              await setDoc(doc(db, "users", firebaseUser.uid), basicData);
+            } catch (e) {
+              console.error('Failed to auto-create Google user profile:', e);
+            }
+            // Mark as unlocked since Google login is a fresh auth
+            setIsUnlocked(true);
+            localStorage.setItem('vasthara_unlocked_session', 'true');
+          }
           setUser(basicData);
+          localStorage.setItem('vasthara_user', JSON.stringify(basicData));
         }
       } else {
         // Only clear if there's no manual user stored (don't wipe out manual logins!)
