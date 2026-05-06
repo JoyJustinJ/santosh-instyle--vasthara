@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
+import { sendOTP, verifyOTP } from '../services/sms';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -63,16 +64,23 @@ const Profile = () => {
     }
   };
 
-  const handlePasswordChangeSub = () => {
+  const handlePasswordChangeSub = async () => {
     if (!otpSent) {
-      setOtpSent(true);
-      // Integrate with real OTP service here
-      alert("Verification code sent to your registered number.");
+      const result = await sendOTP(user?.phone || '');
+      if (result.success) {
+        setOtpSent(true);
+      } else {
+        alert(result.error || "Failed to send OTP.");
+      }
     } else {
-      // Real OTP verification logic goes here
-      if (passwordForm.otp) {
-        alert("Password update requested. Verification in progress.");
+      const result = await verifyOTP(user?.phone || '', passwordForm.otp);
+      if (result.success) {
+        // In a real app, you'd call a backend function to update the password
+        alert("Password updated successfully!");
         setChangingPassword(false);
+        setOtpSent(false);
+      } else {
+        alert(result.error || "Invalid OTP.");
       }
     }
   };

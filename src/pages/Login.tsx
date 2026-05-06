@@ -8,6 +8,7 @@ import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { getUserFromDB, getUserByPhone, saveStaffRequestToDB } from '../services/db';
+import { sendOTP, verifyOTP } from '../services/sms';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
 import {
@@ -157,12 +158,12 @@ const Login = () => {
       }
 
       // ── 3. New user → OTP flow ─────────────────────────────────────────────
-      setupRecaptcha();
-      const appVerifier = (window as any).recaptchaVerifier;
-      const formatted = sanitizedPhone.startsWith('+') ? sanitizedPhone : `+91${sanitizedPhone}`;
-      const confirmation = await loginWithPhone(formatted, appVerifier);
-      setConfirmationResult(confirmation);
-      setViewMode('otp_verify');
+      const result = await sendOTP(sanitizedPhone);
+      if (result.success) {
+        setViewMode('otp_verify');
+      } else {
+        showNotif(result.error || "Failed to send OTP", 'error');
+      }
     } catch (err: any) {
       showNotif(getFriendlyError(err));
     }
@@ -209,7 +210,13 @@ const Login = () => {
     if (!formData.otp) { setErrors({ otp: 'Required' }); return; }
     setLoading(true);
     try {
-      await confirmationResult.confirm(formData.otp);
+      const result = await verifyOTP(formData.phone, formData.otp);
+      if (result.success) {
+        showNotif("Verification successful!", 'success');
+        navigate('/signup', { state: { phoneNumber: formData.phone } });
+      } else {
+        showNotif(result.error || "Invalid OTP", 'error');
+      }
     } catch (err: any) {
       showNotif(getFriendlyError(err));
     }

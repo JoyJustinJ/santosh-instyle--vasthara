@@ -10,6 +10,7 @@ import { Card } from '../components/UI/Card';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { validateEmail, validatePhone, cn } from '../utils';
 import { useAuth } from '../context/AuthContext';
+import { sendOTP } from '../services/sms';
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -79,12 +80,15 @@ const Signup = () => {
         localStorage.setItem('pending_signup', JSON.stringify(formData));
         navigate('/otp-verify');
       } else {
-        // Simulate OTP sending for phone (existing behavior)
-        setTimeout(() => {
+        // Real OTP sending via Pay4SMS
+        const result = await sendOTP(formData.phone);
+        if (result.success) {
           localStorage.setItem('pending_signup', JSON.stringify(formData));
           navigate('/otp-verify');
-          setLoading(false);
-        }, 1500);
+        } else {
+          showNotif(result.error || "Failed to send OTP. Please check your number.");
+        }
+        setLoading(false);
       }
     } catch (err: any) {
       console.error("Signup error:", err);

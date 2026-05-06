@@ -7,6 +7,7 @@ import { Button } from '../components/UI/Button';
 import { cn } from '../utils';
 import { createUserProfile } from '../services/db';
 import { useAuth } from '../context/AuthContext';
+import { sendOTP, verifyOTP } from '../services/sms';
 
 const OTPVerify = () => {
   const { t } = useTranslation();
@@ -92,8 +93,9 @@ const OTPVerify = () => {
     setTimer(30);
     if (verifyMethod === 'email') {
       await sendVerificationEmail();
+    } else {
+      await sendOTP(targetValue);
     }
-    // For phone, existing simulation or logic would go here
   };
 
   const handleVerifyManual = async () => {
@@ -114,17 +116,15 @@ const OTPVerify = () => {
     if (code.length < 6) return;
 
     setLoading(true);
-    // Simulate verification for phone
-    setTimeout(async () => {
-      if (code === '123456') {
-        await handleSuccess();
-      } else {
-        setError(true);
-        setOtp(['', '', '', '', '', '']);
-        if (inputRefs.current[0]) inputRefs.current[0].focus();
-      }
-      setLoading(false);
-    }, 1500);
+    const result = await verifyOTP(targetValue, code);
+    if (result.success) {
+      await handleSuccess();
+    } else {
+      setError(true);
+      setOtp(['', '', '', '', '', '']);
+      if (inputRefs.current[0]) inputRefs.current[0].focus();
+    }
+    setLoading(false);
   };
 
   return (
