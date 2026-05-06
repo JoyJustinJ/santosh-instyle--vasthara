@@ -59,12 +59,20 @@ const OTPVerify = () => {
     if (pollInterval.current) clearInterval(pollInterval.current);
 
     const pendingData = localStorage.getItem('pending_signup');
-    if (pendingData && (user || verifyMethod === 'phone')) {
+    if (pendingData) {
       const userData = JSON.parse(pendingData);
-      // Keep password for custom phone-based login, remove confirmPassword only
+      // Remove fields not needed in the profile
       const { confirmPassword, verifyMethod: _, ...profileData } = userData;
-      const finalUserId = user?.id || profileData.phone;
-      await createUserProfile(finalUserId, profileData);
+      // For phone-based signup: ALWAYS use the phone number as the document ID.
+      // Never use user?.id here as it may be a stale auth session from a different user,
+      // which would cause the new profile to overwrite that user's data.
+      const finalUserId = verifyMethod === 'phone'
+        ? profileData.phone
+        : (user?.id || profileData.phone);
+      await createUserProfile(finalUserId, {
+        ...profileData,
+        id: finalUserId,
+      });
       localStorage.removeItem('pending_signup');
     }
 

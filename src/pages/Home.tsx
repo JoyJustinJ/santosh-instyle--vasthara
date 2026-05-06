@@ -164,8 +164,8 @@ const Home = () => {
                   <p className="text-lg font-bold text-primary">{formatCurrency(featuredScheme.monthlyAmount)}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Maturity</p>
-                  <p className="text-lg font-bold text-success">{formatCurrency(featuredScheme.maturityValue)}</p>
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Amount</p>
+                  <p className="text-lg font-bold text-success">{formatCurrency(featuredScheme.monthlyAmount * featuredScheme.duration)}</p>
                 </div>
               </div>
 

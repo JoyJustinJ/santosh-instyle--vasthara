@@ -80,8 +80,8 @@ const SchemesList = () => {
                     <p className="text-xl font-bold text-primary">{formatCurrency(scheme.monthlyAmount)}</p>
                   </div>
                   <div className="text-right space-y-0.5">
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Value</p>
-                    <p className="text-xl font-bold text-success">{formatCurrency(scheme.maturityValue)}</p>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Amount</p>
+                    <p className="text-xl font-bold text-success">{formatCurrency(scheme.monthlyAmount * scheme.duration)}</p>
                   </div>
                 </div>
 
