@@ -11,6 +11,7 @@ import { Notification, NotificationType } from '../components/UI/Notification';
 import { validateEmail, validatePhone, cn } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { sendOTP } from '../services/sms';
+import { getUserByPhone } from '../services/db';
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -72,6 +73,13 @@ const Signup = () => {
 
     setLoading(true);
     try {
+      const existingUser = await getUserByPhone(formData.phone);
+      if (existingUser) {
+        showNotif("Account with this phone number already exists.");
+        setLoading(false);
+        return;
+      }
+
       if (formData.verifyMethod === 'email') {
         // Real Firebase Email Signup
         await signupWithEmail(formData.email, formData.password);

@@ -68,7 +68,7 @@ const OTPVerify = () => {
       localStorage.removeItem('pending_signup');
     }
 
-    setTimeout(() => navigate('/pin-setup'), 2000);
+    setTimeout(() => navigate('/set-pin'), 2000);
   };
 
   const handleChange = (index, value) => {
