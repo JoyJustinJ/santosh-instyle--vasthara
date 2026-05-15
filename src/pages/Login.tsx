@@ -283,9 +283,9 @@ const Login = () => {
             <ChevronDown size={10} />
           </button>
           {showLang && (
-            <div className="absolute top-full left-0 mt-2 bg-white border border-border rounded-xl shadow-card overflow-hidden w-24 z-50">
-              <button onClick={() => toggleLang('en')} className="w-full px-4 py-2 text-left text-xs font-bold hover:bg-surface">English</button>
-              <button onClick={() => toggleLang('ta')} className="w-full px-4 py-2 text-left text-xs font-bold hover:bg-surface">தமிழ்</button>
+            <div className="absolute top-full left-0 mt-2 bg-surface border border-border rounded-xl shadow-card overflow-hidden w-24 z-50">
+              <button onClick={() => toggleLang('en')} className="w-full px-4 py-2 text-left text-xs font-bold hover:bg-background">English</button>
+              <button onClick={() => toggleLang('ta')} className="w-full px-4 py-2 text-left text-xs font-bold hover:bg-background">தமிழ்</button>
             </div>
           )}
         </div>
@@ -345,14 +345,14 @@ const Login = () => {
                 <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-text-muted font-bold">Or continue with</span>
+                    <span className="bg-background px-2 text-text-muted font-bold">Or continue with</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full h-14 bg-white border border-border rounded-xl flex items-center justify-center gap-3 hover:bg-surface shadow-subtle active:scale-95 transition-all"
+                  className="w-full h-14 bg-surface border border-border rounded-xl flex items-center justify-center gap-3 hover:opacity-80 shadow-subtle active:scale-95 transition-all"
                 >
                   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                   <span className="text-sm font-bold text-text-primary">Google Account</span>

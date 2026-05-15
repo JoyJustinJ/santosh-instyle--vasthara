@@ -34,7 +34,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', cla
     default: 'bg-accent-light text-accent',
     success: 'bg-success-light text-success',
     danger: 'bg-danger-light text-danger',
-    warning: 'bg-amber-50 text-warning',
+    warning: 'bg-warning/10 text-warning',
     primary: 'bg-primary text-white',
   };
 

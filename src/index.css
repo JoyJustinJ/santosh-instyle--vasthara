@@ -85,7 +85,7 @@
 }
 
 .glass {
-  @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border border-white/20;
+  @apply bg-white/80 dark:bg-[#1A1614]/80 backdrop-blur-md border border-white/20 dark:border-[#2D241F]/30;
 }
 
 .no-scrollbar::-webkit-scrollbar {

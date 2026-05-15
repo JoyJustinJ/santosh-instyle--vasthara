@@ -42,7 +42,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         initial={{ scale: 0.9, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20"
+                        className="relative w-full max-w-sm bg-surface rounded-3xl shadow-2xl overflow-hidden border border-border/50"
                     >
                         <div className="p-8 space-y-6">
                             <div className="flex justify-center">

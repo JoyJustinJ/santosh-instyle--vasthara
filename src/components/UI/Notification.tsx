@@ -16,35 +16,35 @@ export const Notification: React.FC<NotificationProps> = ({ message, type, isVis
         switch (type) {
             case 'success':
                 return {
-                    bg: 'bg-emerald-50/90',
-                    text: 'text-emerald-800',
-                    border: 'border-emerald-200/50',
-                    icon: <CheckCircle className="text-emerald-500" size={18} />,
-                    accent: 'bg-emerald-500'
+                    bg: 'bg-success/10 dark:bg-success/20',
+                    text: 'text-success dark:text-success',
+                    border: 'border-success/20 dark:border-success/30',
+                    icon: <CheckCircle className="text-success" size={18} />,
+                    accent: 'bg-success'
                 };
             case 'error':
                 return {
-                    bg: 'bg-rose-50/90',
-                    text: 'text-rose-800',
-                    border: 'border-rose-200/50',
-                    icon: <AlertCircle className="text-rose-500" size={18} />,
-                    accent: 'bg-rose-500'
+                    bg: 'bg-danger/10 dark:bg-danger/20',
+                    text: 'text-danger dark:text-danger',
+                    border: 'border-danger/20 dark:border-danger/30',
+                    icon: <AlertCircle className="text-danger" size={18} />,
+                    accent: 'bg-danger'
                 };
             case 'warning':
                 return {
-                    bg: 'bg-amber-50/90',
-                    text: 'text-amber-800',
-                    border: 'border-amber-200/50',
-                    icon: <AlertCircle className="text-amber-500" size={18} />,
-                    accent: 'bg-amber-500'
+                    bg: 'bg-warning/10 dark:bg-warning/20',
+                    text: 'text-warning dark:text-warning',
+                    border: 'border-warning/20 dark:border-warning/30',
+                    icon: <AlertCircle className="text-warning" size={18} />,
+                    accent: 'bg-warning'
                 };
             default:
                 return {
-                    bg: 'bg-sky-50/90',
-                    text: 'text-sky-800',
-                    border: 'border-sky-200/50',
-                    icon: <Info className="text-sky-500" size={18} />,
-                    accent: 'bg-sky-500'
+                    bg: 'bg-accent/10 dark:bg-accent/20',
+                    text: 'text-accent dark:text-accent',
+                    border: 'border-accent/20 dark:border-accent/30',
+                    icon: <Info className="text-accent" size={18} />,
+                    accent: 'bg-accent'
                 };
         }
     };

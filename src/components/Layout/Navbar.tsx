@@ -35,7 +35,7 @@ export const Navbar = ({ onMenuClick }) => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-border flex items-center justify-between px-6 z-40 max-w-[430px] mx-auto">
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-background border-b border-border flex items-center justify-between px-6 z-40 max-w-[430px] mx-auto transition-colors duration-300">
         <button onClick={onMenuClick} className="p-2 -ml-2 text-primary">
           <Menu size={24} />
         </button>
@@ -59,7 +59,7 @@ export const Navbar = ({ onMenuClick }) => {
             </button>
 
             {showLang && (
-              <div className="absolute top-full right-0 mt-2 bg-white border border-border rounded-xl shadow-card overflow-hidden w-24">
+              <div className="absolute top-full right-0 mt-2 bg-surface border border-border rounded-xl shadow-card overflow-hidden w-24">
                 <button
                   onClick={() => toggleLang('en')}
                   className="w-full px-4 py-2 text-left text-xs font-bold hover:bg-surface"
@@ -82,13 +82,13 @@ export const Navbar = ({ onMenuClick }) => {
           >
             <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-background" />
             )}
           </button>
 
           <button
             onClick={() => navigate('/profile')}
-            className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-subtle overflow-hidden ml-1"
+            className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border-2 border-background shadow-subtle overflow-hidden ml-1"
           >
             {user?.avatar ? (
               <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
