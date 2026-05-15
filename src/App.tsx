@@ -31,7 +31,7 @@ import ContactUs from './pages/ContactUs';
 import OurStores from './pages/OurStores';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
-import Notifications from './pages/Notifications';
+import Notifications from './pages/NotificationsPage'; // Notifications Route
 
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
