@@ -66,13 +66,14 @@ const Login = () => {
   };
 
   const getFriendlyError = (error: any) => {
+    console.error("Auth Error:", error);
     const code = error?.code || '';
     if (code.includes('auth/configuration-not-found')) return 'Phone login is being set up. Please use Google Login for now.';
     if (code.includes('auth/invalid-phone-number')) return "That phone number doesn't look right.";
     if (code.includes('auth/too-many-requests')) return 'Too many tries! Wait a few minutes and try again.';
     if (code.includes('auth/invalid-verification-code')) return 'The code you entered is incorrect.';
     if (code.includes('auth/network-request-failed')) return 'Connection trouble. Check your internet.';
-    return 'Oops! Something went wrong. Please try again.';
+    return error?.message || 'Oops! Something went wrong. Please try again.';
   };
 
   const setupRecaptcha = () => {
@@ -348,6 +349,7 @@ const Login = () => {
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleGoogleLogin}
                   className="w-full h-14 bg-white border border-border rounded-xl flex items-center justify-center gap-3 hover:bg-surface shadow-subtle active:scale-95 transition-all"
                 >

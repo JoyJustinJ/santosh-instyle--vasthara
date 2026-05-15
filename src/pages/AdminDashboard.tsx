@@ -526,7 +526,7 @@ const AdminDashboard = () => {
             const schemeName = tx.schemeName || accountSchemeMap[tx.accountId] || schemeMap[tx.schemeId] || tx.schemeId || 'N/A';
 
             return [
-                tx.id || 'N/A',
+                tx.referenceId || tx.id || 'N/A',
                 `"${customerName}"`,
                 phone,
                 tx.amount || 0,

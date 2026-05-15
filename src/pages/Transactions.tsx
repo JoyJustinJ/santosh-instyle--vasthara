@@ -91,7 +91,7 @@ const Transactions = () => {
                                             <b>Vasthara</b>
                                         </td>
                                         <td>
-                                            Invoice #: ${t.id}<br>
+                                            Invoice #: ${t.referenceId || t.id}<br>
                                             Created: ${t.date || new Date(t.timestamp).toLocaleDateString()}<br>
                                             Status: Paid
                                         </td>

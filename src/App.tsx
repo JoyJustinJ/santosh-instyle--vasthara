@@ -46,24 +46,27 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) return null;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
-  const hasPin = localStorage.getItem('vasthara_pin');
-  const hasPinSetupComplete = localStorage.getItem('vasthara_pin_setup_complete');
+  const userHasPinInDB = !!(user.pin || user.password);
 
-  // If user has a PIN but hasn't unlocked the app yet, redirect to PIN login
-  if (hasPin && !isUnlocked && location.pathname !== '/pin-login') {
-    return <Navigate to="/pin-login" replace />;
+  // If the user has NOT set up a PIN yet, force them to set it up.
+  if (!userHasPinInDB) {
+    if (location.pathname !== '/set-pin') {
+      return <Navigate to="/set-pin" replace />;
+    }
+    return <>{children}</>;
   }
 
-  // Existing user whose localStorage was cleared — send to PIN login (not set-pin)
-  if (!hasPin && hasPinSetupComplete && !isUnlocked && location.pathname !== '/pin-login') {
-    return <Navigate to="/pin-login" replace />;
+  // User HAS a PIN. Are they unlocked?
+  if (!isUnlocked) {
+    // If not unlocked, they must go to pin-login to verify.
+    if (location.pathname !== '/pin-login') {
+      return <Navigate to="/pin-login" replace />;
+    }
+    return <>{children}</>;
   }
 
-  // Brand new user with no PIN at all — must set one
-  if (!hasPin && !hasPinSetupComplete && location.pathname !== '/set-pin') {
-    return <Navigate to="/set-pin" replace />;
-  }
-
+  // User HAS a PIN and IS unlocked. 
+  // If they somehow try to go to /set-pin or /pin-login, let them pass but normally they shouldn't.
   return <>{children}</>;
 };
 

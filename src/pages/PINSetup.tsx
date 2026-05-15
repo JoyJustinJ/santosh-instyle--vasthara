@@ -61,6 +61,9 @@ const PINSetup = () => {
           const userId = user?.id || user?.uid || user?.phone;
           if (userId) {
             await updateUserPIN(userId, pin);
+            if (user) {
+              setUser({ ...user, pin });
+            }
           }
 
           showNotification(isChangeMode ? 'PIN changed successfully!' : 'Security PIN set successfully!', 'success');

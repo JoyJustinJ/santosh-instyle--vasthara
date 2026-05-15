@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(() => {
-    return localStorage.getItem('vasthara_unlocked_session') === 'true';
+    return sessionStorage.getItem('vasthara_unlocked_session') === 'true';
   });
   const [isBiometricEnabled, setBiometricEnabledState] = useState(() => {
     return localStorage.getItem('vasthara_biometric_enabled') === 'true';
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             // Mark as unlocked since Google login is a fresh auth
             setIsUnlocked(true);
-            localStorage.setItem('vasthara_unlocked_session', 'true');
+            sessionStorage.setItem('vasthara_unlocked_session', 'true');
           }
           setUser(basicData);
           localStorage.setItem('vasthara_user', JSON.stringify(basicData));
@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
     setIsUnlocked(false);
-    localStorage.removeItem('vasthara_unlocked_session');
+    sessionStorage.removeItem('vasthara_unlocked_session');
 
     // Clear user state and manual login session
     setUser(null);
@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const unlockApp = () => {
     setIsUnlocked(true);
-    localStorage.setItem('vasthara_unlocked_session', 'true');
+    sessionStorage.setItem('vasthara_unlocked_session', 'true');
   };
 
   const setBiometricEnabled = (enabled: boolean) => {

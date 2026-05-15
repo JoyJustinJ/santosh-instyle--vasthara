@@ -59,8 +59,10 @@ export const deleteStaffRequestFromDB = async (requestId: string) => {
 // ================= TRANSACTIONS =================
 export const recordTransactionInDB = async (transaction: any): Promise<string | null> => {
     try {
+        const referenceId = transaction.referenceId || `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         const docRef = await addDoc(collection(db, "transactions"), {
             ...transaction,
+            referenceId,
             date: new Date().toLocaleDateString('en-GB'), // 10-04-2024 format
             timestamp: new Date().toISOString()
         });
