@@ -15,7 +15,7 @@ import {
 
 const PINSetup = () => {
   const navigate = useNavigate();
-  const { unlockApp, user, setBiometricEnabled } = useAuth()!;
+  const { unlockApp, user, setUser, setBiometricEnabled } = useAuth()!;
   const { showNotification } = useNotification();
   const [step, setStep] = useState(1); // 1: Set, 2: Confirm, 3: Biometric prompt
   const [pin, setPin] = useState('');
