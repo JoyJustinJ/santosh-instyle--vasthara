@@ -101,7 +101,7 @@ const MySchemes = () => {
 
                 <div className="bg-surface px-6 py-3 flex justify-between items-center border-t border-border/50">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider">
-                    <TrendingUp size={14} /> Next Due: {new Date().toLocaleString('default', { month: 'long' })}
+                    <TrendingUp size={14} /> Next Due: {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString('default', { month: 'long' })}
                   </div>
                   <button className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">
                     Pay Now
