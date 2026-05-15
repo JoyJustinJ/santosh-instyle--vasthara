@@ -32,6 +32,9 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(() => {
+    const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
+    if (isAdmin) return { role: 'admin', firstName: 'Admin', lastName: 'User', id: 'admin' };
+    
     const saved = localStorage.getItem('vasthara_user_minimal');
     return saved ? JSON.parse(saved) : null;
   });
@@ -101,8 +104,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
         }
       } else {
-        // Only clear if there's no manual user stored
-        if (!localStorage.getItem('vasthara_user_minimal')) {
+        // Only clear if there's no manual user or admin session stored
+        if (!localStorage.getItem('vasthara_user_minimal') && localStorage.getItem('is_admin_authenticated') !== 'true') {
           setUser(null);
         }
       }

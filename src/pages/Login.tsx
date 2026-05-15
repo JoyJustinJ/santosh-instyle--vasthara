@@ -124,6 +124,15 @@ const Login = () => {
           localStorage.setItem('is_admin_authenticated', 'true');
           const isPrimary = !adminData?.docId || adminData.docId === 'main_admin';
           localStorage.setItem('is_primary_admin', isPrimary ? 'true' : 'false');
+          
+          // Update AuthContext to recognize the admin
+          setUser({
+            role: 'admin',
+            firstName: 'Admin',
+            lastName: isPrimary ? '(Primary)' : '(Staff)',
+            id: 'admin'
+          });
+
           setLoading(false);
           navigate('/admin');
           return;
