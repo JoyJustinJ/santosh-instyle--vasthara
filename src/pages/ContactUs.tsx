@@ -161,12 +161,12 @@ const ContactUs = () => {
 
       {/* Footer Info */}
       <div className="text-center space-y-4 pt-8">
-        <div className="flex justify-center gap-6 text-text-muted">
+        <div className="flex justify-center pt-4">
           <a
             href="https://www.instagram.com/santhosh_instyle"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary transition-colors cursor-pointer"
+            className="btn-shine"
           >
             Instagram
           </a>

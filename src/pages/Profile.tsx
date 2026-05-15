@@ -15,9 +15,11 @@ import {
   Edit2,
   Camera,
   Check,
-  X
+  X,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { ThemeToggle } from '../components/UI/ThemeToggle';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -237,6 +239,17 @@ const Profile = () => {
               <div className="space-y-3">
                 <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Settings</h3>
                 <Card className="p-0 overflow-hidden border-none shadow-subtle">
+                  {/* Theme Toggle Item */}
+                  <div className="w-full flex items-center justify-between p-5 border-b border-border/50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-lg bg-accent-light text-accent flex items-center justify-center">
+                        <Moon size={18} />
+                      </div>
+                      <span className="text-sm font-bold text-primary">Dark Mode</span>
+                    </div>
+                    <ThemeToggle />
+                  </div>
+
                   {menuItems.map((item, i) => (
                     <button
                       key={item.label}

@@ -36,7 +36,7 @@ export const Input: React.FC<InputProps> = ({
         <input
           type={isPassword ? (showPassword ? 'text' : 'password') : type}
           className={cn(
-            'w-full h-14 bg-surface border-2 border-border rounded-xl px-4 font-medium text-text-primary focus:border-accent focus:bg-white outline-none transition-all placeholder:text-text-muted',
+            'w-full h-14 bg-surface border-2 border-border rounded-xl px-4 font-medium text-text-primary focus:border-accent focus:bg-surface outline-none transition-all placeholder:text-text-muted',
             Icon && 'pl-12',
             isPassword && 'pr-12',
             error && 'border-danger focus:border-danger',

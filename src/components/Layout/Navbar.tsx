@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Menu, Bell, Globe, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationDrawer } from './NotificationDrawer';
@@ -7,6 +8,7 @@ import { getNotificationsFromDB } from '../../services/db';
 
 export const Navbar = ({ onMenuClick }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth()!;
   const [showLang, setShowLang] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -81,6 +83,17 @@ export const Navbar = ({ onMenuClick }) => {
             <Bell size={20} />
             {unreadCount > 0 && (
               <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-white" />
+            )}
+          </button>
+
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-subtle overflow-hidden ml-1"
+          >
+            {user?.avatar ? (
+              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <>{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</>
             )}
           </button>
         </div>

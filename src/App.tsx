@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) return null;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
-  const userHasPinInDB = !!(user.pin || user.password);
+  const userHasPinInDB = !!user.pin;
 
   // If the user has NOT set up a PIN yet, force them to set it up.
   if (!userHasPinInDB) {
@@ -192,14 +192,18 @@ const AppContent = () => {
   );
 };
 
+import { ThemeProvider } from './context/ThemeContext';
+
 export default function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <SchemeProvider>
-          <AppContent />
-        </SchemeProvider>
-      </NotificationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <SchemeProvider>
+            <AppContent />
+          </SchemeProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

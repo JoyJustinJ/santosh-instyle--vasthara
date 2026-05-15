@@ -53,7 +53,7 @@ const PINLogin = () => {
 
   const handleLogin = () => {
     const storedPin = localStorage.getItem('vasthara_pin');
-    const validPin = user?.pin || user?.password || storedPin;
+    const validPin = user?.pin || storedPin;
 
     if (pin === validPin) {
       unlockApp();

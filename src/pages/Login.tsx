@@ -147,7 +147,7 @@ const Login = () => {
           unlockApp();
           // Store phone and pin for future biometric re-login and route protection
           localStorage.setItem('vasthara_last_phone', userDoc.phone);
-          localStorage.setItem('vasthara_pin', userDoc.pin || userDoc.password);
+          localStorage.setItem('vasthara_pin', userDoc.pin || '');
           setLoading(false);
           navigate(userDoc.role === 'staff' ? '/staff' : '/home');
           return;

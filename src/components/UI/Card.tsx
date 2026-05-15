@@ -12,7 +12,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', onClick, .
     <div
       onClick={onClick}
       className={cn(
-        'bg-white border border-border rounded-2xl p-4 shadow-subtle transition-all',
+        'bg-surface border border-border rounded-2xl p-4 shadow-subtle transition-all',
         onClick && 'cursor-pointer active:scale-[0.98] hover:shadow-card',
         className
       )}

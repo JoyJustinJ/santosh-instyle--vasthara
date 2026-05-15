@@ -53,7 +53,7 @@ export const SideDrawer = ({ isOpen, onClose }) => {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-white z-[60] shadow-2xl flex flex-col"
+            className="fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-background z-[60] shadow-2xl flex flex-col"
           >
             <div className="p-8 bg-surface border-b border-border relative">
               <button
@@ -64,8 +64,12 @@ export const SideDrawer = ({ isOpen, onClose }) => {
               </button>
 
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-accent text-white flex items-center justify-center text-2xl font-bold border-4 border-white shadow-subtle">
-                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                <div className="w-16 h-16 rounded-full bg-accent text-white flex items-center justify-center text-2xl font-bold border-4 border-background shadow-subtle overflow-hidden">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <>{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-xl text-primary">
