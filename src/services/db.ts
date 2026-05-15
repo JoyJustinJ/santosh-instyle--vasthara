@@ -234,6 +234,8 @@ const HARDCODED_ADMIN = {
     securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
 };
 
+const sanitizeId = (id: string) => id ? id.replace(/[^a-zA-Z0-9]/g, '') : '';
+
 export const checkIsAdmin = async (adminId: string) => {
     try {
         const q = query(collection(db, "admins"), where("adminId", "==", adminId));
@@ -246,7 +248,7 @@ export const checkIsAdmin = async (adminId: string) => {
     }
 
     // Fallback to hardcoded admin credentials if DB fails or admin not found
-    if (adminId === HARDCODED_ADMIN.adminId) {
+    if (sanitizeId(adminId) === sanitizeId(HARDCODED_ADMIN.adminId)) {
         // Also update Firestore in background to keep it in sync but ONLY if it doesn't exist
         getDoc(doc(db, "admins", "main_admin")).then((docSnap) => {
             if (!docSnap.exists()) {
