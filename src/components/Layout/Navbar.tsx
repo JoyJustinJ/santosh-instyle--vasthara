@@ -40,11 +40,14 @@ export const Navbar = ({ onMenuClick }) => {
           <Menu size={24} />
         </button>
 
-        <div className="flex flex-col items-center">
-          <h1 className="text-xl font-display font-bold tracking-tighter text-primary">
+        <div 
+          onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/home')}
+          className="flex flex-col items-center cursor-pointer group"
+        >
+          <h1 className="text-xl font-display font-bold tracking-tighter text-primary group-hover:text-accent transition-colors">
             VASTHARA
           </h1>
-          <div className="h-0.5 w-8 bg-[#D4AF37] -mt-1" />
+          <div className="h-0.5 w-8 bg-[#D4AF37] -mt-1 group-hover:w-12 transition-all" />
         </div>
 
         <div className="flex items-center gap-2">

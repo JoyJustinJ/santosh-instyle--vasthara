@@ -14,8 +14,24 @@ import {
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
+export interface User {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  role: 'customer' | 'admin' | 'staff';
+  pin?: string;
+  avatar?: string;
+  emailVerified?: boolean;
+  branch?: string;
+  balance?: number;
+  savings?: number;
+  createdAt?: string;
+}
+
 const AuthContext = createContext<{
-  user: any;
+  user: User | null;
   loading: boolean;
   isUnlocked: boolean;
   isBiometricEnabled: boolean;
@@ -27,13 +43,13 @@ const AuthContext = createContext<{
   checkEmailVerification: () => Promise<boolean>;
   logout: () => Promise<void>;
   unlockApp: () => void;
-  setUser: (user: any) => void;
+  setUser: (user: User | null) => void;
 } | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
-    if (isAdmin) return { role: 'admin', firstName: 'Admin', lastName: 'User', id: 'admin' };
+    if (isAdmin) return { role: 'admin', firstName: 'Admin', lastName: 'User', id: 'admin', pin: 'ADMIN_BYPASS' };
     
     const saved = localStorage.getItem('vasthara_user_minimal');
     return saved ? JSON.parse(saved) : null;
@@ -56,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: firebaseUser.uid,
             ...userDoc.data(),
             emailVerified: firebaseUser.emailVerified
-          };
+          } as User;
           setUser(userData);
           // Store only non-sensitive data in localStorage for fast UI rendering
           const minimalData = {

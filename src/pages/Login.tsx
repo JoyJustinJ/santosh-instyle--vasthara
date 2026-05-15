@@ -20,12 +20,9 @@ import {
 
 // ── Admin fallback (stored in .env for security) ──────────────────────────
 // ── Admin fallback (stored in .env for security) ──────────────────────────
-// ── Admin fallback (stored in .env for security) ──────────────────────────
 const ADMIN_ID = (import.meta.env.VITE_ADMIN_ID || '9840077747').trim();
 const ADMIN_PASS = (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim();
 const ADMIN_PIN = (import.meta.env.VITE_ADMIN_PIN || '4444').trim();
-
-const sanitizeId = (id: string) => id.replace(/[^a-zA-Z0-9]/g, '');
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -92,16 +89,15 @@ const Login = () => {
 
   // ── Helper: is the typed phone the admin number? ──────────────────────────
   const isAdminPhone = (phone: string) => {
-    const sanitized = sanitizeId(phone);
-    const target = sanitizeId(ADMIN_ID);
-    return sanitized === target || (sanitized.length >= 5 && !sanitized.match(/^\d+$/));
+    const sanitized = phone.replace(/[\s-]/g, '');
+    return sanitized === ADMIN_ID || (sanitized.length >= 5 && !sanitized.match(/^\d+$/));
   };
 
   // ── Main submit ────────────────────────────────────────────────────────────
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    
+
     // Sanitize phone input (remove spaces and dashes)
     const sanitizedPhone = formData.phone.replace(/[\s-]/g, '');
     if (!sanitizedPhone) { setErrors({ phone: 'Required' }); return; }
@@ -113,13 +109,13 @@ const Login = () => {
       const adminData: any = await checkIsAdmin(sanitizedPhone);
 
       // Admin identified in Firestore OR matched the hardcoded credentials
-      const isAdminById = adminData && sanitizeId(adminData.adminId) === sanitizeId(sanitizedPhone);
+      const isAdminById = adminData && adminData.adminId === sanitizedPhone;
       const isHardcodedAdmin =
-        sanitizeId(sanitizedPhone) === sanitizeId(ADMIN_ID) &&
+        sanitizedPhone === ADMIN_ID &&
         formData.password === ADMIN_PASS &&
         formData.securityPin === ADMIN_PIN;
 
-      if (isAdminById || (sanitizeId(sanitizedPhone) === sanitizeId(ADMIN_ID) && isAdminPhone(sanitizedPhone))) {
+      if (isAdminById || (sanitizedPhone === ADMIN_ID && isAdminPhone(sanitizedPhone))) {
         // Verify credentials
         const expectedPass = adminData?.password ?? ADMIN_PASS;
         const expectedPin = adminData?.securityPin ?? ADMIN_PIN;
@@ -129,13 +125,14 @@ const Login = () => {
           const isPrimary = !adminData?.docId || adminData.docId === 'main_admin';
           localStorage.setItem('is_primary_admin', isPrimary ? 'true' : 'false');
           
-          // Update AuthContext to recognize the admin
-          setUser({
-            role: 'admin',
-            firstName: 'Admin',
-            lastName: isPrimary ? '(Primary)' : '(Staff)',
-            id: 'admin'
-          });
+          // Update context state immediately
+          setUser({ 
+            role: 'admin', 
+            firstName: 'Admin', 
+            lastName: 'User', 
+            id: 'admin', 
+            pin: 'ADMIN_BYPASS' 
+          } as any);
 
           setLoading(false);
           navigate('/admin');

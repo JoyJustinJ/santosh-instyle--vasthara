@@ -189,19 +189,19 @@ export const getAdminSettings = async () => {
             return docSnap.data();
         }
         // Default seed if not exists (using env vars for security)
-        const defaultSettings = { 
-            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
-            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
-            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
+        const defaultSettings = {
+            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(),
+            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(),
+            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim()
         };
         await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
         return defaultSettings;
     } catch (e) {
         console.error("Error getting admin settings:", e);
-        return { 
-            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
-            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
-            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
+        return {
+            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(),
+            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(),
+            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim()
         };
     }
 };
@@ -226,15 +226,13 @@ export const getUserPlansFromDB = async (userId: string) => {
 };
 
 
-const HARDCODED_ADMIN = { 
-    adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
-    name: 'ADMIN', 
-    role: 'admin', 
-    password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
-    securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
+const HARDCODED_ADMIN = {
+    adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(),
+    name: 'ADMIN',
+    role: 'admin',
+    password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(),
+    securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim()
 };
-
-const sanitizeId = (id: string) => id ? id.replace(/[^a-zA-Z0-9]/g, '') : '';
 
 export const checkIsAdmin = async (adminId: string) => {
     try {
@@ -248,17 +246,17 @@ export const checkIsAdmin = async (adminId: string) => {
     }
 
     // Fallback to hardcoded admin credentials if DB fails or admin not found
-    if (sanitizeId(adminId) === sanitizeId(HARDCODED_ADMIN.adminId)) {
+    if (adminId === HARDCODED_ADMIN.adminId) {
         // Also update Firestore in background to keep it in sync but ONLY if it doesn't exist
         getDoc(doc(db, "admins", "main_admin")).then((docSnap) => {
             if (!docSnap.exists()) {
                 setDoc(doc(db, "admins", "main_admin"), HARDCODED_ADMIN).catch(() => { });
             }
-        }).catch(() => {});
-        
+        }).catch(() => { });
+
         return HARDCODED_ADMIN;
     }
-    
+
     return null;
 };
 

@@ -51,6 +51,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) return null;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
+  // Admins bypass the customer PIN setup flow as they use a primary administrative PIN
+  if (user.role === 'admin') {
+    return <>{children}</>;
+  }
+
   const userHasPinInDB = !!user.pin;
 
   // If the user has NOT set up a PIN yet, force them to set it up.
@@ -80,7 +85,7 @@ const AppContent = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const hideNavs = ['/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/admin', '/staff'].includes(location.pathname);
+  const hideNavs = ['/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/staff'].includes(location.pathname);
 
   return (
     <div className="mobile-container">

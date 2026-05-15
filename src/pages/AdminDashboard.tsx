@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     Shield, Trash2, Plus, Users, Landmark, FileText,
-    ChevronLeft, HandCoins, CheckCircle, XCircle, Edit2, Save, X, Search, Smartphone, LogOut
+    ChevronLeft, HandCoins, CheckCircle, XCircle, Edit2, Save, X, Search, Smartphone, LogOut, LayoutDashboard, User
 } from 'lucide-react';
+import Home from './Home';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -37,9 +38,19 @@ type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | '
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const { logout } = useAuth()!;
+    const { logout, user } = useAuth()!;
+    const [viewMode, setViewMode] = useState<'personal' | 'management'>(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('view') === 'management' ? 'management' : 'personal';
+    });
     const [activeView, setActiveView] = useState<ViewState>('overview');
     const { showNotification } = useNotification();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('view') === 'management' ? 'management' : 'personal';
+        if (mode !== viewMode) setViewMode(mode);
+    }, [window.location.search]);
 
     // DB State
     const [schemesList, setSchemesList] = useState<any[]>([]);
@@ -1213,6 +1224,10 @@ const AdminDashboard = () => {
                 );
         }
     };
+
+    if (viewMode === 'personal') {
+        return <Home />;
+    }
 
     return (
         <div className="page-transition-wrapper p-6 pb-24">

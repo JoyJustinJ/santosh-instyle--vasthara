@@ -3,12 +3,16 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Sparkles, CreditCard, PhoneCall } from 'lucide-react';
 import { cn } from '../../utils';
+import { useAuth } from '../../context/AuthContext';
 
 export const BottomNav = () => {
   const { t } = useTranslation();
 
+  const { user } = useAuth()!;
+  const homePath = user?.role === 'admin' ? '/admin' : '/home';
+
   const navItems = [
-    { to: '/home', icon: Home, label: t('nav.home') },
+    { to: homePath, icon: Home, label: t('nav.home') },
     { to: '/my-schemes', icon: Sparkles, label: t('nav.my_schemes') },
     { to: '/pay-emi', icon: CreditCard, label: t('nav.pay_emi') },
     { to: '/contact', icon: PhoneCall, label: t('nav.contact') },

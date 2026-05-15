@@ -91,6 +91,7 @@ const Profile = () => {
     { label: 'Security & PIN', icon: Shield, path: '/profile/security' },
     { label: 'Notifications', icon: Bell, path: '/notifications' },
     { label: 'Transactions', icon: CreditCard, path: '/transactions' },
+    ...(user?.role === 'admin' ? [{ label: 'ADMIN ACCESS', icon: Shield, path: '/admin?view=management', isSpecial: true }] : []),
   ];
 
   return (
@@ -256,16 +257,23 @@ const Profile = () => {
                       onClick={() => navigate(item.path)}
                       className={cn(
                         "w-full flex items-center justify-between p-5 hover:bg-surface transition-colors",
-                        i !== menuItems.length - 1 && "border-b border-border/50"
+                        i !== menuItems.length - 1 && "border-b border-border/50",
+                        (item as any).isSpecial && "bg-accent/5"
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-accent-light text-accent flex items-center justify-center">
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center",
+                          (item as any).isSpecial ? "bg-accent text-white shadow-lg shadow-accent/20" : "bg-accent-light text-accent"
+                        )}>
                           <item.icon size={18} />
                         </div>
-                        <span className="text-sm font-bold text-primary">{item.label}</span>
+                        <span className={cn(
+                          "text-sm font-bold",
+                          (item as any).isSpecial ? "text-accent" : "text-primary"
+                        )}>{item.label}</span>
                       </div>
-                      <ChevronRight size={18} className="text-text-muted" />
+                      <ChevronRight size={18} className={(item as any).isSpecial ? "text-accent" : "text-text-muted"} />
                     </button>
                   ))}
                 </Card>
