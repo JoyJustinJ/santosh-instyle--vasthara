@@ -172,7 +172,7 @@ const ContactUs = () => {
           </a>
         </div>
         <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
-          © 2024 Vasthara Jewelry. All Rights Reserved.
+          © 2024 Vasthara. All Rights Reserved.
         </p>
       </div>
     </motion.div>

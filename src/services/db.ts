@@ -190,18 +190,18 @@ export const getAdminSettings = async () => {
         }
         // Default seed if not exists (using env vars for security)
         const defaultSettings = { 
-            adminId: import.meta.env.VITE_ADMIN_ID, 
-            password: import.meta.env.VITE_ADMIN_PASS, 
-            securityPin: import.meta.env.VITE_ADMIN_PIN 
+            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
+            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
+            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
         };
         await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
         return defaultSettings;
     } catch (e) {
         console.error("Error getting admin settings:", e);
         return { 
-            adminId: import.meta.env.VITE_ADMIN_ID, 
-            password: import.meta.env.VITE_ADMIN_PASS, 
-            securityPin: import.meta.env.VITE_ADMIN_PIN 
+            adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
+            password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
+            securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
         };
     }
 };
@@ -227,11 +227,11 @@ export const getUserPlansFromDB = async (userId: string) => {
 
 
 const HARDCODED_ADMIN = { 
-    adminId: import.meta.env.VITE_ADMIN_ID, 
+    adminId: (import.meta.env.VITE_ADMIN_ID || '9840077747').trim(), 
     name: 'ADMIN', 
     role: 'admin', 
-    password: import.meta.env.VITE_ADMIN_PASS, 
-    securityPin: import.meta.env.VITE_ADMIN_PIN 
+    password: (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim(), 
+    securityPin: (import.meta.env.VITE_ADMIN_PIN || '4444').trim() 
 };
 
 export const checkIsAdmin = async (adminId: string) => {

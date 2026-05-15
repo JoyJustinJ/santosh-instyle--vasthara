@@ -19,9 +19,10 @@ import {
 
 
 // ── Admin fallback (stored in .env for security) ──────────────────────────
-const ADMIN_ID = import.meta.env.VITE_ADMIN_ID;
-const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASS;
-const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN;
+// ── Admin fallback (stored in .env for security) ──────────────────────────
+const ADMIN_ID = (import.meta.env.VITE_ADMIN_ID || '9840077747').trim();
+const ADMIN_PASS = (import.meta.env.VITE_ADMIN_PASS || 'benin123').trim();
+const ADMIN_PIN = (import.meta.env.VITE_ADMIN_PIN || '4444').trim();
 
 const Login = () => {
   const { t, i18n } = useTranslation();
