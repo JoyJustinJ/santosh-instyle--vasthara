@@ -197,7 +197,7 @@ const Home = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="px-6">
+      <div className="px-6 space-y-4">
         <Card className="bg-surface border-none p-5 space-y-3 flex flex-col items-center text-center">
           <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
             <TrendingUp size={24} />
@@ -207,6 +207,16 @@ const Home = () => {
             <p className="text-2xl font-bold text-primary">{schemes.length}</p>
           </div>
         </Card>
+
+        <Button 
+          variant="outline" 
+          fullWidth 
+          onClick={() => navigate('/schemes-list')}
+          className="bg-primary text-white border-primary hover:bg-primary-light h-14 text-base font-bold shadow-card rounded-2xl group"
+        >
+          Explore All Schemes
+          <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+        </Button>
       </div>
 
       {/* Why Vasthara */}

@@ -216,29 +216,29 @@ const Transactions = () => {
                                     key={t.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="p-4 rounded-xl border border-border/50 bg-white shadow-subtle flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center"
+                                    className="p-5 rounded-2xl border border-border/30 bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden"
                                 >
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="px-2 py-1 rounded bg-success/10 text-success text-[10px] font-black uppercase tracking-widest">
+                                    <div className="space-y-3 flex-1 min-w-0">
+                                        <div className="flex items-center flex-wrap gap-2">
+                                            <span className="px-2 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-black uppercase tracking-widest border border-success/20">
                                                 Paid
                                             </span>
                                             <span className="text-xs font-bold text-text-muted flex items-center gap-1">
-                                                <Calendar size={12} />
+                                                <Calendar size={12} className="text-accent" />
                                                 {t.date || new Date(t.timestamp).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-primary uppercase flex items-center gap-1">
-                                                <Tag size={12} className="text-accent" />
-                                                {t.schemeName || 'Installment Payment'}
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-primary uppercase flex items-center gap-2 truncate">
+                                                <Tag size={14} className="text-accent flex-shrink-0" />
+                                                <span className="truncate">{t.schemeName || 'Installment Payment'}</span>
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-                                        <div className="text-left sm:text-right">
-                                            <p className="text-xs font-black text-text-muted uppercase tracking-widest">Amount</p>
+                                    <div className="flex items-center justify-between w-full sm:w-auto gap-4 sm:gap-8 pt-4 sm:pt-0 border-t border-border/30 sm:border-0">
+                                        <div className="text-left sm:text-right flex-shrink-0">
+                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-70">Amount</p>
                                             <p className="text-lg font-bold text-primary">{formatCurrency(t.amount)}</p>
                                         </div>
 
@@ -246,7 +246,7 @@ const Transactions = () => {
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleDownloadInvoice(t)}
-                                            className="h-10 hover:bg-accent hover:border-accent hover:text-white"
+                                            className="h-10 px-4 flex-shrink-0 border-primary/10 text-primary hover:bg-primary hover:text-white hover:border-primary transition-all rounded-xl"
                                         >
                                             <Download size={16} className="mr-2" />
                                             Invoice
