@@ -53,8 +53,7 @@ const PINSetup = () => {
       if (pin === confirmPin) {
         setLoading(true);
         try {
-          // Store locally for quick access
-          localStorage.setItem('vasthara_pin', pin);
+          // Store locally for setup completion state, but NOT the plaintext PIN
           localStorage.setItem('vasthara_pin_setup_complete', 'true');
 
           // Persist to DB if user is logged in

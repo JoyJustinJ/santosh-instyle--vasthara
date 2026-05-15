@@ -52,13 +52,10 @@ const PINLogin = () => {
   };
 
   const handleLogin = () => {
-    const storedPin = localStorage.getItem('vasthara_pin');
-    const validPin = user?.pin || storedPin;
+    const validPin = user?.pin;
 
     if (pin === validPin) {
       unlockApp();
-      // Store it back in local storage just in case
-      localStorage.setItem('vasthara_pin', pin);
       
       // Show biometric enrolment prompt if not yet answered and device supports it
       if (!localStorage.getItem('vasthara_biometric_prompted') && biometricSupported()) {

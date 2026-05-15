@@ -34,8 +34,13 @@ import StaffDashboard from './pages/StaffDashboard';
 import Notifications from './pages/NotificationsPage'; // Notifications Route
 
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
-  const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
-  if (!isAdmin) return <Navigate to="/login" replace />;
+  const { user, loading } = useAuth()!;
+  
+  if (loading) return null; // Wait for auth to load
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 };
 

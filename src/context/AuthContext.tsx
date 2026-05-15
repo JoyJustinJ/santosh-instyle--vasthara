@@ -32,7 +32,7 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(() => {
-    const saved = localStorage.getItem('vasthara_user');
+    const saved = localStorage.getItem('vasthara_user_minimal');
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             emailVerified: firebaseUser.emailVerified
           };
           setUser(userData);
-          localStorage.setItem('vasthara_user', JSON.stringify(userData));
+          // Store only non-sensitive data in localStorage for fast UI rendering
+          const minimalData = {
+            id: userData.id,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            avatar: userData.avatar,
+            emailVerified: userData.emailVerified
+          };
+          localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalData));
         } else {
           // New Google/Email user — create a basic profile in Firestore automatically
           const basicData: any = {
@@ -84,11 +92,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             sessionStorage.setItem('vasthara_unlocked_session', 'true');
           }
           setUser(basicData);
-          localStorage.setItem('vasthara_user', JSON.stringify(basicData));
+          const minimalBasic = {
+            id: basicData.id,
+            firstName: basicData.firstName,
+            lastName: basicData.lastName,
+            emailVerified: basicData.emailVerified
+          };
+          localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
         }
       } else {
-        // Only clear if there's no manual user stored (don't wipe out manual logins!)
-        if (!localStorage.getItem('vasthara_user')) {
+        // Only clear if there's no manual user stored
+        if (!localStorage.getItem('vasthara_user_minimal')) {
           setUser(null);
         }
       }
@@ -132,8 +146,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Clear user state and manual login session
     setUser(null);
-    localStorage.removeItem('vasthara_user');
-    localStorage.removeItem('vasthara_pin'); // Optional: usually mobile number login resets PIN or implies full re-auth
+    localStorage.removeItem('vasthara_user_minimal');
+    localStorage.removeItem('vasthara_pin');
+    localStorage.removeItem('is_admin_authenticated');
+    localStorage.removeItem('is_primary_admin');
   };
 
   const unlockApp = () => {
@@ -149,9 +165,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const handleSetUser = (userData: any) => {
     setUser(userData);
     if (userData) {
-      localStorage.setItem('vasthara_user', JSON.stringify(userData));
+      const minimal = {
+        id: userData.id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        avatar: userData.avatar,
+        emailVerified: userData.emailVerified
+      };
+      localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimal));
     } else {
-      localStorage.removeItem('vasthara_user');
+      localStorage.removeItem('vasthara_user_minimal');
     }
   };
 

@@ -212,12 +212,14 @@ const AdminDashboard = () => {
             .reduce((acc, s) => acc + s.monthlyAmount, 0);
 
         if (amt < expectedTotal) {
-            const ok = window.confirm(`You entered ₹${amt} but selected schemes require ₹${expectedTotal}. Continue anyway?`);
-            if (!ok) return;
+            showNotif(`Deposit amount (₹${amt}) cannot be less than the selected schemes total (₹${expectedTotal}).`, 'error');
+            return;
         }
 
         try {
             const userId = foundCustomer?.id || depositCustomer;
+            const { addAuditLog } = await import('../services/db');
+
             for (const accountId of selectedPlans) {
                 const s = customerActiveSchemes.find(p => p.accountId === accountId);
                 if (!s) continue;
@@ -229,7 +231,7 @@ const AdminDashboard = () => {
                     totalPaid: (s.totalPaid || 0) + paid,
                 });
 
-                await recordTransactionInDB({
+                const transactionId = await recordTransactionInDB({
                     userId: userId,
                     customerAccount: userId,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
@@ -241,6 +243,15 @@ const AdminDashboard = () => {
                     method: 'CASH',
                     recordedBy: 'admin'
                 });
+
+                if (transactionId) {
+                    await addAuditLog('MANUAL_DEPOSIT', 'admin', {
+                        phone: userId,
+                        amount: paid,
+                        schemeId: s.name || s.schemeName || accountId,
+                        transactionId
+                    });
+                }
             }
 
             showNotification("Cash deposit recorded successfully!", 'success');
@@ -307,18 +318,29 @@ const AdminDashboard = () => {
         if (action === 'approve') {
             const request = pendingStaff.find(s => s.id === id);
             if (request) {
-                // Create user profile for the approved staff
+                // Use the password provided in the staff request
+                const tempPassword = request.password; 
+                const tempPin = Math.floor(1000 + Math.random() * 9000).toString();
+                
+                const { addAuditLog } = await import('../services/db');
+                
                 await createUserProfile({
                     phone: request.phone,
                     firstName: request.name.split(' ')[0] || request.name,
                     lastName: request.name.split(' ').slice(1).join(' ') || '',
                     branch: request.branch,
                     role: 'staff',
-                    password: 'password123', // Default password for new staff
-                    pin: '1234',            // Default PIN for new staff
+                    password: tempPassword,
+                    pin: tempPin,
                     status: 'active'
                 });
-                showNotif(`Staff account created for ${request.name}. Password: password123`, 'success');
+
+                await addAuditLog('STAFF_CREATION', 'admin', {
+                    staffId: request.phone,
+                    name: request.name
+                });
+
+                showNotif(`Staff account created for ${request.name}. Login with their chosen password. Temp PIN: ${tempPin}`, 'success');
             }
         }
         await deleteStaffRequestFromDB(id.toString());

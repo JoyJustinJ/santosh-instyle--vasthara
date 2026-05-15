@@ -27,16 +27,17 @@
 }
 
 .dark {
-  --background: #121212;
-  --surface: #1E1E1E;
-  --primary: #FFFFFF;
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --border: #2D2D2D;
-  --accent-light: rgba(91, 127, 232, 0.1);
-  --shadow-subtle: 0 2px 4px rgba(0,0,0,0.2);
-  --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
+  --background: #0F0D0C; /* Deep coffee black */
+  --surface: #1A1614;    /* Rich dark brown surface */
+  --primary: #C5A17D;    /* Warm bronze for high-contrast elements */
+  --text-primary: #E5D5C6; /* Creamy beige for primary text */
+  --text-secondary: #A69082; /* Muted tan for secondary text */
+  --text-muted: #736357;    /* Earthy brown for muted elements */
+  --border: #2D241F;      /* Dark oak for borders */
+  --accent: #D4AF37;      /* Classic gold accent */
+  --accent-light: rgba(197, 161, 125, 0.1);
+  --shadow-subtle: 0 2px 4px rgba(0,0,0,0.4);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 @theme {

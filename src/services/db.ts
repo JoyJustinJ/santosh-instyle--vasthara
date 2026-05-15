@@ -188,13 +188,21 @@ export const getAdminSettings = async () => {
         if (docSnap.exists()) {
             return docSnap.data();
         }
-        // Default seed if not exists
-        const defaultSettings = { adminId: '9840077747', password: 'benin123', securityPin: '4444' };
+        // Default seed if not exists (using env vars for security)
+        const defaultSettings = { 
+            adminId: import.meta.env.VITE_ADMIN_ID, 
+            password: import.meta.env.VITE_ADMIN_PASS, 
+            securityPin: import.meta.env.VITE_ADMIN_PIN 
+        };
         await setDoc(doc(db, "admins", "main_admin"), defaultSettings);
         return defaultSettings;
     } catch (e) {
         console.error("Error getting admin settings:", e);
-        return { adminId: '9840077747', password: 'benin123', securityPin: '4444' };
+        return { 
+            adminId: import.meta.env.VITE_ADMIN_ID, 
+            password: import.meta.env.VITE_ADMIN_PASS, 
+            securityPin: import.meta.env.VITE_ADMIN_PIN 
+        };
     }
 };
 
@@ -218,7 +226,13 @@ export const getUserPlansFromDB = async (userId: string) => {
 };
 
 
-const HARDCODED_ADMIN = { adminId: '9840077747', name: 'BENIN', role: 'admin', password: 'benin123', securityPin: '4444' };
+const HARDCODED_ADMIN = { 
+    adminId: import.meta.env.VITE_ADMIN_ID, 
+    name: 'ADMIN', 
+    role: 'admin', 
+    password: import.meta.env.VITE_ADMIN_PASS, 
+    securityPin: import.meta.env.VITE_ADMIN_PIN 
+};
 
 export const checkIsAdmin = async (adminId: string) => {
     try {
@@ -309,5 +323,19 @@ export const markNotificationAsRead = async (notificationId: string) => {
         await setDoc(doc(db, "notifications", notificationId), { read: true }, { merge: true });
     } catch (e) {
         console.error("Error marking notification as read:", e);
+    }
+};
+
+// ================= AUDIT LOGS =================
+export const addAuditLog = async (action: string, performedBy: string, details: any) => {
+    try {
+        await addDoc(collection(db, "audit_logs"), {
+            action,
+            performedBy,
+            details,
+            timestamp: new Date().toISOString()
+        });
+    } catch (e) {
+        console.error("Error adding audit log:", e);
     }
 };

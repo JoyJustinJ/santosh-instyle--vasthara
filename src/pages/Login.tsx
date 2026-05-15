@@ -18,10 +18,10 @@ import {
 } from '../utils/biometrics';
 
 
-// ── Hardcoded admin fallback (matches Firestore seed) ──────────────────────
-const ADMIN_ID = '9840077747';
-const ADMIN_PASS = 'benin123';
-const ADMIN_PIN = '4444';
+// ── Admin fallback (stored in .env for security) ──────────────────────────
+const ADMIN_ID = import.meta.env.VITE_ADMIN_ID;
+const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASS;
+const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN;
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -40,7 +40,7 @@ const Login = () => {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
   // ── Staff request state ────────────────────────────────────────────────────
-  const [staffForm, setStaffForm] = useState({ name: '', branch: '', phone: '' });
+  const [staffForm, setStaffForm] = useState({ name: '', branch: '', phone: '', password: '' });
 
   const showNotif = (message: string, type: NotificationType = 'error') => {
     setNotification({ message, type });
@@ -233,18 +233,19 @@ const Login = () => {
 
   const handleStaffRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffForm.name || !staffForm.branch) { showNotif('Please fill all fields'); return; }
+    if (!staffForm.name || !staffForm.branch || !staffForm.password) { showNotif('Please fill all fields'); return; }
     setLoading(true);
     await saveStaffRequestToDB({
       id: Math.random().toString(),
       name: staffForm.name,
       branch: staffForm.branch,
       phone: staffForm.phone,
+      password: staffForm.password,
       status: 'pending',
     });
     setLoading(false);
     showNotif('Request sent! Management must approve your access.', 'success');
-    setStaffForm({ name: '', branch: '', phone: '' });
+    setStaffForm({ name: '', branch: '', phone: '', password: '' });
     setViewMode('login');
   };
 
@@ -418,6 +419,7 @@ const Login = () => {
                 <Input label="Full Name" placeholder="Enter full name" icon={UserSquare2} required value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} />
                 <Input label="Branch Name" placeholder="Enter branch name" icon={Building2} required value={staffForm.branch} onChange={(e) => setStaffForm({ ...staffForm, branch: e.target.value })} />
                 <Input label="Mobile Number" placeholder="Your contact number" icon={Smartphone} required value={staffForm.phone} onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })} />
+                <Input label="Setup Login Password" placeholder="Create a password" icon={Lock} type="password" required value={staffForm.password} onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })} />
                 <Button fullWidth size="lg">Submit Request</Button>
               </form>
             </motion.div>
