@@ -105,7 +105,7 @@ const StaffDashboard = () => {
         if (id.length >= 10) {
             try {
                 // Try to find the user by phone
-                const userProfile = await getUserFromDB(id);
+                const userProfile: any = await getUserFromDB(id);
                 if (userProfile) {
                     setDepositCustomerProfile(userProfile);
                     const plansById = await getUserPlansFromDB(userProfile.id);

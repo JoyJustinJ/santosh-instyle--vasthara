@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * SMS Service for handling OTP via Vercel Backend Proxy
  */

@@ -273,7 +273,7 @@ const AdminDashboard = () => {
     const handleCustomerLookup = async (id: string) => {
         setDepositCustomer(id);
         if (id.length >= 10) {
-            const userProfile = await getUserFromDB(id);
+            const userProfile: any = await getUserFromDB(id);
             if (userProfile) {
                 setFoundCustomer(userProfile);
                 const userId = userProfile.id;
