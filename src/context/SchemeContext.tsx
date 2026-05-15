@@ -59,7 +59,8 @@ export const SchemeProvider = ({ children }) => {
     return newEntry;
   };
 
-  const payEMI = async (payments: { accountId: string, amount: number }[], userId: string) => {
+  const payEMI = async (payments: { accountId: string, amount: number }[], userId: string): Promise<string[]> => {
+    const transactionIds: string[] = [];
     for (const payment of payments) {
       const schemeRef = doc(db, "user_schemes", payment.accountId);
       const current = userSchemes.find(s => s.accountId === payment.accountId);
@@ -68,7 +69,7 @@ export const SchemeProvider = ({ children }) => {
           monthsPaid: (current.monthsPaid || 0) + 1,
           totalPaid: (current.totalPaid || 0) + payment.amount,
         });
-        await recordTransactionInDB({
+        const txId = await recordTransactionInDB({
           userId,
           schemeName: current.name || current.schemeName || 'Purchase Plan',
           accountId: payment.accountId,
@@ -77,9 +78,11 @@ export const SchemeProvider = ({ children }) => {
           status: 'Success',
           method: 'UPI'
         });
+        if (txId) transactionIds.push(txId);
       }
     }
     showNotification('Payments successful!', 'success');
+    return transactionIds;
   };
 
   return (

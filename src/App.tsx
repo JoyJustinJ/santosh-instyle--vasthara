@@ -31,6 +31,7 @@ import ContactUs from './pages/ContactUs';
 import OurStores from './pages/OurStores';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
+import Notifications from './pages/Notifications';
 
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
@@ -46,14 +47,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   const hasPin = localStorage.getItem('vasthara_pin');
+  const hasPinSetupComplete = localStorage.getItem('vasthara_pin_setup_complete');
 
   // If user has a PIN but hasn't unlocked the app yet, redirect to PIN login
   if (hasPin && !isUnlocked && location.pathname !== '/pin-login') {
     return <Navigate to="/pin-login" replace />;
   }
 
-  // If user doesn't have a PIN, they must set one
-  if (!hasPin && location.pathname !== '/set-pin') {
+  // Existing user whose localStorage was cleared — send to PIN login (not set-pin)
+  if (!hasPin && hasPinSetupComplete && !isUnlocked && location.pathname !== '/pin-login') {
+    return <Navigate to="/pin-login" replace />;
+  }
+
+  // Brand new user with no PIN at all — must set one
+  if (!hasPin && !hasPinSetupComplete && location.pathname !== '/set-pin') {
     return <Navigate to="/set-pin" replace />;
   }
 
@@ -163,6 +170,12 @@ const AppContent = () => {
             <Route path="/stores" element={
               <ProtectedRoute>
                 <OurStores />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             } />
 

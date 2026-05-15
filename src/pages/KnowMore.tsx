@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, CheckCircle2, HelpCircle, ArrowRight, ShieldCheck, TrendingUp, Gift } from 'lucide-react';
+import { ChevronLeft, HelpCircle, ArrowRight, ShieldCheck, TrendingUp, Gift } from 'lucide-react';
 import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
 
@@ -9,10 +9,22 @@ const KnowMore = () => {
   const navigate = useNavigate();
 
   const faqs = [
-    { q: "How do I join the scheme?", a: "You can join by selecting a plan and paying your first installment through the app or at any of our branches." },
-    { q: "What happens if I miss a payment?", a: "You can pay the missed installment in the next month. However, consistent payments are recommended for maximum benefits." },
-    { q: "Can I redeem before the scheme duration ends?", a: "Early closure is possible after 6 months, but gift benefits and waivers may not apply." },
-    { q: "Is my money safe?", a: "Yes, Vasthara is a trusted name with over 20 years of excellence in savings and finance." }
+    {
+      q: 'How does the scheme work?',
+      a: 'Pay a fixed monthly installment for 11 months. The 12th month is completely complimentary — you receive the full 12-month value at maturity. This means you effectively get one free month\'s worth added to your savings.'
+    },
+    {
+      q: 'What do I receive when my scheme completes?',
+      a: 'Upon completing all 11 installments, you receive your full maturity amount (equivalent to 12 months of installments) and a premium gift box for eligible plans — redeemable at the Santosh Instyle store in Hosur.'
+    },
+    {
+      q: 'Can I pay early or skip a month?',
+      a: 'Yes! There is no fixed due date — you can pay your monthly installment any time during the month at your convenience. However, skipping a month is not recommended as it may delay your maturity benefits.'
+    },
+    {
+      q: 'Where can I redeem my savings?',
+      a: 'Visit the Santosh Instyle store at Nethaji Road, Hosur, Tamil Nadu. Bring your Account ID (from the app) and a valid photo ID. Our staff will process your maturity amount and gift in person.'
+    },
   ];
 
   return (
@@ -45,7 +57,7 @@ const KnowMore = () => {
             Vasthara Savings Plan
           </h1>
           <p className="text-white/70 text-sm font-medium mt-1">
-            The smartest way to save for your future.
+            11 installments. 12 months of value. One free month — guaranteed.
           </p>
         </div>
       </div>
@@ -57,14 +69,16 @@ const KnowMore = () => {
             About the Scheme
           </h2>
           <p className="text-text-secondary leading-relaxed text-sm">
-            Vasthara Savings Plan is a flexible monthly savings scheme designed to help you accumulate wealth. By contributing a fixed amount every month, you not only save money but also receive exclusive rewards and benefits upon completion.
+            The Vasthara Savings Plan lets you save a fixed amount each month for 11 months.
+            At the end of your plan, you receive the full value of 12 months — that's one month
+            completely free from us. Eligible plans also come with a premium gift box upon completion.
           </p>
 
           <div className="grid grid-cols-1 gap-4 mt-6">
             {[
-              { title: "Zero Hidden Charges", desc: "No extra fees or deductions on your savings at maturity.", icon: ShieldCheck },
-              { title: "Surprise Gift Box", desc: "Receive a premium gift box upon successful completion.", icon: Gift },
-              { title: "Flexible Redemption", desc: "Redeem your savings at any Vasthara branch across India.", icon: TrendingUp }
+              { title: 'Zero Hidden Charges', desc: 'No deductions or hidden fees. You get back exactly what you earn at maturity.', icon: ShieldCheck },
+              { title: 'Premium Gift Box', desc: 'Complete your 11 installments and receive a curated gift box on redemption day.', icon: Gift },
+              { title: 'Pay Any Day, Any Time', desc: 'No fixed due date. Pay your installment whenever it suits you during the month.', icon: TrendingUp },
             ].map((item, i) => (
               <div key={i} className="flex gap-4 p-4 bg-surface rounded-2xl border border-border/50">
                 <div className="w-10 h-10 rounded-xl bg-white shadow-subtle flex items-center justify-center text-accent shrink-0">
@@ -86,9 +100,21 @@ const KnowMore = () => {
           </h2>
           <div className="space-y-8 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
             {[
-              { step: "01", title: "Choose a Plan", desc: "Select a monthly installment amount that suits your budget (₹1000, ₹2000, or ₹3000)." },
-              { step: "02", title: "Pay Monthly", desc: "Pay your installments consistently for 11 months through our secure app." },
-              { step: "03", title: "Redeem Benefits", desc: "After completing your plan, visit our branch to collect your maturity amount with exclusive completion benefits." }
+              {
+                step: '01',
+                title: 'Choose a Plan',
+                desc: 'Select a monthly installment amount that suits your budget — ₹1,000, ₹2,000, or ₹3,000 per month.',
+              },
+              {
+                step: '02',
+                title: 'Pay for 11 Months',
+                desc: 'Pay your installment any day during the month — there is no fixed due date. Stay consistent for 11 months.',
+              },
+              {
+                step: '03',
+                title: 'Get the 12th Month Free',
+                desc: 'After completing 11 months, collect your full 12-month maturity value plus a premium gift box at our Hosur branch.',
+              },
             ].map((item, i) => (
               <div key={i} className="flex gap-6 relative">
                 <div className="w-10 h-10 rounded-full bg-white border-2 border-accent flex items-center justify-center text-accent font-black text-xs shrink-0 z-10">
@@ -136,8 +162,8 @@ const KnowMore = () => {
   );
 };
 
-const Badge = ({ children, variant = 'default', className }) => {
-  const variants = {
+const Badge = ({ children, variant = 'default', className }: any) => {
+  const variants: Record<string, string> = {
     default: 'bg-accent-light text-accent',
     success: 'bg-success-light text-success',
     danger: 'bg-danger-light text-danger',
@@ -156,6 +182,6 @@ const Badge = ({ children, variant = 'default', className }) => {
   );
 };
 
-const cn = (...inputs) => inputs.filter(Boolean).join(' ');
+const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
 
 export default KnowMore;

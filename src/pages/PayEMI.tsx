@@ -32,6 +32,7 @@ const PayEMI = () => {
   const [success, setSuccess] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [paidPlanIds, setPaidPlanIds] = useState<string[]>([]);
+  const [realTransactionIds, setRealTransactionIds] = useState<string[]>([]);
 
   React.useEffect(() => {
     const checkPaidPlans = async () => {
@@ -83,7 +84,8 @@ const PayEMI = () => {
     });
 
     try {
-      await payEMI(payments, user?.id || user?.phone);
+      const txIds = await payEMI(payments, user?.id || user?.phone);
+      setRealTransactionIds(txIds);
       showNotification("Payment successful! Your plans have been updated.", "success");
       setShowQR(false);
       setSuccess(true);
@@ -179,8 +181,8 @@ const PayEMI = () => {
 
         <Card className="w-full bg-surface border-none p-6 space-y-4 text-left">
           <div className="flex justify-between items-center border-b border-border pb-3">
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Transaction</p>
-            <p className="text-[10px] font-bold text-text-muted">TXN-{Math.floor(10000000 + Math.random() * 90000000)}</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Transaction ID</p>
+            <p className="text-[10px] font-bold text-text-muted font-mono">{realTransactionIds[0] || '—'}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

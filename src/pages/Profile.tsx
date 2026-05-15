@@ -87,7 +87,7 @@ const Profile = () => {
 
   const menuItems = [
     { label: 'Security & PIN', icon: Shield, path: '/profile/security' },
-    { label: 'Notifications', icon: Bell, path: '/profile/notifications' },
+    { label: 'Notifications', icon: Bell, path: '/notifications' },
     { label: 'Transactions', icon: CreditCard, path: '/transactions' },
   ];
 

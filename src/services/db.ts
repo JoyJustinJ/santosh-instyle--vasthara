@@ -57,15 +57,17 @@ export const deleteStaffRequestFromDB = async (requestId: string) => {
 };
 
 // ================= TRANSACTIONS =================
-export const recordTransactionInDB = async (transaction: any) => {
+export const recordTransactionInDB = async (transaction: any): Promise<string | null> => {
     try {
-        await addDoc(collection(db, "transactions"), {
+        const docRef = await addDoc(collection(db, "transactions"), {
             ...transaction,
             date: new Date().toLocaleDateString('en-GB'), // 10-04-2024 format
             timestamp: new Date().toISOString()
         });
+        return docRef.id; // Return the real Firestore document ID
     } catch (e) {
         console.error("Error recording transaction:", e);
+        return null;
     }
 };
 
