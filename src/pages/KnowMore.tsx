@@ -11,11 +11,11 @@ const KnowMore = () => {
   const faqs = [
     {
       q: 'How does the scheme work?',
-      a: 'Pay a fixed monthly installment for 11 months. The 12th month is completely complimentary — you receive the full 12-month value at maturity. This means you effectively get one free month\'s worth added to your savings.'
+      a: 'Pay a fixed monthly installment for the scheme duration. Upon maturity, you receive your full saved value.'
     },
     {
       q: 'What do I receive when my scheme completes?',
-      a: 'Upon completing all 11 installments, you receive your full maturity amount (equivalent to 12 months of installments) and a premium gift box for eligible plans — redeemable at the Santosh Instyle store in Hosur.'
+      a: 'Upon completing all installments, you receive your full maturity amount and some gifts at maturity (subject to discretion) — redeemable at the Santosh Instyle store in Hosur.'
     },
     {
       q: 'Can I pay early or skip a month?',
@@ -57,7 +57,7 @@ const KnowMore = () => {
             Vasthara Savings Plan
           </h1>
           <p className="text-white/70 text-sm font-medium mt-1">
-            11 installments. 12 months of value. One free month — guaranteed.
+            Flexible installments. Great value. Secured savings.
           </p>
         </div>
       </div>
@@ -69,15 +69,14 @@ const KnowMore = () => {
             About the Scheme
           </h2>
           <p className="text-text-secondary leading-relaxed text-sm">
-            The Vasthara Savings Plan lets you save a fixed amount each month for 11 months.
-            At the end of your plan, you receive the full value of 12 months — that's one month
-            completely free from us. Eligible plans also come with a premium gift box upon completion.
+            The Vasthara Savings Plan lets you save a fixed amount each month for your plan duration.
+            At the end of your plan, you receive the full saved value. Eligible plans also come with some gifts at maturity.
           </p>
 
           <div className="grid grid-cols-1 gap-4 mt-6">
             {[
               { title: 'Zero Hidden Charges', desc: 'No deductions or hidden fees. You get back exactly what you earn at maturity.', icon: ShieldCheck },
-              { title: 'Premium Gift Box', desc: 'Complete your 11 installments and receive a curated gift box on redemption day.', icon: Gift },
+              { title: 'Gifts at Maturity', desc: 'Complete your installments and receive some gifts at maturity on redemption day.', icon: Gift },
               { title: 'Pay Any Day, Any Time', desc: 'No fixed due date. Pay your installment whenever it suits you during the month.', icon: TrendingUp },
             ].map((item, i) => (
               <div key={i} className="flex gap-4 p-4 bg-surface rounded-2xl border border-border/50">
@@ -107,13 +106,13 @@ const KnowMore = () => {
               },
               {
                 step: '02',
-                title: 'Pay for 11 Months',
-                desc: 'Pay your installment any day during the month — there is no fixed due date. Stay consistent for 11 months.',
+                title: 'Pay for Scheme Duration',
+                desc: 'Pay your installment any day during the month — there is no fixed due date. Stay consistent for your scheme duration.',
               },
               {
                 step: '03',
-                title: 'Get the 12th Month Free',
-                desc: 'After completing 11 months, collect your full 12-month maturity value plus a premium gift box at our Hosur branch.',
+                title: 'Get Maturity Benefits',
+                desc: 'After completing your scheme, collect your full maturity value plus some gifts at maturity at our Hosur branch.',
               },
             ].map((item, i) => (
               <div key={i} className="flex gap-6 relative">

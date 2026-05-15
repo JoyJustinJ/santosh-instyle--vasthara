@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, CheckCircle2, ShieldCheck, Info, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +26,7 @@ const JoinScheme = () => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>('details');
   const [newAccount, setNewAccount] = useState<any>(null);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [scheme, setScheme] = useState<any>(null);
   const [loadingScheme, setLoadingScheme] = useState(true);
@@ -261,7 +262,7 @@ const JoinScheme = () => {
                 className="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-accent"
               />
               <label htmlFor="terms" className="text-xs font-medium text-text-secondary leading-relaxed">
-                I agree to the <button className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme and authorise the first month payment of {formatCurrency(scheme.monthlyAmount)}.
+                I agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme and authorise the first month payment of {formatCurrency(scheme.monthlyAmount)}.
               </label>
             </div>
           </div>
@@ -279,6 +280,41 @@ const JoinScheme = () => {
           PROCEED TO PAY &amp; JOIN
         </Button>
       </div>
+
+      <AnimatePresence>
+        {showTerms && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-surface rounded-3xl shadow-card overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="p-4 border-b border-border/50 flex justify-between items-center bg-surface">
+                <h3 className="font-display font-bold text-primary">Terms & Conditions</h3>
+                <button onClick={() => setShowTerms(false)} className="p-1 text-text-muted hover:text-primary transition-colors rounded-full hover:bg-black/5">
+                  ✕
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto text-sm text-text-secondary space-y-4 flex-1">
+                <p><strong>1. Scheme Duration & Payments:</strong> Members must pay their monthly installments consistently for the chosen scheme duration.</p>
+                <p><strong>2. Maturity Benefits:</strong> The maturity value is strictly the total accumulated amount. No extra monetary benefits are provided. Gifts at maturity are solely at the discretion of the management.</p>
+                <p><strong>3. Late Payments:</strong> There is no fixed due date within the month, but skipping a month may affect maturity benefits and gift eligibility.</p>
+                <p><strong>4. Redemption:</strong> Savings must be redeemed at the Santosh Instyle store in Hosur. Cash refunds are not permitted under any circumstances.</p>
+                <p><strong>5. Cancellation:</strong> Premature cancellation may result in loss of benefits. The management reserves the right to alter terms as necessary.</p>
+              </div>
+              <div className="p-4 border-t border-border/50 bg-surface">
+                <Button fullWidth onClick={() => { setShowTerms(false); setAgreed(true); }}>I Agree</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
