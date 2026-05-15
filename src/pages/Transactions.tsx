@@ -216,37 +216,39 @@ const Transactions = () => {
                                     key={t.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="p-5 rounded-2xl border border-border/30 bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden"
+                                    className="p-5 rounded-2xl border border-border/30 bg-white shadow-subtle grid grid-cols-1 sm:grid-cols-[1.5fr,1fr,auto] items-center gap-4"
                                 >
-                                    <div className="space-y-3 flex-1 min-w-0">
-                                        <div className="flex items-center flex-wrap gap-2">
-                                            <span className="px-2 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-black uppercase tracking-widest border border-success/20">
-                                                Paid
-                                            </span>
-                                            <span className="text-xs font-bold text-text-muted flex items-center gap-1">
-                                                <Calendar size={12} className="text-accent" />
+                                    {/* Left: Transaction Details */}
+                                    <div className="space-y-2 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="success">PAID</Badge>
+                                            <span className="text-[10px] font-bold text-text-muted whitespace-nowrap">
                                                 {t.date || new Date(t.timestamp).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-bold text-primary uppercase flex items-center gap-2 truncate">
-                                                <Tag size={14} className="text-accent flex-shrink-0" />
-                                                <span className="truncate">{t.schemeName || 'Installment Payment'}</span>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Tag size={14} className="text-accent flex-shrink-0" />
+                                            <p className="text-sm font-bold text-primary uppercase truncate">
+                                                {t.schemeName || 'Installment Payment'}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between w-full sm:w-auto gap-4 sm:gap-8 pt-4 sm:pt-0 border-t border-border/30 sm:border-0">
-                                        <div className="text-left sm:text-right flex-shrink-0">
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-70">Amount</p>
-                                            <p className="text-lg font-bold text-primary">{formatCurrency(t.amount)}</p>
-                                        </div>
+                                    {/* Middle: Amount (Stacked on mobile, side-by-side on desktop) */}
+                                    <div className="py-3 sm:py-0 px-0 sm:px-6 border-y sm:border-y-0 sm:border-x border-border/10 flex flex-row sm:flex-col justify-between sm:justify-center items-center sm:items-end gap-2">
+                                        <p className="text-[9px] font-black text-text-muted uppercase tracking-widest opacity-60">Amount</p>
+                                        <p className="text-lg font-bold text-primary leading-none">
+                                            {formatCurrency(t.amount)}
+                                        </p>
+                                    </div>
 
+                                    {/* Right: Actions */}
+                                    <div className="flex justify-end pl-0 sm:pl-2">
                                         <Button
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleDownloadInvoice(t)}
-                                            className="h-10 px-4 flex-shrink-0 border-primary/10 text-primary hover:bg-primary hover:text-white hover:border-primary transition-all rounded-xl"
+                                            className="h-10 px-5 border-primary/10 text-primary hover:bg-primary hover:text-white hover:border-primary transition-all rounded-xl shadow-sm hover:shadow-md active:scale-95"
                                         >
                                             <Download size={16} className="mr-2" />
                                             Invoice
