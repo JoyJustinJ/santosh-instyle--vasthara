@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, LogOut } from 'lucide-react';
+import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2 } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -19,7 +19,7 @@ import { useNotification } from '../context/NotificationContext';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth()!;
+    const { user } = useAuth()!;
     const { showNotification } = useNotification();
 
     // Protection: Only staff can access
@@ -298,11 +298,8 @@ const StaffDashboard = () => {
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div className="flex items-center gap-4 border-b border-border/50 pb-4">
-                    <button onClick={async () => {
-                        await logout();
-                        navigate('/login');
-                    }} className="p-2 -ml-2 text-primary">
-                        <LogOut size={24} />
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary">
+                        <ChevronLeft size={24} />
                     </button>
                     <UserCheck className="text-accent" size={28} />
                     <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Staff Console</h1>

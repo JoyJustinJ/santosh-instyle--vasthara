@@ -48,6 +48,21 @@ export const saveStaffRequestToDB = async (request: any) => {
     }
 };
 
+export const getStaffRequestByPhone = async (phone: string) => {
+    try {
+        const q = query(collection(db, "staff_requests"), where("phone", "==", phone));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const staffRequest = querySnapshot.docs[0];
+            return { id: staffRequest.id, ...staffRequest.data() };
+        }
+        return null;
+    } catch (e) {
+        console.error("Error getting staff request by phone:", e);
+        return null;
+    }
+};
+
 export const deleteStaffRequestFromDB = async (requestId: string) => {
     try {
         await deleteDoc(doc(db, "staff_requests", requestId));

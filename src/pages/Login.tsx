@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
 import { Notification, NotificationType } from '../components/UI/Notification';
-import { getUserFromDB, getUserByPhone, saveStaffRequestToDB } from '../services/db';
+import { getUserByPhone, getStaffRequestByPhone, saveStaffRequestToDB } from '../services/db';
 import { sendOTP, verifyOTP } from '../services/sms';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -75,6 +75,18 @@ const Login = () => {
     if (code.includes('auth/invalid-verification-code')) return 'The code you entered is incorrect.';
     if (code.includes('auth/network-request-failed')) return 'Connection trouble. Check your internet.';
     return error?.message || 'Oops! Something went wrong. Please try again.';
+  };
+
+  const getPhoneCandidates = (phone: string) => {
+    const sanitized = phone.replace(/[\s-]/g, '');
+    const candidates = [sanitized];
+    if (!sanitized.startsWith('+') && sanitized.length === 10) {
+      candidates.push(`+91${sanitized}`);
+    }
+    if (sanitized.startsWith('+91') && sanitized.length === 13) {
+      candidates.push(sanitized.slice(3));
+    }
+    return Array.from(new Set(candidates.filter(Boolean)));
   };
 
   const setupRecaptcha = () => {
@@ -145,13 +157,19 @@ const Login = () => {
       }
 
       // ── 2. Existing regular user / staff ───────────────────────────────────
-      let userDoc: any = await getUserByPhone(sanitizedPhone);
-
-      if (!userDoc && !sanitizedPhone.startsWith('+') && sanitizedPhone.length === 10) {
-        userDoc = await getUserByPhone(`+91${sanitizedPhone}`);
+      let userDoc: any = null;
+      for (const phoneCandidate of getPhoneCandidates(sanitizedPhone)) {
+        userDoc = await getUserByPhone(phoneCandidate);
+        if (userDoc) break;
       }
 
       if (userDoc) {
+        if (userDoc.role === 'staff' && userDoc.status !== 'active') {
+          showNotif('Your staff login is waiting for admin approval.', 'error');
+          setLoading(false);
+          return;
+        }
+
         const pinMatch = formData.password === userDoc.password || formData.password === userDoc.pin;
         if (formData.password && pinMatch) {
           setUser(userDoc);
@@ -160,10 +178,24 @@ const Login = () => {
           localStorage.setItem('vasthara_last_phone', userDoc.phone);
           localStorage.setItem('vasthara_pin', userDoc.pin || '');
           setLoading(false);
-          navigate(userDoc.role === 'staff' ? '/staff' : '/home');
+          navigate('/home');
           return;
         } else {
           showNotif('Incorrect Password or PIN', 'error');
+          setLoading(false);
+          return;
+        }
+      }
+
+      for (const phoneCandidate of getPhoneCandidates(sanitizedPhone)) {
+        const pendingStaff: any = await getStaffRequestByPhone(phoneCandidate);
+        if (pendingStaff) {
+          showNotif(
+            pendingStaff.status === 'rejected'
+              ? 'Your staff access request was not approved.'
+              : 'Your staff access request is waiting for admin approval.',
+            'error'
+          );
           setLoading(false);
           return;
         }
@@ -203,7 +235,7 @@ const Login = () => {
         if (userDoc) {
           setUser(userDoc);
           unlockApp();
-          navigate(userDoc.role === 'staff' ? '/staff' : '/home');
+          navigate('/home');
           showNotif('Logged in with Biometrics', 'success');
         } else {
           showNotif('User data not found. Please log in manually once.', 'error');
@@ -244,15 +276,24 @@ const Login = () => {
 
   const handleStaffRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffForm.name || !staffForm.branch || !staffForm.password) { showNotif('Please fill all fields'); return; }
+    const sanitizedPhone = staffForm.phone.replace(/[\s-]/g, '');
+    if (!staffForm.name || !staffForm.branch || !sanitizedPhone || !staffForm.password) { showNotif('Please fill all fields'); return; }
     setLoading(true);
+    const existingStaff = await getUserByPhone(sanitizedPhone);
+    const pendingStaff = await getStaffRequestByPhone(sanitizedPhone);
+    if (existingStaff || pendingStaff) {
+      setLoading(false);
+      showNotif(existingStaff ? 'An account with this mobile number already exists.' : 'A staff request for this mobile number is already pending.');
+      return;
+    }
     await saveStaffRequestToDB({
-      id: Math.random().toString(),
+      id: sanitizedPhone,
       name: staffForm.name,
       branch: staffForm.branch,
-      phone: staffForm.phone,
+      phone: sanitizedPhone,
       password: staffForm.password,
       status: 'pending',
+      requestedAt: new Date().toISOString(),
     });
     setLoading(false);
     showNotif('Request sent! Management must approve your access.', 'success');

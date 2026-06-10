@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, TrendingUp, Gift, Shield } from 'lucide-react';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
-import { useAuth } from '../context/AuthContext';
 import { useSchemes } from '../context/SchemeContext';
 import { useNotification } from '../context/NotificationContext';
 import { getSchemesFromDB, getAllUsersFromDB, getTransactionsFromDB } from '../services/db';
@@ -18,15 +17,10 @@ const Home = () => {
   const [schemes, setSchemes] = useState<any[]>([]);
   const [showPromo, setShowPromo] = useState(false);
 
-  const { user } = useAuth()!;
   const { userSchemes } = useSchemes() as any;
   const { showNotification } = useNotification();
 
   useEffect(() => {
-    if (user?.role === 'staff') {
-      navigate('/staff', { replace: true });
-      return;
-    }
     getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
 
     // Payment Reminders
@@ -55,7 +49,7 @@ const Home = () => {
       };
       checkDues();
     }
-  }, [user, navigate, userSchemes, showNotification]);
+  }, [navigate, userSchemes, showNotification]);
 
   // Removed random promo effect
 

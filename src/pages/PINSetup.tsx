@@ -55,6 +55,10 @@ const PINSetup = () => {
         try {
           // Store locally for setup completion state, but NOT the plaintext PIN
           localStorage.setItem('vasthara_pin_setup_complete', 'true');
+          localStorage.setItem('vasthara_pin', pin);
+          if (user?.phone) {
+            localStorage.setItem('vasthara_last_phone', user.phone);
+          }
 
           // Persist to DB if user is logged in
           const userId = user?.id || user?.uid || user?.phone;

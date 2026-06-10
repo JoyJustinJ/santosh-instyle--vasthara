@@ -4,7 +4,7 @@ import { ChevronLeft, Receipt, Download, RefreshCw, Calendar, Tag, UserCheck, Al
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getTransactionsFromDB, getUserPlansFromDB, getSchemesFromDB } from '../services/db';
-import { Card } from '../components/UI/Card';
+import { Badge, Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { formatCurrency, cn } from '../utils';
 

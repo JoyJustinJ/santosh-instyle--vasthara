@@ -13,6 +13,7 @@ import { SideDrawer } from './components/Layout/SideDrawer';
 
 // Pages
 import Login from './pages/Login';
+import StartPage from './pages/StartPage';
 import Signup from './pages/Signup';
 import OTPVerify from './pages/OTPVerify';
 import PINSetup from './pages/PINSetup';
@@ -85,7 +86,7 @@ const AppContent = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const hideNavs = ['/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/staff'].includes(location.pathname);
+  const hideNavs = ['/', '/login', '/signup', '/otp-verify', '/set-pin', '/pin-login'].includes(location.pathname);
 
   return (
     <div className="mobile-container">
@@ -95,6 +96,7 @@ const AppContent = () => {
       <main className={!hideNavs ? 'pt-16 pb-20' : ''}>
         <AnimatePresence mode="wait">
           <Routes location={location}>
+            <Route path="/" element={<StartPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/otp-verify" element={<OTPVerify />} />
@@ -105,7 +107,11 @@ const AppContent = () => {
                 <AdminDashboard />
               </AdminGuard>
             } />
-            <Route path="/staff" element={<StaffDashboard />} />
+            <Route path="/staff" element={
+              <ProtectedRoute>
+                <StaffDashboard />
+              </ProtectedRoute>
+            } />
 
 
             <Route path="/set-pin" element={
@@ -192,7 +198,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
         </AnimatePresence>
       </main>

@@ -31,6 +31,16 @@ const PINLogin = () => {
   useEffect(() => {
     inputRef.current?.focus();
 
+    if (!user) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    if (!user.pin && !localStorage.getItem('vasthara_pin')) {
+      navigate('/set-pin', { replace: true });
+      return;
+    }
+
     // Auto-trigger biometric login if enabled
     if (biometricEnabled && biometricSupported() && localStorage.getItem('vasthara_biometric_credId')) {
       handleBiometricLogin();
@@ -52,7 +62,7 @@ const PINLogin = () => {
   };
 
   const handleLogin = () => {
-    const validPin = user?.pin;
+    const validPin = user?.pin || localStorage.getItem('vasthara_pin');
 
     if (pin === validPin) {
       unlockApp();
