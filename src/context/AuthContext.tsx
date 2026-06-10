@@ -22,6 +22,9 @@ export interface User {
   phone?: string;
   role: 'customer' | 'admin' | 'staff';
   pin?: string;
+  password?: string;
+  status?: string;
+  accessLevel?: string;
   avatar?: string;
   emailVerified?: boolean;
   branch?: string;
@@ -52,7 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isAdmin) return { role: 'admin', firstName: 'Admin', lastName: 'User', id: 'admin', pin: 'ADMIN_BYPASS' };
     
     const saved = localStorage.getItem('vasthara_user_minimal');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('vasthara_user_minimal');
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(() => {
@@ -79,8 +88,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: userData.id,
             firstName: userData.firstName,
             lastName: userData.lastName,
+            email: userData.email,
+            phone: userData.phone,
+            role: userData.role,
+            pin: userData.pin,
             avatar: userData.avatar,
-            emailVerified: userData.emailVerified
+            emailVerified: userData.emailVerified,
+            branch: userData.branch,
+            status: userData.status,
+            accessLevel: userData.accessLevel
           };
           localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalData));
         } else {
@@ -115,7 +131,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: basicData.id,
             firstName: basicData.firstName,
             lastName: basicData.lastName,
-            emailVerified: basicData.emailVerified
+            email: basicData.email,
+            phone: basicData.phone,
+            role: basicData.role,
+            pin: basicData.pin,
+            emailVerified: basicData.emailVerified,
+            branch: basicData.branch,
+            status: basicData.status,
+            accessLevel: basicData.accessLevel
           };
           localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
         }
@@ -167,6 +190,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     localStorage.removeItem('vasthara_user_minimal');
     localStorage.removeItem('vasthara_pin');
+    localStorage.removeItem('vasthara_last_phone');
     localStorage.removeItem('is_admin_authenticated');
     localStorage.removeItem('is_primary_admin');
   };
@@ -188,8 +212,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id: userData.id,
         firstName: userData.firstName,
         lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role,
+        pin: userData.pin,
         avatar: userData.avatar,
-        emailVerified: userData.emailVerified
+        emailVerified: userData.emailVerified,
+        branch: userData.branch,
+        status: userData.status,
+        accessLevel: userData.accessLevel
       };
       localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimal));
     } else {

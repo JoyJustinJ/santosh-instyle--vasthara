@@ -16,7 +16,8 @@ import {
   Camera,
   Check,
   X,
-  Moon
+  Moon,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from '../components/UI/ThemeToggle';
@@ -91,6 +92,7 @@ const Profile = () => {
     { label: 'Security & PIN', icon: Shield, path: '/profile/security' },
     { label: 'Notifications', icon: Bell, path: '/notifications' },
     { label: 'Transactions', icon: CreditCard, path: '/transactions' },
+    ...(user?.role === 'staff' ? [{ label: 'STAFF AUTHORITY', icon: UserCheck, path: '/staff', isSpecial: true }] : []),
     ...(user?.role === 'admin' ? [{ label: 'ADMIN ACCESS', icon: Shield, path: '/admin?view=management', isSpecial: true }] : []),
   ];
 
