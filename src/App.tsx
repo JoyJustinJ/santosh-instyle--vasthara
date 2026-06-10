@@ -57,10 +57,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
-  const userHasPinInDB = !!user.pin;
+  const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
 
   // If the user has NOT set up a PIN yet, force them to set it up.
-  if (!userHasPinInDB) {
+  if (!userHasPin) {
     if (location.pathname !== '/set-pin') {
       return <Navigate to="/set-pin" replace />;
     }

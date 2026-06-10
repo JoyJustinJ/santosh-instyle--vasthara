@@ -229,9 +229,11 @@ const PayEMI = () => {
         <div className="space-y-4">
           <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Select Plans to Pay</h3>
           <div className="space-y-3">
-            {userSchemes.length === 0 ? (
+            {userSchemes.filter((s: any) => s.status !== 'completed' && (s.monthsPaid || 0) < (s.duration || 0)).length === 0 ? (
               <p className="text-sm text-text-muted px-2">You don't have any active plans yet.</p>
-            ) : userSchemes.map((s: any) => {
+            ) : userSchemes
+              .filter((s: any) => s.status !== 'completed' && (s.monthsPaid || 0) < (s.duration || 0))
+              .map((s: any) => {
               const isPaid = paidPlanIds.includes(s.accountId);
               return (
                 <Card

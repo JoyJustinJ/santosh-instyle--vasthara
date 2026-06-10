@@ -237,9 +237,13 @@ const AdminDashboard = () => {
 
                 const paid = s.monthlyAmount;
                 const schemeRef = doc(db, "user_schemes", accountId);
+                const nextMonthsPaid = (s.monthsPaid || 0) + 1;
+                const isCompleted = nextMonthsPaid >= (s.duration || 0);
                 await updateDoc(schemeRef, {
-                    monthsPaid: (s.monthsPaid || 0) + 1,
+                    monthsPaid: nextMonthsPaid,
                     totalPaid: (s.totalPaid || 0) + paid,
+                    status: isCompleted ? 'completed' : (s.status || 'active'),
+                    completedAt: isCompleted ? new Date().toISOString() : s.completedAt,
                 });
 
                 const transactionId = await recordTransactionInDB({

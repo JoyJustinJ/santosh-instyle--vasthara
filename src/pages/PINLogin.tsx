@@ -296,7 +296,10 @@ const PINLogin = () => {
 
           <div className="text-center">
             <button
-              onClick={() => navigate('/login')}
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
               className="text-xs font-black text-accent uppercase tracking-[0.2em] hover:underline"
             >
               Forgot PIN?

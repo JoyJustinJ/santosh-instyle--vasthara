@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Sparkles, ChevronRight, TrendingUp } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, Plus, Sparkles, ChevronRight, TrendingUp, MapPin } from 'lucide-react';
 import { useSchemes } from '../context/SchemeContext';
 import { Card, Badge, ProgressBar } from '../components/UI';
 import { Button } from '../components/UI/Button';
@@ -50,32 +50,52 @@ const MySchemes = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {userSchemes.map((plan, i) => (
-            <motion.div
-              key={plan.accountId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card
-                onClick={() => navigate(`/plan-detail/${plan.accountId}`)}
-                className="p-0 overflow-hidden border-none shadow-card group"
+          {userSchemes.map((plan, i) => {
+            const duration = plan.duration || 0;
+            const paidMonths = duration > 0 ? Math.min(plan.monthsPaid || 0, duration) : (plan.monthsPaid || 0);
+            const progressPercent = duration > 0 ? Math.round((paidMonths / duration) * 100) : 0;
+            const isCompleted = plan.status === 'completed' || (duration > 0 && paidMonths >= duration);
+
+            return (
+              <motion.div
+                key={plan.accountId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
               >
-                <div className="p-6 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex gap-2">
-                        <Badge variant="success">ACTIVE</Badge>
-                        <Badge variant="default">{plan.monthsPaid}/{plan.duration} PAID</Badge>
+                <Card
+                  onClick={() => navigate(`/plan-detail/${plan.accountId}`)}
+                  className="p-0 overflow-hidden border-none shadow-card group"
+                >
+                  <div className="p-6 space-y-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={isCompleted ? 'primary' : 'success'}>
+                            {isCompleted ? 'COMPLETED' : 'ACTIVE'}
+                          </Badge>
+                          <Badge variant="default">{paidMonths}/{duration} PAID</Badge>
+                        </div>
+                        <h3 className="text-xl font-display font-bold text-primary mt-2">
+                          {plan.name}
+                        </h3>
                       </div>
-                      <h3 className="text-xl font-display font-bold text-primary mt-2">
-                        {plan.name}
-                      </h3>
+                      <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text-muted group-hover:bg-accent-light group-hover:text-accent transition-colors">
+                        <ChevronRight size={20} />
+                      </div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text-muted group-hover:bg-accent-light group-hover:text-accent transition-colors">
-                      <ChevronRight size={20} />
-                    </div>
-                  </div>
+
+                    {isCompleted && (
+                      <div className="rounded-2xl border border-success/30 bg-success-light/40 p-4 flex gap-3">
+                        <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-success">Scheme completed</p>
+                          <p className="text-xs leading-5 text-text-secondary">
+                            Please collect your redemption from our main branch. Bring your Account ID and a valid photo ID for verification.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
@@ -85,31 +105,42 @@ const MySchemes = () => {
                       </div>
                       <div className="text-right space-y-1">
                         <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Payments Due</p>
-                        <p className="text-lg font-bold text-accent">{plan.monthsPaid}/{plan.duration}</p>
+                        <p className="text-lg font-bold text-accent">{paidMonths}/{duration}</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                         <span className="text-text-muted">Progress</span>
-                        <span className="text-accent">{Math.round((plan.monthsPaid / plan.duration) * 100)}%</span>
+                        <span className="text-accent">{progressPercent}%</span>
                       </div>
-                      <ProgressBar current={plan.monthsPaid} total={plan.duration} />
+                      <ProgressBar current={paidMonths} total={duration} />
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-surface px-6 py-3 flex justify-between items-center border-t border-border/50">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider">
-                    <TrendingUp size={14} /> Next Due: {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString('default', { month: 'long' })}
+                    {isCompleted ? (
+                      <>
+                        <MapPin size={14} /> Redemption: Main Branch
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp size={14} /> Next Due: {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString('default', { month: 'long' })}
+                      </>
+                    )}
                   </div>
-                  <button className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">
-                    Pay Now
-                  </button>
+                  {!isCompleted && (
+                    <button className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">
+                      Pay Now
+                    </button>
+                  )}
                 </div>
               </Card>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       )}
 

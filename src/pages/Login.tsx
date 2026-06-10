@@ -27,7 +27,7 @@ const ADMIN_PIN = (import.meta.env.VITE_ADMIN_PIN || '4444').trim();
 const Login = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user, isBiometricEnabled: biometricEnabled } = useAuth()!;
+  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user, isUnlocked, isBiometricEnabled: biometricEnabled } = useAuth()!;
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<'login' | 'staff_request' | 'otp_verify'>('login');
@@ -48,18 +48,19 @@ const Login = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // If already logged in as a normal user, go home
+  // If already logged in and unlocked, go home. If PIN-locked, allow this page
+  // to stay available for password recovery or switching accounts.
   useEffect(() => {
-    if (user) {
+    if (user && isUnlocked) {
       navigate('/home');
     } else {
       // Auto-trigger biometric login if available and enabled
       const credId = localStorage.getItem('vasthara_biometric_credId');
-      if (biometricEnabled && biometricSupported() && credId) {
+      if (!user && biometricEnabled && biometricSupported() && credId) {
         handleBiometricLogin();
       }
     }
-  }, [user]);
+  }, [user, isUnlocked]);
 
   const toggleLang = (lang: string) => {
     i18n.changeLanguage(lang);

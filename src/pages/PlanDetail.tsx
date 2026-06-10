@@ -39,6 +39,10 @@ const PlanDetail = () => {
 
   if (!plan) return <div className="p-8 text-center text-primary font-bold">Plan not found</div>;
 
+  const duration = plan.duration || 0;
+  const paidMonths = duration > 0 ? Math.min(plan.monthsPaid || 0, duration) : (plan.monthsPaid || 0);
+  const isCompleted = plan.status === 'completed' || (duration > 0 && paidMonths >= duration);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -67,9 +71,11 @@ const PlanDetail = () => {
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <h2 className="text-2xl font-display font-bold text-primary">{plan.name}</h2>
-              <div className="flex gap-2">
-                <Badge variant="success">ACTIVE</Badge>
-                <Badge variant="default">{plan.duration} MONTHS</Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={isCompleted ? 'primary' : 'success'}>
+                  {isCompleted ? 'COMPLETED' : 'ACTIVE'}
+                </Badge>
+                <Badge variant="default">{duration} MONTHS</Badge>
               </div>
             </div>
             <div className="text-right">
@@ -81,10 +87,22 @@ const PlanDetail = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
               <span className="text-text-muted">Payment Progress</span>
-              <span className="text-primary">{plan.monthsPaid} of {plan.duration} Months</span>
+              <span className="text-primary">{paidMonths} of {duration} Months</span>
             </div>
-            <ProgressBar current={plan.monthsPaid} total={plan.duration} />
+            <ProgressBar current={paidMonths} total={duration} />
           </div>
+
+          {isCompleted && (
+            <div className="rounded-2xl border border-success/30 bg-success-light/40 p-4 flex gap-3">
+              <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-success">Scheme completed</p>
+                <p className="text-xs leading-5 text-text-secondary">
+                  Please collect your redemption from our main branch. Bring this Account ID and a valid photo ID for verification.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div className="p-4 bg-white rounded-2xl border border-border/50 space-y-1">
@@ -92,8 +110,8 @@ const PlanDetail = () => {
               <p className="text-lg font-bold text-primary">₹0</p>
             </div>
             <div className="p-4 bg-white rounded-2xl border border-border/50 space-y-1">
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Next Due</p>
-              <p className="text-lg font-bold text-warning">Flexible</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{isCompleted ? 'Redemption' : 'Next Due'}</p>
+              <p className="text-lg font-bold text-warning">{isCompleted ? 'Main Branch' : 'Flexible'}</p>
             </div>
           </div>
         </Card>
@@ -155,16 +173,18 @@ const PlanDetail = () => {
       </div>
 
       {/* Action Bar */}
-      <div className="fixed bottom-24 left-6 right-6 z-30">
-        <Button
-          fullWidth
-          size="lg"
-          onClick={() => navigate('/pay-emi')}
-          className="h-16 shadow-card text-base flex gap-3"
-        >
-          <CreditCard size={20} /> PAY NEXT INSTALLMENT
-        </Button>
-      </div>
+      {!isCompleted && (
+        <div className="fixed bottom-24 left-6 right-6 z-30">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={() => navigate('/pay-emi')}
+            className="h-16 shadow-card text-base flex gap-3"
+          >
+            <CreditCard size={20} /> PAY NEXT INSTALLMENT
+          </Button>
+        </div>
+      )}
     </motion.div>
   );
 };
