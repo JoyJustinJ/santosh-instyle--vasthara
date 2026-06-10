@@ -12,7 +12,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   total, 
   variant = 'active' 
 }) => {
-  const percentage = Math.min((current / total) * 100, 100);
+  const safeTotal = total > 0 ? total : 1;
+  const safeCurrent = Math.max(current || 0, 0);
+  const percentage = Math.min((safeCurrent / safeTotal) * 100, 100);
   const color = variant === 'active' ? 'bg-accent' : 'bg-success';
 
   return (
@@ -24,7 +26,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           className={`h-full ${color}`}
         />
       </div>
-      <p className="text-xs text-text-secondary">{current} of {total} months paid</p>
+      <p className="text-xs text-text-secondary">{safeCurrent} of {total || 0} months paid</p>
     </div>
   );
 };

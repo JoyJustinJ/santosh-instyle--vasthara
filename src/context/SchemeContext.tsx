@@ -65,9 +65,13 @@ export const SchemeProvider = ({ children }) => {
       const schemeRef = doc(db, "user_schemes", payment.accountId);
       const current = userSchemes.find(s => s.accountId === payment.accountId);
       if (current) {
+        const nextMonthsPaid = (current.monthsPaid || 0) + 1;
+        const isCompleted = nextMonthsPaid >= (current.duration || 0);
         await updateDoc(schemeRef, {
-          monthsPaid: (current.monthsPaid || 0) + 1,
+          monthsPaid: nextMonthsPaid,
           totalPaid: (current.totalPaid || 0) + payment.amount,
+          status: isCompleted ? 'completed' : (current.status || 'active'),
+          completedAt: isCompleted ? new Date().toISOString() : current.completedAt,
         });
         const txId = await recordTransactionInDB({
           userId,
