@@ -78,11 +78,6 @@ const PayEMI = () => {
   const handlePayment = async () => {
     if (selectedPlans.length === 0 || !paymentMethod) return;
 
-    if (!RAZORPAY_KEY_ID) {
-      showNotification("Razorpay key is not configured.", "error");
-      return;
-    }
-
     if (!window.Razorpay) {
       showNotification("Payment checkout could not load. Please try again.", "error");
       return;
@@ -119,8 +114,14 @@ const PayEMI = () => {
         throw new Error(order?.error || 'Unable to create payment order');
       }
 
+      const razorpayKeyId = RAZORPAY_KEY_ID || order.key_id;
+
+      if (!razorpayKeyId) {
+        throw new Error('Razorpay key is not configured');
+      }
+
       const razorpay = new window.Razorpay({
-        key: RAZORPAY_KEY_ID,
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: 'Vasthara',
