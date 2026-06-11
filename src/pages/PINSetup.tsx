@@ -9,8 +9,6 @@ import { useNotification } from '../context/NotificationContext';
 import { updateUserPIN } from '../services/db';
 import {
   checkBiometricAvailability,
-  generateChallenge,
-  bufferToBase64url,
   storeBiometricCredentialId,
 } from '../utils/biometrics';
 
@@ -110,26 +108,15 @@ const PINSetup = () => {
   // --- Biometric Registration (from PINSetup after first PIN set) ---
   const handleEnableBiometrics = async () => {
     try {
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: generateChallenge(),
-          rp: { name: 'Vasthara', id: window.location.hostname },
-          user: {
-            id: new TextEncoder().encode(user?.id || user?.phone || 'vasthara_user'),
-            name: user?.phone || user?.email || user?.id || 'vasthara_user',
-            displayName: `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
-          },
-          pubKeyCredParams: [{ alg: -7, type: 'public-key' as const }],
-          authenticatorSelection: { userVerification: 'required' as const },
-          timeout: 60000,
-        },
-      }) as PublicKeyCredential | null;
+      const { verifyBiometric } = await import('../utils/biometrics');
+      const success = await verifyBiometric();
 
-      if (credential) {
-        const rawId = bufferToBase64url((credential as PublicKeyCredential).rawId);
-        storeBiometricCredentialId(rawId, user?.id || user?.phone);
+      if (success) {
+        storeBiometricCredentialId('true', user?.id || user?.phone);
         setBiometricEnabled(true);
         showNotification('Biometrics enabled successfully!', 'success');
+      } else {
+        showNotification('Biometric setup failed. You can enable it later in Security Settings.', 'info');
       }
     } catch (err) {
       console.error('Biometric registration failed', err);
@@ -224,7 +211,7 @@ const PINSetup = () => {
             pattern="[0-9]*"
             value={currentVal}
             onChange={handleInputChange}
-            className="absolute opacity-0 pointer-events-none"
+            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
             autoFocus
           />
 

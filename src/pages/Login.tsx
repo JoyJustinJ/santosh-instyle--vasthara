@@ -13,9 +13,8 @@ import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
 import {
   checkBiometricAvailability,
-  generateChallenge,
-  base64urlToBuffer,
-  getStoredBiometricCredentialId
+  getStoredBiometricCredentialId,
+  verifyBiometric
 } from '../utils/biometrics';
 import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
@@ -232,16 +231,9 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge: generateChallenge(),
-          allowCredentials: [{ id: base64urlToBuffer(credId), type: 'public-key' }],
-          userVerification: 'required',
-          timeout: 60000,
-        },
-      });
+      const success = await verifyBiometric();
 
-      if (assertion && storedPhone) {
+      if (success && storedPhone) {
         const userDoc: any = await getUserByPhone(storedPhone);
         if (userDoc) {
           setUser(userDoc);
