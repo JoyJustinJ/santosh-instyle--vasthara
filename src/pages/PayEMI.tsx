@@ -26,6 +26,14 @@ declare global {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
+const getApiErrorMessage = (error: unknown) => {
+  if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    return 'Payment server is unreachable. Please check the deployed API URL and try again.';
+  }
+
+  return error instanceof Error ? error.message : 'Payment failed. Please try again.';
+};
+
 const PayEMI = () => {
   const navigate = useNavigate();
   const { userSchemes, payEMI } = useSchemes() as any;
@@ -78,11 +86,6 @@ const PayEMI = () => {
   const handlePayment = async () => {
     if (selectedPlans.length === 0 || !paymentMethod) return;
 
-    if (!RAZORPAY_KEY_ID) {
-      showNotification("Razorpay key is not configured.", "error");
-      return;
-    }
-
     if (!window.Razorpay) {
       showNotification("Payment checkout could not load. Please try again.", "error");
       return;
@@ -119,8 +122,14 @@ const PayEMI = () => {
         throw new Error(order?.error || 'Unable to create payment order');
       }
 
+      const razorpayKeyId = RAZORPAY_KEY_ID || order.key_id;
+
+      if (!razorpayKeyId) {
+        throw new Error('Razorpay key is not configured');
+      }
+
       const razorpay = new window.Razorpay({
-        key: RAZORPAY_KEY_ID,
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: 'Vasthara',
@@ -182,7 +191,7 @@ const PayEMI = () => {
       razorpay.open();
     } catch (err) {
       console.error(err);
-      showNotification(err instanceof Error ? err.message : "Payment failed. Please try again.", "error");
+      showNotification(getApiErrorMessage(err), "error");
       setLoading(false);
     } finally {
       setLoading(false);
