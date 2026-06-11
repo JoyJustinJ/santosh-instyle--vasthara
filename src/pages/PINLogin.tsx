@@ -7,10 +7,14 @@ import { useAuth } from '../context/AuthContext';
 import { cn } from '../utils';
 import {
   biometricSupported,
+  checkBiometricAvailability,
   generateChallenge,
   bufferToBase64url,
   base64urlToBuffer,
+  getStoredBiometricCredentialId,
+  storeBiometricCredentialId,
 } from '../utils/biometrics';
+import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
 
 const PINLogin = () => {
@@ -26,6 +30,7 @@ const PINLogin = () => {
 
   // Biometric states
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricError, setBiometricError] = useState('');
 
   useEffect(() => {
@@ -41,10 +46,18 @@ const PINLogin = () => {
       return;
     }
 
-    // Auto-trigger biometric login if enabled
-    if (biometricEnabled && biometricSupported() && localStorage.getItem('vasthara_biometric_credId')) {
-      handleBiometricLogin();
-    }
+    let cancelled = false;
+    checkBiometricAvailability().then((available) => {
+      if (cancelled) return;
+      setBiometricAvailable(available);
+      if (biometricEnabled && available && getStoredBiometricCredentialId(user.id || user.phone)) {
+        handleBiometricLogin();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -68,7 +81,7 @@ const PINLogin = () => {
       unlockApp();
       
       // Show biometric enrolment prompt if not yet answered and device supports it
-      if (!localStorage.getItem('vasthara_biometric_prompted') && biometricSupported()) {
+      if (!localStorage.getItem('vasthara_biometric_prompted') && biometricAvailable) {
         setShowBiometricPrompt(true);
       } else {
         navigate('/home');
@@ -105,8 +118,8 @@ const PINLogin = () => {
           challenge: generateChallenge(),
           rp: { name: 'Vasthara', id: window.location.hostname },
           user: {
-            id: new TextEncoder().encode(user?.phone ?? 'vasthara_user'),
-            name: user?.phone ?? 'vasthara_user',
+            id: new TextEncoder().encode(user?.id || user?.phone || 'vasthara_user'),
+            name: user?.phone || user?.email || user?.id || 'vasthara_user',
             displayName: `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
           },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' as const }],
@@ -117,7 +130,7 @@ const PINLogin = () => {
 
       if (credential) {
         const rawId = bufferToBase64url((credential as PublicKeyCredential).rawId);
-        localStorage.setItem('vasthara_biometric_credId', rawId);
+        storeBiometricCredentialId(rawId, user?.id || user?.phone);
         setBiometricEnabled(true);
         localStorage.setItem('vasthara_biometric_prompted', 'true');
       }
@@ -138,8 +151,13 @@ const PINLogin = () => {
   // --- Biometric Authentication ---
   const handleBiometricLogin = async () => {
     setBiometricError('');
-    const credId = localStorage.getItem('vasthara_biometric_credId');
-    if (!credId || !biometricSupported()) return;
+    const credId = getStoredBiometricCredentialId(user?.id || user?.phone);
+    const available = await checkBiometricAvailability();
+    setBiometricAvailable(available);
+    if (!credId || !available) {
+      setBiometricError('Biometric login is not available on this device. Use your PIN.');
+      return;
+    }
 
     try {
       const assertion = await navigator.credentials.get({
@@ -214,9 +232,8 @@ const PINLogin = () => {
     >
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="flex flex-col items-center">
-          <div className="w-20 h-20 bg-primary rounded-[28px] flex items-center justify-center shadow-card relative overflow-hidden">
-            <span className="text-white text-5xl font-display font-bold">V</span>
-            <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#D4AF37] rounded-tl-full" />
+          <div className="w-20 h-20 bg-primary rounded-[28px] flex items-center justify-center shadow-card overflow-hidden">
+            <img src={vastharaIcon} alt="Vasthara" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-xl font-display font-bold tracking-tighter mt-4 text-primary">
             VASTHARA
@@ -234,7 +251,7 @@ const PINLogin = () => {
 
         <div className="w-full space-y-8 relative">
           {/* Biometric button — shown only when biometrics are enrolled */}
-          {biometricEnabled && biometricSupported() && localStorage.getItem('vasthara_biometric_credId') && (
+          {biometricEnabled && biometricAvailable && getStoredBiometricCredentialId(user?.id || user?.phone) && (
             <div className="flex justify-center">
               <button
                 onClick={handleBiometricLogin}

@@ -31,6 +31,15 @@ export interface User {
   balance?: number;
   savings?: number;
   createdAt?: string;
+  updatedAt?: string;
+  accountCreatedVia?: 'phone' | 'email' | 'google' | 'staff' | 'admin';
+  phoneVerified?: boolean;
+  address?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  pincode?: string;
+  referralStaff?: string;
 }
 
 const AuthContext = createContext<{
@@ -96,7 +105,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             emailVerified: userData.emailVerified,
             branch: userData.branch,
             status: userData.status,
-            accessLevel: userData.accessLevel
+            accessLevel: userData.accessLevel,
+            accountCreatedVia: userData.accountCreatedVia,
+            phoneVerified: userData.phoneVerified,
+            createdAt: userData.createdAt,
+            updatedAt: userData.updatedAt,
+            address: userData.address,
+            country: userData.country,
+            state: userData.state,
+            city: userData.city,
+            pincode: userData.pincode,
+            referralStaff: userData.referralStaff
           };
           localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalData));
         } else {
@@ -109,6 +128,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             phone: firebaseUser.phoneNumber || '',
             role: 'customer',
             emailVerified: firebaseUser.emailVerified,
+            accountCreatedVia: firebaseUser.providerData.some((p) => p.providerId === 'google.com') ? 'google' : 'email',
+            phoneVerified: !!firebaseUser.phoneNumber,
             createdAt: new Date().toISOString(),
             balance: 0,
             savings: 0
@@ -138,7 +159,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             emailVerified: basicData.emailVerified,
             branch: basicData.branch,
             status: basicData.status,
-            accessLevel: basicData.accessLevel
+            accessLevel: basicData.accessLevel,
+            accountCreatedVia: basicData.accountCreatedVia,
+            phoneVerified: basicData.phoneVerified,
+            createdAt: basicData.createdAt
           };
           localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
         }
@@ -220,7 +244,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         emailVerified: userData.emailVerified,
         branch: userData.branch,
         status: userData.status,
-        accessLevel: userData.accessLevel
+        accessLevel: userData.accessLevel,
+        accountCreatedVia: userData.accountCreatedVia,
+        phoneVerified: userData.phoneVerified,
+        createdAt: userData.createdAt,
+        updatedAt: userData.updatedAt,
+        address: userData.address,
+        country: userData.country,
+        state: userData.state,
+        city: userData.city,
+        pincode: userData.pincode,
+        referralStaff: userData.referralStaff
       };
       localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimal));
     } else {

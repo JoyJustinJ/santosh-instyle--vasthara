@@ -50,7 +50,7 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     const { createUserProfile } = await import('../services/db');
-    const updatedUser = { ...user, ...formData, avatar: avatarPreview };
+    const updatedUser = { ...user, ...formData, avatar: avatarPreview || user?.avatar };
     await createUserProfile(updatedUser);
     updateUserContext(updatedUser);
     setIsEditing(false);
@@ -153,7 +153,7 @@ const Profile = () => {
                 {user?.firstName} {user?.lastName}
               </h2>
               <p className="text-sm font-medium text-white/60 mt-1">
-                Customer ID: V-88291
+                Customer ID: {user?.id || user?.phone || 'Pending'}
               </p>
             </>
           )}
@@ -224,7 +224,10 @@ const Profile = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Email Address</p>
-                      <p className="text-sm font-bold text-primary">{user?.email}</p>
+                      <p className="text-sm font-bold text-primary">{user?.email || 'Not provided'}</p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">
+                        {user?.emailVerified ? 'Email Verified' : 'Email Not Verified'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -236,6 +239,33 @@ const Profile = () => {
                       <p className="text-sm font-bold text-primary">{user?.branch || 'Hosur'}</p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-text-muted">
+                      <UserCheck size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Account Details</p>
+                      <p className="text-sm font-bold text-primary">
+                        Created via {(user?.accountCreatedVia || 'phone').toUpperCase()}
+                      </p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">
+                        {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Join date unavailable'}
+                      </p>
+                    </div>
+                  </div>
+                  {(user?.address || user?.city || user?.state || user?.pincode) && (
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-text-muted">
+                        <MapPin size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Address</p>
+                        <p className="text-sm font-bold text-primary">
+                          {[user?.address, user?.city, user?.state, user?.pincode].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
 

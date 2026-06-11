@@ -6,16 +6,20 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/UI/Button';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { cn } from '../utils';
+import { checkBiometricAvailability, getStoredBiometricCredentialId, getBiometricCredentialKey } from '../utils/biometrics';
 
 const SecuritySettings = () => {
     const navigate = useNavigate();
-    const { isBiometricEnabled, setBiometricEnabled } = useAuth()!;
+    const { isBiometricEnabled, setBiometricEnabled, user } = useAuth()!;
     const [notification, setNotification] = useState<{ message: string; type: NotificationType } | null>(null);
     const [hasStoredCredId, setHasStoredCredId] = useState(false);
+    const [biometricAvailable, setBiometricAvailable] = useState(false);
 
     useEffect(() => {
-        setHasStoredCredId(!!localStorage.getItem('vasthara_biometric_credId'));
-    }, []);
+        const userId = user?.id || user?.phone;
+        setHasStoredCredId(!!getStoredBiometricCredentialId(userId));
+        checkBiometricAvailability().then(setBiometricAvailable);
+    }, [user]);
 
     const showNotif = (message: string, type: NotificationType = 'success') => {
         setNotification({ message, type });
@@ -27,6 +31,10 @@ const SecuritySettings = () => {
             setBiometricEnabled(false);
             showNotif('Biometric login disabled', 'info');
         } else {
+            if (!biometricAvailable) {
+                showNotif('Biometric login is not available on this device/browser', 'error');
+                return;
+            }
             if (!hasStoredCredId) {
                 showNotif('Please log in with PIN first to enable biometrics', 'error');
                 return;
@@ -37,7 +45,9 @@ const SecuritySettings = () => {
     };
 
     const handleClearBiometrics = () => {
+        const userId = user?.id || user?.phone;
         localStorage.removeItem('vasthara_biometric_credId');
+        localStorage.removeItem(getBiometricCredentialKey(userId));
         setBiometricEnabled(false);
         setHasStoredCredId(false);
         showNotif('Biometric data cleared', 'info');
@@ -96,7 +106,9 @@ const SecuritySettings = () => {
                         </div>
                         <div>
                             <h2 className="font-bold">Biometric Login</h2>
-                            <p className="text-xs text-text-muted">Use Fingerprint or Face ID to unlock</p>
+                            <p className="text-xs text-text-muted">
+                                {biometricAvailable ? 'Use Fingerprint or Face ID to unlock' : 'Unavailable on this device/browser'}
+                            </p>
                         </div>
                     </div>
 

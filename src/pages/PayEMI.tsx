@@ -3,36 +3,17 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
-  Smartphone,
+  CreditCard,
   CheckCircle2,
 } from 'lucide-react';
 import { useSchemes } from '../context/SchemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { getTransactionsFromDB } from '../services/db';
+import { payWithRazorpay } from '../services/razorpay';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { formatCurrency, cn } from '../utils';
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: any) => {
-      open: () => void;
-      on: (event: string, callback: (response: any) => void) => void;
-    };
-  }
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-
-const getApiErrorMessage = (error: unknown) => {
-  if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return 'Payment server is unreachable. Please check the deployed API URL and try again.';
-  }
-
-  return error instanceof Error ? error.message : 'Payment failed. Please try again.';
-};
 
 const PayEMI = () => {
   const navigate = useNavigate();
@@ -86,113 +67,40 @@ const PayEMI = () => {
   const handlePayment = async () => {
     if (selectedPlans.length === 0 || !paymentMethod) return;
 
-    if (!window.Razorpay) {
-      showNotification("Payment checkout could not load. Please try again.", "error");
-      return;
-    }
-
     const payments = selectedPlans.map(id => {
       const plan = userSchemes.find((s: any) => s.accountId === id);
       return { accountId: id, amount: plan?.monthlyAmount || 0 };
     });
 
-    const amountInPaise = Math.round(totalAmount * 100);
-
-    if (amountInPaise < 100) {
-      showNotification("Minimum payment amount is ₹1.", "error");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const orderResponse = await fetch(`${API_BASE_URL}/api/create-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: amountInPaise,
-          currency: 'INR',
-          receipt: `vasthara_${Date.now()}`,
-        }),
-      });
-
-      const order = await orderResponse.json();
-
-      if (!orderResponse.ok) {
-        throw new Error(order?.error || 'Unable to create payment order');
-      }
-
-      const razorpayKeyId = RAZORPAY_KEY_ID || order.key_id;
-
-      if (!razorpayKeyId) {
-        throw new Error('Razorpay key is not configured');
-      }
-
-      const razorpay = new window.Razorpay({
-        key: razorpayKeyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Vasthara',
+      const payment = await payWithRazorpay({
+        amount: totalAmount,
+        receipt: `vasthara_emi_${Date.now()}`,
         description: 'Installment payment',
-        order_id: order.order_id,
-        prefill: {
-          name: user?.name || '',
-          contact: user?.phone || '',
-          email: user?.email || '',
-        },
-        theme: {
-          color: '#8A5A44',
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-            showNotification("Payment cancelled.", "error");
-          },
-        },
-        handler: async (response: any) => {
-          setLoading(true);
-
-          try {
-            const verifyResponse = await fetch(`${API_BASE_URL}/api/verify-payment`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-
-            const verification = await verifyResponse.json();
-
-            if (!verifyResponse.ok || !verification.success) {
-              throw new Error(verification?.error || 'Payment verification failed');
-            }
-
-            const txIds = await payEMI(payments, user?.id || user?.phone);
-            setRealTransactionIds(txIds);
-            showNotification("Payment successful! Your plans have been updated.", "success");
-            setSuccess(true);
-          } catch (err: any) {
-            console.error(err);
-            showNotification(err?.message || "Payment verification failed.", "error");
-          } finally {
-            setLoading(false);
-          }
+        user,
+        notes: {
+          purpose: 'emi',
+          userId: user?.id || user?.phone || '',
+          accountIds: selectedPlans.join(','),
         },
       });
 
-      razorpay.on('payment.failed', (response: any) => {
-        setLoading(false);
-        const message = response?.error?.description || "Payment failed. Please try again.";
-        showNotification(message, "error");
+      const txIds = await payEMI(payments, user?.id || user?.phone, {
+        razorpayPaymentId: payment.razorpay_payment_id,
+        razorpayOrderId: payment.razorpay_order_id,
+        razorpaySignature: payment.razorpay_signature,
+        gatewayReceipt: payment.receipt,
+        gatewayAmount: payment.amount,
+        gatewayCurrency: payment.currency,
       });
-
-      razorpay.open();
+      setRealTransactionIds(txIds);
+      showNotification("Payment successful! Your plans have been updated.", "success");
+      setSuccess(true);
     } catch (err) {
       console.error(err);
-      showNotification(getApiErrorMessage(err), "error");
-      setLoading(false);
+      showNotification(err instanceof Error ? err.message : "Payment failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -329,7 +237,7 @@ const PayEMI = () => {
           <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Payment Method</h3>
           <div className="space-y-3">
             {[
-              { id: 'upi', label: 'UPI (GPay, PhonePe, Paytm)', icon: Smartphone }
+              { id: 'razorpay', label: 'Razorpay Secure Checkout', icon: CreditCard }
             ].map((method) => (
               <button
                 key={method.id}

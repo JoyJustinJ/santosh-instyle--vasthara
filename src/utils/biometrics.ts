@@ -5,18 +5,39 @@
 
 export const biometricSupported = () => {
     return !!(
+        window.isSecureContext &&
+        navigator.credentials &&
         window.PublicKeyCredential &&
         window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
     );
 };
 
 export const checkBiometricAvailability = async () => {
-    if (!biometricSupported()) return false;
-    return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    try {
+        if (!biometricSupported()) return false;
+        return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch {
+        return false;
+    }
 };
 
 export const generateChallenge = () => {
-    return new Uint8Array(32).map(() => Math.floor(Math.random() * 256));
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    return challenge;
+};
+
+export const getBiometricCredentialKey = (userId?: string) => {
+    return `vasthara_biometric_credId_${userId || 'default'}`;
+};
+
+export const getStoredBiometricCredentialId = (userId?: string) => {
+    return localStorage.getItem(getBiometricCredentialKey(userId)) || localStorage.getItem('vasthara_biometric_credId');
+};
+
+export const storeBiometricCredentialId = (credentialId: string, userId?: string) => {
+    localStorage.setItem(getBiometricCredentialKey(userId), credentialId);
+    localStorage.setItem('vasthara_biometric_credId', credentialId);
 };
 
 /**
@@ -46,4 +67,3 @@ export const base64urlToBuffer = (base64url: string): ArrayBuffer => {
     }
     return buffer;
 };
-

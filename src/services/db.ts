@@ -75,9 +75,12 @@ export const deleteStaffRequestFromDB = async (requestId: string) => {
 export const recordTransactionInDB = async (transaction: any): Promise<string | null> => {
     try {
         const referenceId = transaction.referenceId || `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        const docRef = await addDoc(collection(db, "transactions"), {
+        const docRef = doc(collection(db, "transactions"));
+        await setDoc(docRef, {
             ...transaction,
+            id: docRef.id,
             referenceId,
+            invoicePrimaryKey: docRef.id,
             date: new Date().toLocaleDateString('en-GB'), // 10-04-2024 format
             timestamp: new Date().toISOString()
         });
@@ -130,10 +133,15 @@ export const createUserProfile = async (uidOrData: any, userData?: any) => {
         await setDoc(doc(db, "users", uid), {
             ...data,
             id: uid,
+            role: data.role || 'customer',
+            emailVerified: data.emailVerified === true,
+            phoneVerified: data.phoneVerified === true,
+            accountCreatedVia: data.accountCreatedVia || 'phone',
             createdAt: data.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             balance: data.balance !== undefined ? data.balance : 0,
             savings: data.savings !== undefined ? data.savings : 0
-        });
+        }, { merge: true });
     } catch (e) {
         console.error("Error creating user profile:", e);
     }

@@ -5,6 +5,7 @@ import { Menu, Bell, Globe, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationDrawer } from './NotificationDrawer';
 import { getNotificationsFromDB } from '../../services/db';
+import vastharaIcon from '../../assets/vasthara-icon.jpeg';
 
 export const Navbar = ({ onMenuClick }) => {
   const { t, i18n } = useTranslation();
@@ -42,12 +43,15 @@ export const Navbar = ({ onMenuClick }) => {
 
         <div 
           onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/home')}
-          className="flex flex-col items-center cursor-pointer group"
+          className="flex items-center gap-2 cursor-pointer group"
         >
-          <h1 className="text-xl font-display font-bold tracking-tighter text-primary group-hover:text-accent transition-colors">
-            VASTHARA
-          </h1>
-          <div className="h-0.5 w-8 bg-[#D4AF37] -mt-1 group-hover:w-12 transition-all" />
+          <img src={vastharaIcon} alt="Vasthara" className="w-9 h-9 rounded-xl object-cover shadow-subtle" />
+          <div className="flex flex-col items-center">
+            <h1 className="text-xl font-display font-bold tracking-tighter text-primary group-hover:text-accent transition-colors">
+              VASTHARA
+            </h1>
+            <div className="h-0.5 w-8 bg-[#D4AF37] -mt-1 group-hover:w-12 transition-all" />
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

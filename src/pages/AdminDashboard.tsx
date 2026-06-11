@@ -569,7 +569,7 @@ const AdminDashboard = () => {
                 tx.amount || 0,
                 tx.date || new Date(tx.timestamp).toLocaleDateString(),
                 (tx.type || 'unknown').toUpperCase(),
-                (tx.method || 'UPI').toUpperCase(),
+                (tx.method || 'Razorpay').toUpperCase(),
                 tx.recordedBy || 'System',
                 `"${schemeName}"`
             ];
