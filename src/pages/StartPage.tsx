@@ -13,9 +13,35 @@ import {
 import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
 import vastharaIcon from '../assets/vasthara-icon.jpeg';
+import { useAuth } from '../context/AuthContext';
 
 const StartPage = () => {
   const navigate = useNavigate();
+  const { user, loading, isUnlocked } = useAuth()!;
+
+  React.useEffect(() => {
+    if (!loading && user) {
+      if (isUnlocked) {
+        navigate('/home', { replace: true });
+      } else {
+        navigate('/pin-login', { replace: true });
+      }
+    }
+  }, [user, loading, isUnlocked, navigate]);
+
+  if (loading || user) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <motion.div
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="w-24 h-24 rounded-[28px] bg-primary flex items-center justify-center shadow-card overflow-hidden"
+        >
+          <img src={vastharaIcon} alt="Vasthara" className="w-full h-full object-cover" />
+        </motion.div>
+      </div>
+    );
+  }
 
   const infoSections = [
     {
