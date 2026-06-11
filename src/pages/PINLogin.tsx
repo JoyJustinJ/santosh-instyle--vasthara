@@ -6,13 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../utils';
 import {
-  biometricSupported,
   checkBiometricAvailability,
-  generateChallenge,
-  bufferToBase64url,
-  base64urlToBuffer,
-  getStoredBiometricCredentialId,
   storeBiometricCredentialId,
+  getStoredBiometricCredentialId,
 } from '../utils/biometrics';
 import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
@@ -113,27 +109,9 @@ const PINLogin = () => {
   // --- Biometric Registration ---
   const handleEnableBiometrics = async () => {
     try {
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: generateChallenge(),
-          rp: { name: 'Vasthara', id: window.location.hostname },
-          user: {
-            id: new TextEncoder().encode(user?.id || user?.phone || 'vasthara_user'),
-            name: user?.phone || user?.email || user?.id || 'vasthara_user',
-            displayName: `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
-          },
-          pubKeyCredParams: [{ alg: -7, type: 'public-key' as const }],
-          authenticatorSelection: { userVerification: 'required' as const },
-          timeout: 60000,
-        },
-      }) as PublicKeyCredential | null;
-
-      if (credential) {
-        const rawId = bufferToBase64url((credential as PublicKeyCredential).rawId);
-        storeBiometricCredentialId(rawId, user?.id || user?.phone);
-        setBiometricEnabled(true);
-        localStorage.setItem('vasthara_biometric_prompted', 'true');
-      }
+      storeBiometricCredentialId('true', user?.id || user?.phone);
+      setBiometricEnabled(true);
+      localStorage.setItem('vasthara_biometric_prompted', 'true');
     } catch (err) {
       console.error('Biometric registration failed', err);
     } finally {
@@ -160,23 +138,14 @@ const PINLogin = () => {
     }
 
     try {
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge: generateChallenge(),
-          allowCredentials: [
-            {
-              id: base64urlToBuffer(credId),
-              type: 'public-key' as const,
-            },
-          ],
-          userVerification: 'required' as const,
-          timeout: 60000,
-        },
-      });
+      const { verifyBiometric } = await import('../utils/biometrics');
+      const success = await verifyBiometric();
 
-      if (assertion) {
+      if (success) {
         unlockApp();
         navigate('/home');
+      } else {
+        setBiometricError('Biometric verification failed. Use your PIN.');
       }
     } catch (err) {
       setBiometricError('Biometric verification failed. Use your PIN.');
@@ -277,7 +246,7 @@ const PINLogin = () => {
             pattern="[0-9]*"
             value={pin}
             onChange={handleInputChange}
-            className="absolute opacity-0 pointer-events-none"
+            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
             disabled={lockout > 0}
             autoFocus
           />
