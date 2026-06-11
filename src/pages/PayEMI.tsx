@@ -3,12 +3,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
-  CreditCard,
   Smartphone,
-  Landmark,
   CheckCircle2,
-  ShieldCheck,
-  Users
 } from 'lucide-react';
 import { useSchemes } from '../context/SchemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,8 +12,19 @@ import { useNotification } from '../context/NotificationContext';
 import { getTransactionsFromDB } from '../services/db';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
-import { Input } from '../components/UI/Input';
 import { formatCurrency, cn } from '../utils';
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: any) => {
+      open: () => void;
+      on: (event: string, callback: (response: any) => void) => void;
+    };
+  }
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const PayEMI = () => {
   const navigate = useNavigate();
@@ -27,10 +34,8 @@ const PayEMI = () => {
 
   const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [staffReferral, setStaffReferral] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [showQR, setShowQR] = useState(false);
   const [paidPlanIds, setPaidPlanIds] = useState<string[]>([]);
   const [realTransactionIds, setRealTransactionIds] = useState<string[]>([]);
 
@@ -72,80 +77,117 @@ const PayEMI = () => {
 
   const handlePayment = async () => {
     if (selectedPlans.length === 0 || !paymentMethod) return;
-    setShowQR(true);
-  };
 
-  const handleQRScanned = async () => {
-    setLoading(true);
+    if (!RAZORPAY_KEY_ID) {
+      showNotification("Razorpay key is not configured.", "error");
+      return;
+    }
+
+    if (!window.Razorpay) {
+      showNotification("Payment checkout could not load. Please try again.", "error");
+      return;
+    }
 
     const payments = selectedPlans.map(id => {
       const plan = userSchemes.find((s: any) => s.accountId === id);
       return { accountId: id, amount: plan?.monthlyAmount || 0 };
     });
 
+    const amountInPaise = Math.round(totalAmount * 100);
+
+    if (amountInPaise < 100) {
+      showNotification("Minimum payment amount is ₹1.", "error");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const txIds = await payEMI(payments, user?.id || user?.phone);
-      setRealTransactionIds(txIds);
-      showNotification("Payment successful! Your plans have been updated.", "success");
-      setShowQR(false);
-      setSuccess(true);
+      const orderResponse = await fetch(`${API_BASE_URL}/api/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: 'INR',
+          receipt: `vasthara_${Date.now()}`,
+        }),
+      });
+
+      const order = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(order?.error || 'Unable to create payment order');
+      }
+
+      const razorpay = new window.Razorpay({
+        key: RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Vasthara',
+        description: 'Installment payment',
+        order_id: order.order_id,
+        prefill: {
+          name: user?.name || '',
+          contact: user?.phone || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#8A5A44',
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            showNotification("Payment cancelled.", "error");
+          },
+        },
+        handler: async (response: any) => {
+          setLoading(true);
+
+          try {
+            const verifyResponse = await fetch(`${API_BASE_URL}/api/verify-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verification = await verifyResponse.json();
+
+            if (!verifyResponse.ok || !verification.success) {
+              throw new Error(verification?.error || 'Payment verification failed');
+            }
+
+            const txIds = await payEMI(payments, user?.id || user?.phone);
+            setRealTransactionIds(txIds);
+            showNotification("Payment successful! Your plans have been updated.", "success");
+            setSuccess(true);
+          } catch (err: any) {
+            console.error(err);
+            showNotification(err?.message || "Payment verification failed.", "error");
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+
+      razorpay.on('payment.failed', (response: any) => {
+        setLoading(false);
+        const message = response?.error?.description || "Payment failed. Please try again.";
+        showNotification(message, "error");
+      });
+
+      razorpay.open();
     } catch (err) {
       console.error(err);
-      showNotification("Payment failed. Please try again.", "error");
+      showNotification(err instanceof Error ? err.message : "Payment failed. Please try again.", "error");
+      setLoading(false);
     } finally {
       setLoading(false);
     }
   };
-
-  if (showQR) {
-    const upiLink = `upi://pay?pa=jkjustin1805-2@oksbi&pn=Vasthara&am=${totalAmount}&cu=INR`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(upiLink)}`;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="page-transition-wrapper p-8 flex flex-col items-center justify-center min-h-screen text-center space-y-6"
-      >
-        <div className="space-y-2">
-          <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
-            Pay Amount: {formatCurrency(totalAmount)}
-          </h2>
-          <p className="text-sm font-medium text-text-secondary">
-            Scan the QR or click below to pay via GPay/PhonePe
-          </p>
-        </div>
-
-        <Card className="bg-white p-6 inline-block border border-border shadow-subtle rounded-3xl relative overflow-hidden">
-          <img
-            src={qrUrl}
-            className="w-64 h-64 object-contain rounded-xl"
-            alt="Payment QR Code"
-          />
-          <div className="absolute inset-0 border-4 border-transparent border-t-accent rounded-3xl animate-spin" style={{ animationDuration: '3s' }} />
-        </Card>
-
-        <div className="space-y-4 pt-4 w-full">
-          <a href={upiLink} className="w-full block">
-            <Button fullWidth size="lg" className="bg-[#1A73E8] hover:bg-[#1557B0] text-white shadow-card">
-              <Smartphone size={20} className="mr-2" /> Open UPI App
-            </Button>
-          </a>
-
-          <Button fullWidth size="lg" loading={loading} onClick={handleQRScanned} className="bg-success hover:bg-green-700 shadow-card">
-            <CheckCircle2 size={20} className="mr-2" /> I Have Paid
-          </Button>
-
-          <button
-            onClick={() => setShowQR(false)}
-            className="text-xs font-black text-text-muted uppercase tracking-widest hover:text-primary transition-colors mt-2"
-          >
-            Cancel Payment
-          </button>
-        </div>
-      </motion.div>
-    );
-  }
 
   if (success) {
     return (

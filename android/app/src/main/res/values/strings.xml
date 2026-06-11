@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vasthara</string>
+    <string name="title_activity_main">Vasthara</string>
+    <string name="package_name">com.santoshinstyle.vasthara</string>
+    <string name="custom_url_scheme">com.santoshinstyle.vasthara</string>
+</resources>
