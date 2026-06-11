@@ -32,7 +32,7 @@ export const SchemeProvider = ({ children }) => {
     return () => unsub();
   }, [currentUserId]);
 
-  const joinScheme = async (scheme: any, planId: string, userId: string) => {
+  const joinScheme = async (scheme: any, planId: string, userId: string, paymentMeta: any = {}) => {
     const newEntry = {
       ...scheme,
       userId,
@@ -53,13 +53,16 @@ export const SchemeProvider = ({ children }) => {
       amount: scheme.monthlyAmount,
       type: 'deposit',
       status: 'Success',
-      method: 'UPI'
+      method: 'Razorpay',
+      paymentGateway: 'razorpay',
+      planId,
+      ...paymentMeta
     });
     showNotification(`Successfully joined ${scheme.name}!`, 'success');
     return newEntry;
   };
 
-  const payEMI = async (payments: { accountId: string, amount: number }[], userId: string): Promise<string[]> => {
+  const payEMI = async (payments: { accountId: string, amount: number }[], userId: string, paymentMeta: any = {}): Promise<string[]> => {
     const transactionIds: string[] = [];
     for (const payment of payments) {
       const schemeRef = doc(db, "user_schemes", payment.accountId);
@@ -80,7 +83,12 @@ export const SchemeProvider = ({ children }) => {
           amount: payment.amount,
           type: 'deposit',
           status: 'Success',
-          method: 'UPI'
+          method: 'Razorpay',
+          paymentGateway: 'razorpay',
+          ...paymentMeta,
+          referenceId: paymentMeta.razorpayPaymentId
+            ? `${paymentMeta.razorpayPaymentId}-${payment.accountId}`
+            : paymentMeta.referenceId
         });
         if (txId) transactionIds.push(txId);
       }

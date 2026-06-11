@@ -19,14 +19,18 @@ const Transactions = () => {
         setLoading(true);
         if (user) {
             try {
-                // Fetch transactions and plans/schemes for mapping
-                // Use user.phone to match how transactions are recorded in joinScheme/payEMI
-                const userId = user.phone || user.id;
-                const [txData, userPlans, allSchemes] = await Promise.all([
-                    userId ? getTransactionsFromDB(userId) : Promise.resolve([]),
-                    user.phone ? getUserPlansFromDB(user.phone) : Promise.resolve([]),
+                const userIds = Array.from(new Set([user.id, user.phone].filter(Boolean)));
+                const [txGroups, planGroups, allSchemes] = await Promise.all([
+                    Promise.all(userIds.map((id) => getTransactionsFromDB(id))),
+                    Promise.all(userIds.map((id) => getUserPlansFromDB(id))),
                     getSchemesFromDB()
                 ]);
+                const txData = Array.from(
+                    new Map(txGroups.flat().map((tx: any) => [tx.id, tx])).values()
+                );
+                const userPlans = Array.from(
+                    new Map(planGroups.flat().map((plan: any) => [plan.id || plan.accountId, plan])).values()
+                );
 
                 const mapping: Record<string, string> = {};
                 // Map from accountId to schemeName
@@ -57,12 +61,16 @@ const Transactions = () => {
         // Resolve scheme name using transaction property, then the fetched mapping
         const resolvedSchemeName = t.schemeName || planMap[t.accountId] || planMap[t.schemeId] || 'General Deposit';
 
+        const invoicePrimaryKey = t.invoicePrimaryKey || t.id;
+        const paymentId = t.razorpayPaymentId || t.gatewayPaymentId || '';
+        const orderId = t.razorpayOrderId || '';
+
         // Create an invoice structure
         const invoiceHTML = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Invoice - ${t.id}</title>
+                <title>Invoice - ${invoicePrimaryKey}</title>
                 <style>
                     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
                     .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 16px; line-height: 24px; color: #555; }
@@ -91,7 +99,10 @@ const Transactions = () => {
                                             <b>Vasthara</b>
                                         </td>
                                         <td>
-                                            Invoice #: ${t.referenceId || t.id}<br>
+                                            Invoice Primary Key: ${invoicePrimaryKey}<br>
+                                            Reference #: ${t.referenceId || invoicePrimaryKey}<br>
+                                            ${paymentId ? `Razorpay Payment ID: ${paymentId}<br>` : ''}
+                                            ${orderId ? `Razorpay Order ID: ${orderId}<br>` : ''}
                                             Created: ${t.date || new Date(t.timestamp).toLocaleDateString()}<br>
                                             Status: Paid
                                         </td>
@@ -110,6 +121,7 @@ const Transactions = () => {
                                         <td>
                                             Username: ${user?.firstName} ${user?.lastName}<br>
                                             Phone Number: +91 ${user?.phone}<br>
+                                            Email: ${user?.email || 'Not provided'}<br>
                                         </td>
                                     </tr>
                                 </table>
@@ -120,7 +132,7 @@ const Transactions = () => {
                             <td>Amount</td>
                         </tr>
                         <tr class="details">
-                            <td>${t.method || 'Cash / Deposit'}</td>
+                            <td>${t.method || 'Razorpay'}</td>
                             <td>${formatCurrency(t.amount)}</td>
                         </tr>
                         <tr class="heading">
@@ -137,7 +149,7 @@ const Transactions = () => {
                         </tr>
                     </table>
                     <div class="text-center">
-                        <p>Thank you for choosing Vasthara Financial Services.</p>
+                        <p>Thank you for choosing Vasthara.</p>
                         <p>This is a computer generated invoice and does not require a physical signature.</p>
                     </div>
                 </div>

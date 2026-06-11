@@ -66,7 +66,15 @@ const OTPVerify = () => {
       const finalUserId = verifyMethod === 'phone'
         ? profileData.phone
         : (user?.id || profileData.phone);
-      const finalProfile = { ...profileData, id: finalUserId };
+      const finalProfile = {
+        ...profileData,
+        id: finalUserId,
+        role: profileData.role || 'customer',
+        emailVerified: verifyMethod === 'email',
+        phoneVerified: verifyMethod === 'phone',
+        accountCreatedVia: verifyMethod,
+        createdAt: new Date().toISOString(),
+      };
       await createUserProfile(finalUserId, finalProfile);
       localStorage.removeItem('pending_signup');
 

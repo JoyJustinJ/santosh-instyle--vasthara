@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
+import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
 const StartPage = () => {
   const navigate = useNavigate();
@@ -44,9 +45,8 @@ const StartPage = () => {
       <section className="pt-8 space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-card relative overflow-hidden">
-              <span className="text-3xl font-display font-bold">V</span>
-              <div className="absolute bottom-0 right-0 w-5 h-5 bg-[#D4AF37] rounded-tl-full" />
+            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-card overflow-hidden">
+              <img src={vastharaIcon} alt="Vasthara" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.25em]">

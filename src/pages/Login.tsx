@@ -12,10 +12,12 @@ import { sendOTP, verifyOTP } from '../services/sms';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
 import {
-  biometricSupported,
+  checkBiometricAvailability,
   generateChallenge,
-  base64urlToBuffer
+  base64urlToBuffer,
+  getStoredBiometricCredentialId
 } from '../utils/biometrics';
+import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
 
 // ── Admin fallback (stored in .env for security) ──────────────────────────
@@ -34,6 +36,7 @@ const Login = () => {
   const [showLang, setShowLang] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: NotificationType } | null>(null);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({ phone: '', password: '', otp: '', securityPin: '' });
@@ -54,11 +57,13 @@ const Login = () => {
     if (user && isUnlocked) {
       navigate('/home');
     } else {
-      // Auto-trigger biometric login if available and enabled
-      const credId = localStorage.getItem('vasthara_biometric_credId');
-      if (!user && biometricEnabled && biometricSupported() && credId) {
-        handleBiometricLogin();
-      }
+      checkBiometricAvailability().then((available) => {
+        setBiometricAvailable(available);
+        const credId = getStoredBiometricCredentialId(localStorage.getItem('vasthara_last_phone') || undefined);
+        if (!user && biometricEnabled && available && credId) {
+          handleBiometricLogin();
+        }
+      });
     }
   }, [user, isUnlocked]);
 
@@ -216,9 +221,14 @@ const Login = () => {
   };
 
   const handleBiometricLogin = async () => {
-    const credId = localStorage.getItem('vasthara_biometric_credId');
     const storedPhone = localStorage.getItem('vasthara_last_phone');
-    if (!credId || !biometricSupported()) return;
+    const credId = getStoredBiometricCredentialId(storedPhone || undefined);
+    const available = await checkBiometricAvailability();
+    setBiometricAvailable(available);
+    if (!credId || !available) {
+      showNotif('Biometric login is not available on this device. Please log in manually.', 'error');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -346,9 +356,8 @@ const Login = () => {
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="flex flex-col items-center">
-          <div className="w-20 h-20 bg-primary rounded-[28px] flex items-center justify-center shadow-card relative overflow-hidden">
-            <span className="text-white text-5xl font-display font-bold">V</span>
-            <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#D4AF37] rounded-tl-full" />
+          <div className="w-20 h-20 bg-primary rounded-[28px] flex items-center justify-center shadow-card overflow-hidden">
+            <img src={vastharaIcon} alt="Vasthara" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-display font-bold tracking-tighter mt-6 text-primary">VASTHARA</h1>
         </div>
@@ -411,7 +420,7 @@ const Login = () => {
                   <span className="text-sm font-bold text-text-primary">Google Account</span>
                 </button>
 
-                {biometricEnabled && biometricSupported() && localStorage.getItem('vasthara_biometric_credId') && (
+                {biometricEnabled && biometricAvailable && getStoredBiometricCredentialId(localStorage.getItem('vasthara_last_phone') || undefined) && (
                   <button
                     onClick={handleBiometricLogin}
                     className="w-full h-14 mt-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center gap-3 hover:bg-primary/10 transition-all text-primary"

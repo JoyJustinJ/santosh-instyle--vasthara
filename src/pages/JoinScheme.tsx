@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle2, ShieldCheck, Info, Smartphone } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, ShieldCheck, Info, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSchemes } from '../context/SchemeContext';
 import { useNotification } from '../context/NotificationContext';
 import { getSchemesFromDB } from '../services/db';
+import { payWithRazorpay } from '../services/razorpay';
 import { Card, Badge } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -45,11 +46,32 @@ const JoinScheme = () => {
 
   if (loadingScheme || !scheme) return <div className="p-12 text-center text-text-muted">Verifying plan...</div>;
 
-  // ── Step 2: UPI Payment screen ──────────────────────────────────────────────
+  // ── Step 2: Razorpay Payment screen ─────────────────────────────────────────
   const handleJoinAfterPayment = async () => {
     setLoading(true);
     try {
-      const account = await joinScheme(scheme, planId, user?.phone || user?.id);
+      const userId = user?.id || user?.phone;
+      const payment = await payWithRazorpay({
+        amount: scheme.monthlyAmount,
+        receipt: `vasthara_join_${planId || 'plan'}_${Date.now()}`,
+        description: `${scheme.name} first month payment`,
+        user,
+        notes: {
+          purpose: 'scheme_join',
+          userId: userId || '',
+          planId: planId || '',
+          schemeName: scheme.name,
+        },
+      });
+      const account = await joinScheme(scheme, planId, userId, {
+        razorpayPaymentId: payment.razorpay_payment_id,
+        razorpayOrderId: payment.razorpay_order_id,
+        razorpaySignature: payment.razorpay_signature,
+        gatewayReceipt: payment.receipt,
+        gatewayAmount: payment.amount,
+        gatewayCurrency: payment.currency,
+        referenceId: payment.razorpay_payment_id,
+      });
       setNewAccount(account);
       showNotification(`Successfully joined ${scheme.name}!`, "success");
       setStep('success');
@@ -62,9 +84,6 @@ const JoinScheme = () => {
   };
 
   if (step === 'payment') {
-    const upiLink = `upi://pay?pa=jkjustin1805-2@oksbi&pn=Vasthara&am=${scheme.monthlyAmount}&cu=INR`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(upiLink)}`;
-
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -77,34 +96,32 @@ const JoinScheme = () => {
             Pay {formatCurrency(scheme.monthlyAmount)}
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Scan the QR or tap Open UPI App to pay your first instalment and activate the scheme.
+            Complete the secure Razorpay checkout to pay your first instalment and activate the scheme.
           </p>
         </div>
 
-        <Card className="bg-white p-6 inline-block border border-border shadow-subtle rounded-3xl relative overflow-hidden">
-          <img
-            src={qrUrl}
-            className="w-64 h-64 object-contain rounded-xl"
-            alt="Payment QR Code"
-          />
-          <div className="absolute inset-0 border-4 border-transparent border-t-accent rounded-3xl animate-spin" style={{ animationDuration: '3s' }} />
+        <Card className="bg-white p-8 border border-border shadow-subtle rounded-3xl w-full">
+          <div className="w-24 h-24 mx-auto rounded-3xl bg-accent-light text-accent flex items-center justify-center">
+            <CreditCard size={44} strokeWidth={1.5} />
+          </div>
+          <div className="mt-6 space-y-2">
+            <p className="text-xs font-black text-text-muted uppercase tracking-widest">Payment Gateway</p>
+            <p className="text-lg font-display font-bold text-primary">Razorpay Secure Checkout</p>
+            <p className="text-xs font-medium text-text-secondary">
+              Cards, wallets, net banking, and supported checkout options are handled by Razorpay.
+            </p>
+          </div>
         </Card>
 
         <div className="space-y-4 pt-4 w-full">
-          <a href={upiLink} className="w-full block">
-            <Button fullWidth size="lg" className="bg-[#1A73E8] hover:bg-[#1557B0] text-white shadow-card">
-              <Smartphone size={20} className="mr-2" /> Open UPI App
-            </Button>
-          </a>
-
           <Button
             fullWidth
             size="lg"
             loading={loading}
             onClick={handleJoinAfterPayment}
-            className="bg-success hover:bg-green-700 shadow-card"
+            className="shadow-card"
           >
-            <CheckCircle2 size={20} className="mr-2" /> I Have Paid — Activate Scheme
+            <CreditCard size={20} className="mr-2" /> Pay with Razorpay
           </Button>
 
           <button

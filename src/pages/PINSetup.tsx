@@ -8,9 +8,10 @@ import { cn } from '../utils';
 import { useNotification } from '../context/NotificationContext';
 import { updateUserPIN } from '../services/db';
 import {
-  biometricSupported,
+  checkBiometricAvailability,
   generateChallenge,
   bufferToBase64url,
+  storeBiometricCredentialId,
 } from '../utils/biometrics';
 
 const PINSetup = () => {
@@ -22,6 +23,7 @@ const PINSetup = () => {
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const queryParams = new URLSearchParams(window.location.search);
@@ -32,6 +34,10 @@ const PINSetup = () => {
   useEffect(() => {
     inputRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    checkBiometricAvailability().then(setBiometricAvailable);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
@@ -77,7 +83,7 @@ const PINSetup = () => {
           } else {
             unlockApp();
             // Show biometric prompt for new PIN setup (if device supports it)
-            if (biometricSupported() && !localStorage.getItem('vasthara_biometric_prompted')) {
+            if (biometricAvailable && !localStorage.getItem('vasthara_biometric_prompted')) {
               setStep(3);
             } else {
               navigate('/home');
@@ -109,8 +115,8 @@ const PINSetup = () => {
           challenge: generateChallenge(),
           rp: { name: 'Vasthara', id: window.location.hostname },
           user: {
-            id: new TextEncoder().encode(user?.phone ?? 'vasthara_user'),
-            name: user?.phone ?? 'vasthara_user',
+            id: new TextEncoder().encode(user?.id || user?.phone || 'vasthara_user'),
+            name: user?.phone || user?.email || user?.id || 'vasthara_user',
             displayName: `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
           },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' as const }],
@@ -121,7 +127,7 @@ const PINSetup = () => {
 
       if (credential) {
         const rawId = bufferToBase64url((credential as PublicKeyCredential).rawId);
-        localStorage.setItem('vasthara_biometric_credId', rawId);
+        storeBiometricCredentialId(rawId, user?.id || user?.phone);
         setBiometricEnabled(true);
         showNotification('Biometrics enabled successfully!', 'success');
       }
