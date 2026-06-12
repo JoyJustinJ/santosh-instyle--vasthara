@@ -21,7 +21,8 @@ const StartPage = () => {
 
   React.useEffect(() => {
     if (!loading && user) {
-      if (isUnlocked) {
+      const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
+      if (isUnlocked || !userHasPin) {
         navigate('/home', { replace: true });
       } else {
         navigate('/pin-login', { replace: true });
