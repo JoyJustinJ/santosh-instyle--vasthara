@@ -83,10 +83,10 @@ const OTPVerify = () => {
       if (verifyMethod === 'phone') {
         const saved = await getUserByPhone(profileData.phone);
         if (saved) {
-          setUser(saved);
+          setUser(saved as any);
           localStorage.setItem('vasthara_user', JSON.stringify(saved));
         } else {
-          setUser(finalProfile);
+          setUser(finalProfile as any);
           localStorage.setItem('vasthara_user', JSON.stringify(finalProfile));
         }
         // Don't unlock yet — PIN setup will unlock after PIN is confirmed
@@ -195,7 +195,7 @@ const OTPVerify = () => {
               {otp.map((digit, i) => (
                 <input
                   key={i}
-                  ref={(el) => (inputRefs.current[i] = el)}
+                  ref={(el) => (inputRefs.current[i] = el as HTMLInputElement)}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}

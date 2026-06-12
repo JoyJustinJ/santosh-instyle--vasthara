@@ -65,11 +65,11 @@ const PINSetup = () => {
           }
 
           // Persist to DB if user is logged in
-          const userId = user?.id || user?.uid || user?.phone;
+          const userId = user?.id || (user as any)?.uid || user?.phone;
           if (userId) {
             await updateUserPIN(userId, pin);
             if (user) {
-              setUser({ ...user, pin });
+              setUser({ ...user, pin } as any);
             }
           }
 
