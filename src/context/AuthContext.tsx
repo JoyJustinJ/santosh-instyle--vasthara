@@ -134,10 +134,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             balance: 0,
             savings: 0
           };
-          // Only auto-create profile for Google sign-in (has displayName or email but no pending_signup)
-          // For email+OTP flow, OTPVerify will handle profile creation from pending_signup
+          // Only auto-create profile for Google sign-in or if there's no pending signup
+          const isGoogle = firebaseUser.providerData.some((p) => p.providerId === 'google.com');
           const hasPendingSignup = !!localStorage.getItem('pending_signup');
-          if (!hasPendingSignup) {
+          
+          if (isGoogle || !hasPendingSignup) {
             try {
               await setDoc(doc(db, "users", firebaseUser.uid), basicData);
             } catch (e) {
@@ -146,25 +147,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Mark as unlocked since Google login is a fresh auth
             setIsUnlocked(true);
             sessionStorage.setItem('vasthara_unlocked_session', 'true');
+            
+            setUser(basicData);
+            const minimalBasic = {
+              id: basicData.id,
+              firstName: basicData.firstName,
+              lastName: basicData.lastName,
+              email: basicData.email,
+              phone: basicData.phone,
+              role: basicData.role,
+              pin: basicData.pin,
+              emailVerified: basicData.emailVerified,
+              branch: basicData.branch,
+              status: basicData.status,
+              accessLevel: basicData.accessLevel,
+              accountCreatedVia: basicData.accountCreatedVia,
+              phoneVerified: basicData.phoneVerified,
+              createdAt: basicData.createdAt
+            };
+            localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
+          } else {
+            // Do NOT call setUser. The user is in the middle of signup.
+            // When OTPVerify successfully completes, it will set the user and local storage.
+            // If they close the app, they start from scratch and are not partially logged in.
+            setUser(null);
+            localStorage.removeItem('vasthara_user_minimal');
           }
-          setUser(basicData);
-          const minimalBasic = {
-            id: basicData.id,
-            firstName: basicData.firstName,
-            lastName: basicData.lastName,
-            email: basicData.email,
-            phone: basicData.phone,
-            role: basicData.role,
-            pin: basicData.pin,
-            emailVerified: basicData.emailVerified,
-            branch: basicData.branch,
-            status: basicData.status,
-            accessLevel: basicData.accessLevel,
-            accountCreatedVia: basicData.accountCreatedVia,
-            phoneVerified: basicData.phoneVerified,
-            createdAt: basicData.createdAt
-          };
-          localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
         }
       } else {
         // Only clear if there's no manual user or admin session stored

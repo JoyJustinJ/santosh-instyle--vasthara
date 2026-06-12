@@ -1,15 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getTransactionsFromDB, recordTransactionInDB } from '../services/db';
-import { db, auth } from '../firebase';
+import { recordTransactionInDB } from '../services/db';
+import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
 const SchemeContext = createContext<any>(null);
 
-export const SchemeProvider = ({ children }) => {
-  const [userSchemes, setUserSchemes] = useState([]);
+export const SchemeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [userSchemes, setUserSchemes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth() as any;
   const { showNotification } = useNotification();

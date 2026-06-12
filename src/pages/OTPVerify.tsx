@@ -8,6 +8,7 @@ import { cn } from '../utils';
 import { sendOTP, verifyOTP } from '../services/sms';
 import { createUserProfile, getUserByPhone } from '../services/db';
 import { useAuth } from '../context/AuthContext';
+import { auth } from '../firebase';
 
 const OTPVerify = () => {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ const OTPVerify = () => {
   const [error, setError] = useState(false);
   const [verifyMethod, setVerifyMethod] = useState<'phone' | 'email'>('phone');
   const [targetValue, setTargetValue] = useState('');
-  const inputRefs = useRef([]);
+  const inputRefs = useRef<HTMLInputElement[]>([]);
   const pollInterval = useRef<any>(null);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ const OTPVerify = () => {
       // For phone-based signup: ALWAYS use the phone number as the document ID.
       const finalUserId = verifyMethod === 'phone'
         ? profileData.phone
-        : (user?.id || profileData.phone);
+        : (auth.currentUser?.uid || profileData.phone);
       const finalProfile = {
         ...profileData,
         id: finalUserId,
@@ -84,10 +85,8 @@ const OTPVerify = () => {
         const saved = await getUserByPhone(profileData.phone);
         if (saved) {
           setUser(saved as any);
-          localStorage.setItem('vasthara_user', JSON.stringify(saved));
         } else {
           setUser(finalProfile as any);
-          localStorage.setItem('vasthara_user', JSON.stringify(finalProfile));
         }
         // Don't unlock yet — PIN setup will unlock after PIN is confirmed
       }
@@ -96,8 +95,8 @@ const OTPVerify = () => {
     setTimeout(() => navigate('/set-pin'), 2000);
   };
 
-  const handleChange = (index, value) => {
-    if (isNaN(value)) return;
+  const handleChange = (index: number, value: string) => {
+    if (isNaN(Number(value))) return;
     const newOtp = [...otp];
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
@@ -108,7 +107,7 @@ const OTPVerify = () => {
     }
   };
 
-  const handleKeyDown = (index, e) => {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -159,7 +158,7 @@ const OTPVerify = () => {
       exit={{ opacity: 0, x: -20 }}
       className="page-transition-wrapper p-8 flex flex-col min-h-screen"
     >
-      <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary self-start mb-8">
+      <button onClick={() => navigate('/signup')} className="p-2 -ml-2 text-primary self-start mb-8">
         <ChevronLeft size={24} />
       </button>
 
@@ -195,7 +194,7 @@ const OTPVerify = () => {
               {otp.map((digit, i) => (
                 <input
                   key={i}
-                  ref={(el) => (inputRefs.current[i] = el as HTMLInputElement)}
+                  ref={(el) => { inputRefs.current[i] = el as HTMLInputElement; }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}

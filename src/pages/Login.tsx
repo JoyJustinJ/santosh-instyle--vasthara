@@ -215,10 +215,11 @@ const Login = () => {
     if (!formData.otp) { setErrors({ otp: 'Required' }); return; }
     setLoading(true);
     try {
-      const result = await verifyOTP(formData.phone, formData.otp);
+      const sanitizedPhone = formData.phone.replace(/[\s-]/g, '');
+      const result = await verifyOTP(sanitizedPhone, formData.otp);
       if (result.success) {
         showNotif("Verification successful!", 'success');
-        navigate('/signup', { state: { phoneNumber: formData.phone } });
+        navigate('/signup', { state: { phoneNumber: sanitizedPhone } });
       } else {
         showNotif(result.error || "Invalid OTP", 'error');
       }
@@ -230,6 +231,7 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    localStorage.removeItem('pending_signup');
     try { await loginWithGoogle(); }
     catch (err: any) { showNotif(getFriendlyError(err)); }
     setLoading(false);

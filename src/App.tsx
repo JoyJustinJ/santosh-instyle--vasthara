@@ -58,9 +58,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
-  // Enforce profile completion
+  // Enforce profile completion ONLY for users who signed up via Google
   const isProfileComplete = user.phone && user.address && user.state && user.city && user.pincode;
-  if (!isProfileComplete) {
+  if (user.accountCreatedVia === 'google' && !isProfileComplete) {
     if (location.pathname !== '/complete-profile') {
       return <Navigate to="/complete-profile" replace />;
     }
@@ -85,9 +85,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuth()!;
 
-  const hideNavs = ['/', '/login', '/signup', '/otp-verify', '/set-pin', '/pin-login'].includes(location.pathname);
+  const hideNavs = ['/', '/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/complete-profile'].includes(location.pathname);
 
   return (
     <div className="mobile-container">
