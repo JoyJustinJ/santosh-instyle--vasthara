@@ -3,7 +3,7 @@
  * SMS Service for handling OTP via Vercel Backend Proxy
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app';
 
 /**
  * Normalize phone to Indian format for Pay4SMS: digits only, with 91 prefix.
@@ -25,15 +25,27 @@ export const sendOTP = async (phone: string): Promise<{ success: boolean; error?
       body: JSON.stringify({ phone: normalizedPhone }),
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      console.error('Failed to parse JSON response:', e);
+      if (response.status >= 500) return { success: false, error: 'Our server is experiencing issues. Please try again later.' };
+      if (response.status === 404) return { success: false, error: 'The OTP service is currently unavailable.' };
+      return { success: false, error: 'We received an unexpected response from the server. Please try again.' };
+    }
+
     if (response.ok) {
       return { success: true };
     } else {
-      return { success: false, error: data.error || 'Failed to send OTP' };
+      return { success: false, error: data?.error || 'Failed to send OTP. Please try again.' };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send OTP Error:', error);
-    return { success: false, error: 'Network error occurred' };
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      return { success: false, error: 'Unable to connect. Please check your internet connection and try again.' };
+    }
+    return { success: false, error: `Something went wrong: ${error.message}` };
   }
 };
 
@@ -45,14 +57,26 @@ export const verifyOTP = async (phone: string, otp: string): Promise<{ success: 
       body: JSON.stringify({ phone, otp }),
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      console.error('Failed to parse JSON response:', e);
+      if (response.status >= 500) return { success: false, error: 'Our server is experiencing issues. Please try again later.' };
+      if (response.status === 404) return { success: false, error: 'The OTP verification service is currently unavailable.' };
+      return { success: false, error: 'We received an unexpected response from the server. Please try again.' };
+    }
+
     if (response.ok) {
       return { success: true };
     } else {
-      return { success: false, error: data.error || 'Invalid OTP' };
+      return { success: false, error: data?.error || 'Invalid OTP entered. Please try again.' };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Verify OTP Error:', error);
-    return { success: false, error: 'Network error occurred' };
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      return { success: false, error: 'Unable to connect. Please check your internet connection and try again.' };
+    }
+    return { success: false, error: `Something went wrong: ${error.message}` };
   }
 };
