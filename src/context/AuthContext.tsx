@@ -168,8 +168,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         // Only clear if there's no manual user or admin session stored
-        if (!localStorage.getItem('vasthara_user_minimal') && localStorage.getItem('is_admin_authenticated') !== 'true') {
+        const saved = localStorage.getItem('vasthara_user_minimal');
+        if (!saved && localStorage.getItem('is_admin_authenticated') !== 'true') {
           setUser(null);
+        } else if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.id) {
+              const userDoc = await getDoc(doc(db, "users", parsed.id));
+              if (userDoc.exists()) {
+                const updatedData = { id: parsed.id, ...userDoc.data() } as User;
+                if (updatedData.role === 'staff' && updatedData.status !== 'active') {
+                  setUser(null);
+                  localStorage.removeItem('vasthara_user_minimal');
+                } else {
+                  setUser(updatedData);
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Error refreshing manual user session", e);
+          }
         }
       }
       setLoading(false);
