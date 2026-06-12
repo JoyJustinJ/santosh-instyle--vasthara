@@ -11,11 +11,7 @@ import { getUserByPhone, getStaffRequestByPhone, saveStaffRequestToDB } from '..
 import { sendOTP, verifyOTP } from '../services/sms';
 import { RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
-import {
-  checkBiometricAvailability,
-  getStoredBiometricCredentialId,
-  verifyBiometric
-} from '../utils/biometrics';
+
 import vastharaIcon from '../assets/vasthara-icon.jpeg';
 
 
@@ -28,14 +24,13 @@ const ADMIN_PIN = (import.meta.env.VITE_ADMIN_PIN || '4444').trim();
 const Login = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user, isUnlocked, isBiometricEnabled: biometricEnabled } = useAuth()!;
+  const { loginWithGoogle, loginWithPhone, unlockApp, setUser, user, isUnlocked } = useAuth()!;
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<'login' | 'staff_request' | 'otp_verify'>('login');
   const [showLang, setShowLang] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: NotificationType } | null>(null);
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({ phone: '', password: '', otp: '', securityPin: '' });
@@ -55,14 +50,6 @@ const Login = () => {
   useEffect(() => {
     if (user && isUnlocked) {
       navigate('/home');
-    } else {
-      checkBiometricAvailability().then((available) => {
-        setBiometricAvailable(available);
-        const credId = getStoredBiometricCredentialId(localStorage.getItem('vasthara_last_phone') || undefined);
-        if (!user && biometricEnabled && available && credId) {
-          handleBiometricLogin();
-        }
-      });
     }
   }, [user, isUnlocked]);
 
@@ -219,36 +206,7 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleBiometricLogin = async () => {
-    const storedPhone = localStorage.getItem('vasthara_last_phone');
-    const credId = getStoredBiometricCredentialId(storedPhone || undefined);
-    const available = await checkBiometricAvailability();
-    setBiometricAvailable(available);
-    if (!credId || !available) {
-      showNotif('Biometric login is not available on this device. Please log in manually.', 'error');
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const success = await verifyBiometric();
-
-      if (success && storedPhone) {
-        const userDoc: any = await getUserByPhone(storedPhone);
-        if (userDoc) {
-          setUser(userDoc);
-          unlockApp();
-          navigate('/home');
-          showNotif('Logged in with Biometrics', 'success');
-        } else {
-          showNotif('User data not found. Please log in manually once.', 'error');
-        }
-      }
-    } catch (err) {
-      showNotif('Biometric verification failed', 'error');
-    }
-    setLoading(false);
-  };
 
   // ── OTP verify ─────────────────────────────────────────────────────────────
   const handleVerifyOTP = async (e: React.FormEvent) => {
