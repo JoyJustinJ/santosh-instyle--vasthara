@@ -17,7 +17,7 @@ const SchemesList = () => {
 
   React.useEffect(() => {
     getSchemesFromDB().then(data => {
-      setSchemes(data.filter((s: any) => s.status === 'active'));
+      setSchemes(data.filter((s: any) => s.status === 'active') as any[]);
       setLoading(false);
     });
   }, []);

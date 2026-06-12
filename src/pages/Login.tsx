@@ -370,15 +370,7 @@ const Login = () => {
                   <span className="text-sm font-bold text-text-primary">Google Account</span>
                 </button>
 
-                {biometricEnabled && biometricAvailable && getStoredBiometricCredentialId(localStorage.getItem('vasthara_last_phone') || undefined) && (
-                  <button
-                    onClick={handleBiometricLogin}
-                    className="w-full h-14 mt-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center gap-3 hover:bg-primary/10 transition-all text-primary"
-                  >
-                    <Fingerprint size={20} />
-                    <span className="text-sm font-bold">Login with Biometrics</span>
-                  </button>
-                )}
+
               </div>
 
               <div className="text-center space-y-4">
