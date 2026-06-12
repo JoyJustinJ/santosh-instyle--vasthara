@@ -74,7 +74,7 @@ const CompleteProfile = () => {
       setUser({ ...user, ...updates });
       
       showNotif('Profile updated successfully!', 'success');
-      setTimeout(() => navigate('/home', { replace: true }), 1500);
+      setTimeout(() => navigate('/set-pin', { replace: true }), 1500);
     } catch (err: any) {
       console.error('Error updating profile:', err);
       showNotif(err.message || 'Failed to update profile. Please try again.');

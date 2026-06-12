@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { User, Mail, Smartphone, MapPin, Lock, ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Country, State, City } from 'country-state-city';
 import { Input } from '../components/UI/Input';
 import { Button } from '../components/UI/Button';
@@ -16,12 +16,14 @@ import { getUserByPhone } from '../services/db';
 const Signup = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = (location.state as { phoneNumber?: string } | undefined);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
+    phone: navState?.phoneNumber || '',
     address: '',
     country: 'IN',
     state: '',
@@ -86,6 +88,7 @@ const Signup = () => {
         await sendVerificationEmail();
 
         localStorage.setItem('pending_signup', JSON.stringify(formData));
+        setLoading(false);
         navigate('/otp-verify');
       } else {
         // Real OTP sending via Pay4SMS

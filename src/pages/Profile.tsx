@@ -20,6 +20,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { cn } from '../utils';
 import { ThemeToggle } from '../components/UI/ThemeToggle';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -50,7 +51,7 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     const { createUserProfile } = await import('../services/db');
-    const updatedUser = { ...user, ...formData, avatar: avatarPreview || user?.avatar };
+    const updatedUser = { ...user, ...formData, avatar: avatarPreview || user?.avatar } as any;
     await createUserProfile(updatedUser);
     updateUserContext(updatedUser);
     setIsEditing(false);
@@ -361,7 +362,5 @@ const Profile = () => {
     </motion.div>
   );
 };
-
-const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
 
 export default Profile;
