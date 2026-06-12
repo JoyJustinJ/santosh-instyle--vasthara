@@ -18,6 +18,7 @@ import Signup from './pages/Signup';
 import OTPVerify from './pages/OTPVerify';
 import PINSetup from './pages/PINSetup';
 import PINLogin from './pages/PINLogin';
+import CompleteProfile from './pages/CompleteProfile';
 import SecuritySettings from './pages/SecuritySettings';
 import Home from './pages/Home';
 import KnowMore from './pages/KnowMore';
@@ -57,19 +58,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
-  const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
-
-  // If the user has NOT set up a PIN yet, force them to set it up.
-  if (!userHasPin) {
-    if (location.pathname !== '/set-pin') {
-      return <Navigate to="/set-pin" replace />;
+  // Enforce profile completion
+  const isProfileComplete = user.phone && user.address && user.state && user.city && user.pincode;
+  if (!isProfileComplete) {
+    if (location.pathname !== '/complete-profile') {
+      return <Navigate to="/complete-profile" replace />;
     }
     return <>{children}</>;
   }
 
-  // User HAS a PIN. Are they unlocked?
-  if (!isUnlocked) {
-    // If not unlocked, they must go to pin-login to verify.
+  const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
+
+  // If the user HAS a PIN but is NOT unlocked, force them to pin-login
+  if (userHasPin && !isUnlocked) {
     if (location.pathname !== '/pin-login') {
       return <Navigate to="/pin-login" replace />;
     }
@@ -113,6 +114,11 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/complete-profile" element={
+              <ProtectedRoute>
+                <CompleteProfile />
+              </ProtectedRoute>
+            } />
 
             <Route path="/set-pin" element={
               <ProtectedRoute>
