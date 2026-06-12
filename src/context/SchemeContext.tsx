@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
-const SchemeContext = createContext();
+const SchemeContext = createContext<any>(null);
 
 export const SchemeProvider = ({ children }) => {
   const [userSchemes, setUserSchemes] = useState([]);
