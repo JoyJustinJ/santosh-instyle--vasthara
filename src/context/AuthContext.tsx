@@ -9,10 +9,12 @@ import {
   ConfirmationResult,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  reload
+  reload,
+  signInWithRedirect
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
 
 export interface User {
   id: string;
@@ -207,7 +209,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    if (Capacitor.isNativePlatform()) {
+      await signInWithRedirect(auth, provider);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
   };
 
   const loginWithPhone = async (phoneNumber: string, appVerifier: any) => {
