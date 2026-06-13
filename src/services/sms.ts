@@ -42,10 +42,10 @@ export const sendOTP = async (phone: string): Promise<{ success: boolean; error?
     }
   } catch (error: any) {
     console.error('Send OTP Error:', error);
-    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-      return { success: false, error: 'Unable to connect. Please check your internet connection and try again.' };
+    if (/(failed to fetch|networkerror|load failed)/i.test(error.message || '')) {
+      return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
     }
-    return { success: false, error: `Something went wrong: ${error.message}` };
+    return { success: false, error: `Oops! We encountered an unexpected error (${error.message}). Please try again later.` };
   }
 };
 
@@ -74,9 +74,9 @@ export const verifyOTP = async (phone: string, otp: string): Promise<{ success: 
     }
   } catch (error: any) {
     console.error('Verify OTP Error:', error);
-    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-      return { success: false, error: 'Unable to connect. Please check your internet connection and try again.' };
+    if (/(failed to fetch|networkerror|load failed)/i.test(error.message || '')) {
+      return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
     }
-    return { success: false, error: `Something went wrong: ${error.message}` };
+    return { success: false, error: `Oops! We encountered an unexpected error (${error.message}). Please try again later.` };
   }
 };

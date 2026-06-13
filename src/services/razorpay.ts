@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import type { User } from '../context/AuthContext';
 
 declare global {
@@ -30,8 +31,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const getApiErrorMessage = (error: unknown) => {
-  if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return 'Payment server is unreachable. Please check the deployed API URL and try again.';
+  if (error instanceof TypeError && /(failed to fetch|networkerror|load failed)/i.test(error.message)) {
+    return 'Payment server is unreachable. Please check your internet connection and try again.';
   }
 
   return error instanceof Error ? error.message : 'Payment failed. Please try again.';
