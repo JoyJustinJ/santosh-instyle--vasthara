@@ -59,9 +59,16 @@ export const payWithRazorpay = async ({
   }
 
   try {
+    const authModule = await import('../firebase');
+    const auth = authModule.auth;
+    const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+
     const orderResponse = await fetch(`${API_BASE_URL}/api/create-order`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
       body: JSON.stringify({
         amount: amountInPaise,
         currency: 'INR',
@@ -111,7 +118,10 @@ export const payWithRazorpay = async ({
           try {
             const verifyResponse = await fetch(`${API_BASE_URL}/api/verify-payment`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+              },
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
