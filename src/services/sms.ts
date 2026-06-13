@@ -3,7 +3,12 @@
  * SMS Service for handling OTP via Vercel Backend Proxy
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app';
+import { Capacitor } from '@capacitor/core';
+
+// Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
+const API_BASE = Capacitor.isNativePlatform() 
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app')
+  : '';
 
 /**
  * Normalize phone to Indian format for Pay4SMS: digits only, with 91 prefix.

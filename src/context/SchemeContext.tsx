@@ -31,11 +31,13 @@ export const SchemeProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsub();
   }, [currentUserId]);
 
-  const joinScheme = async (scheme: any, planId: string, userId: string, paymentMeta: any = {}) => {
+  const joinScheme = async (scheme: any, planId: string, userId: string, accountId: string, paymentMeta: any = {}) => {
+    // The backend `api/verify-payment.ts` now securely creates the scheme and transaction
+    // after verifying the Razorpay payment.
     const newEntry = {
       ...scheme,
       userId,
-      accountId: `ACC-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+      accountId,
       enrollmentDate: new Date().toISOString(),
       monthsPaid: 1,
       totalPaid: scheme.monthlyAmount,
@@ -43,55 +45,19 @@ export const SchemeProvider = ({ children }: { children: React.ReactNode }) => {
       branch: 'Hosur',
       group: 'Batch-A'
     };
-    await setDoc(doc(db, "user_schemes", newEntry.accountId), newEntry);
-    // Record first month payment as part of joining
-    await recordTransactionInDB({
-      userId,
-      schemeName: scheme.name,
-      accountId: newEntry.accountId,
-      amount: scheme.monthlyAmount,
-      type: 'deposit',
-      status: 'Success',
-      method: 'Razorpay',
-      paymentGateway: 'razorpay',
-      planId,
-      ...paymentMeta
-    });
+
     showNotification(`Successfully joined ${scheme.name}!`, 'success');
     return newEntry;
   };
 
   const payEMI = async (payments: { accountId: string, amount: number }[], userId: string, paymentMeta: any = {}): Promise<string[]> => {
-    const transactionIds: string[] = [];
-    for (const payment of payments) {
-      const schemeRef = doc(db, "user_schemes", payment.accountId);
-      const current = userSchemes.find(s => s.accountId === payment.accountId);
-      if (current) {
-        const nextMonthsPaid = (current.monthsPaid || 0) + 1;
-        const isCompleted = nextMonthsPaid >= (current.duration || 0);
-        await updateDoc(schemeRef, {
-          monthsPaid: nextMonthsPaid,
-          totalPaid: (current.totalPaid || 0) + payment.amount,
-          status: isCompleted ? 'completed' : (current.status || 'active'),
-          completedAt: isCompleted ? new Date().toISOString() : current.completedAt,
-        });
-        const txId = await recordTransactionInDB({
-          userId,
-          schemeName: current.name || current.schemeName || 'Purchase Plan',
-          accountId: payment.accountId,
-          amount: payment.amount,
-          type: 'deposit',
-          status: 'Success',
-          method: 'Razorpay',
-          paymentGateway: 'razorpay',
-          ...paymentMeta,
-          referenceId: paymentMeta.razorpayPaymentId
-            ? `${paymentMeta.razorpayPaymentId}-${payment.accountId}`
-            : paymentMeta.referenceId
-        });
-        if (txId) transactionIds.push(txId);
-      }
-    }
+    // The backend `api/verify-payment.ts` now securely records the transactions 
+    // and updates the user_schemes collection after verifying the payment.
+    
+    // We just return a mock transaction ID for the UI to display success, 
+    // since the real one is generated on the backend.
+    const transactionIds = payments.map(p => `TX-${paymentMeta.razorpayPaymentId || Date.now()}`);
+    
     showNotification('Payments successful!', 'success');
     return transactionIds;
   };

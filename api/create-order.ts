@@ -1,5 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+
+if (!getApps().length) {
+  const serviceAccount = JSON.parse(process.env.VERCEL_FIREBASE_SERVICE_ACCOUNT || '{}');
+  if (serviceAccount.project_id) {
+    initializeApp({
+      credential: cert(serviceAccount)
+    });
+  }
+}
 
 const setCorsHeaders = (req: VercelRequest, res: VercelResponse) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -20,6 +31,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Verify Firebase Auth Token
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+  }
+
+  const token = authHeader.split('Bearer ')[1];
+  let decodedToken;
+  try {
+    decodedToken = await getAuth().verifyIdToken(token);
+  } catch (error) {
+    console.error('Error verifying Firebase token:', error);
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 
   const keyId = process.env.RAZORPAY_KEY_ID;

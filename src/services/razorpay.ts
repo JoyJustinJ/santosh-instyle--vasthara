@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import type { User } from '../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 declare global {
   interface Window {
@@ -27,7 +28,10 @@ type RazorpayCheckoutInput = {
   notes?: Record<string, string | number | boolean | undefined>;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
+const API_BASE_URL = Capacitor.isNativePlatform() 
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app')
+  : '';
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const getApiErrorMessage = (error: unknown) => {
@@ -55,9 +59,16 @@ export const payWithRazorpay = async ({
   }
 
   try {
+    const authModule = await import('../firebase');
+    const auth = authModule.auth;
+    const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+
     const orderResponse = await fetch(`${API_BASE_URL}/api/create-order`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
       body: JSON.stringify({
         amount: amountInPaise,
         currency: 'INR',
@@ -107,7 +118,10 @@ export const payWithRazorpay = async ({
           try {
             const verifyResponse = await fetch(`${API_BASE_URL}/api/verify-payment`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+              },
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,

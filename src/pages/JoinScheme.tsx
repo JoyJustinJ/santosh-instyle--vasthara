@@ -51,6 +51,7 @@ const JoinScheme = () => {
     setLoading(true);
     try {
       const userId = user?.id || user?.phone;
+      const accountId = `ACC-2024-${Math.floor(1000 + Math.random() * 9000)}`;
       const payment = await payWithRazorpay({
         amount: scheme.monthlyAmount,
         receipt: `vasthara_join_${planId || 'plan'}_${Date.now()}`,
@@ -61,9 +62,10 @@ const JoinScheme = () => {
           userId: userId || '',
           planId: planId || '',
           schemeName: scheme.name,
+          accountId: accountId,
         },
       });
-      const account = await joinScheme(scheme, planId, userId, {
+      const account = await joinScheme(scheme, planId, userId, accountId, {
         razorpayPaymentId: payment.razorpay_payment_id,
         razorpayOrderId: payment.razorpay_order_id,
         razorpaySignature: payment.razorpay_signature,
