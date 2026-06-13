@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import type { User } from '../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 declare global {
   interface Window {
@@ -27,7 +28,10 @@ type RazorpayCheckoutInput = {
   notes?: Record<string, string | number | boolean | undefined>;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
+const API_BASE_URL = Capacitor.isNativePlatform() 
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app')
+  : '';
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const getApiErrorMessage = (error: unknown) => {
