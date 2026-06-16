@@ -19,7 +19,7 @@ const Transactions = () => {
         setLoading(true);
         if (user) {
             try {
-                const userIds = Array.from(new Set([user.id, user.phone].filter(Boolean)));
+                const userIds = Array.from(new Set([user.id, user.phone].filter(Boolean) as string[]));
                 const [txGroups, planGroups, allSchemes] = await Promise.all([
                     Promise.all(userIds.map((id) => getTransactionsFromDB(id))),
                     Promise.all(userIds.map((id) => getUserPlansFromDB(id))),
@@ -59,7 +59,7 @@ const Transactions = () => {
 
     const handleDownloadInvoice = (t: any) => {
         // Resolve scheme name using transaction property, then the fetched mapping
-        const resolvedSchemeName = t.schemeName || planMap[t.accountId] || planMap[t.schemeId] || 'General Deposit';
+        const resolvedSchemeName = t.schemeName || planMap[t.accountId] || planMap[t.schemeId] || 'General Payment';
 
         const invoicePrimaryKey = t.invoicePrimaryKey || t.id;
         const paymentId = t.razorpayPaymentId || t.gatewayPaymentId || '';
@@ -140,7 +140,7 @@ const Transactions = () => {
                             <td>Price</td>
                         </tr>
                         <tr class="item last">
-                            <td>Scheme Installment (${resolvedSchemeName})</td>
+                            <td>Subscription Payment (${resolvedSchemeName})</td>
                             <td>${formatCurrency(t.amount)}</td>
                         </tr>
                         <tr class="total">
@@ -241,7 +241,7 @@ const Transactions = () => {
                                         <div className="flex items-center gap-2 min-w-0">
                                             <Tag size={14} className="text-accent flex-shrink-0" />
                                             <p className="text-sm font-bold text-primary uppercase truncate">
-                                                {t.schemeName || 'Installment Payment'}
+                                                {t.schemeName || 'Subscription Payment'}
                                             </p>
                                         </div>
                                     </div>

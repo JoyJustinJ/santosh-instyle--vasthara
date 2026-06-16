@@ -48,17 +48,20 @@ const StartPage = () => {
     {
       title: 'About Us',
       icon: ShieldCheck,
-      text: 'Vasthara by Santosh Instyle helps customers manage savings schemes, track payments, and stay connected with the store from one secure mobile-first app.',
+      path: '/about',
+      text: 'Vasthara by Santosh Instyle helps customers manage loyalty membership subscriptions, track subscription fee payments, and stay connected with the store from one secure mobile-first app.',
     },
     {
       title: 'Privacy Policy',
       icon: LockKeyhole,
-      text: 'We use customer information only to manage accounts, payments, service requests, and app communication. Personal details are handled with care and are not sold to outside parties.',
+      path: '/privacy',
+      text: 'We use customer information only to manage accounts, subscription payments, service requests, and app communication. Personal details are handled with care.',
     },
     {
       title: 'Terms and Conditions',
       icon: FileText,
-      text: 'By using this app, customers agree to provide accurate details, keep login credentials private, and follow the scheme and payment rules shared by Santosh Instyle.',
+      path: '/terms',
+      text: 'By using this app, customers agree to provide accurate details, keep login credentials private, and follow the program and subscription rules shared by Santosh Instyle.',
     },
   ];
 
@@ -89,14 +92,14 @@ const StartPage = () => {
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-accent-light px-4 py-2 text-[10px] font-black uppercase tracking-widest text-accent">
             <CheckCircle2 size={14} />
-            Secure savings scheme app
+            Secure membership program app
           </div>
           <div className="space-y-3">
             <h2 className="text-4xl font-display font-black text-primary leading-tight">
-              Start your savings journey with confidence.
+              Start your subscription journey with confidence.
             </h2>
             <p className="text-sm font-medium text-text-secondary leading-6">
-              View scheme details, manage payments, receive reminders, and reach our team whenever you need support.
+              View program details, manage subscription payments, receive reminders, and reach our team whenever you need support.
             </p>
           </div>
           <div className="flex gap-3">
@@ -126,7 +129,11 @@ const StartPage = () => {
         {infoSections.map((section) => {
           const Icon = section.icon;
           return (
-            <Card key={section.title} className="border-none shadow-subtle p-5 space-y-3">
+            <Card 
+              key={section.title} 
+              onClick={() => navigate(section.path)}
+              className="border-none shadow-subtle p-5 space-y-3 cursor-pointer hover:border-accent/30 hover:shadow-card transition-all active:scale-[0.98]"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-accent-light text-accent flex items-center justify-center">
                   <Icon size={20} />
@@ -172,6 +179,28 @@ const StartPage = () => {
           </div>
         </Card>
       </section>
+
+      <footer className="pt-8 pb-4 border-t border-border/40 text-center space-y-4">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-bold text-accent">
+          <button onClick={() => navigate('/about')} className="hover:underline">About Us</button>
+          <button onClick={() => navigate('/terms')} className="hover:underline">Terms & Conditions</button>
+          <button onClick={() => navigate('/privacy')} className="hover:underline">Privacy Policy</button>
+          <button onClick={() => navigate('/refund-policy')} className="hover:underline">Refund Policy</button>
+          <button onClick={() => navigate('/program-rules')} className="hover:underline">Program Rules</button>
+          <button onClick={() => navigate('/contact')} className="hover:underline">Contact Us</button>
+        </div>
+        
+        <div className="bg-surface p-4 rounded-xl border border-border/50 text-left space-y-2">
+          <p className="text-[10px] font-black uppercase text-accent tracking-widest">Important Disclaimer</p>
+          <p className="text-[10px] text-text-muted leading-relaxed">
+            We do not accept deposits, investments, or public funds. The Vasthara Program is solely a promotional customer loyalty membership and subscription service. This is not a chit fund, recurring deposit, lending, EMI financing, or investment scheme. Payments made are subscription fees towards loyalty program membership and are redeemable only for products and promotional benefits as detailed in our program rules.
+          </p>
+        </div>
+        
+        <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] mt-4">
+          © 2026 Vasthara . All Rights Reserved.
+        </p>
+      </footer>
     </motion.div>
   );
 };

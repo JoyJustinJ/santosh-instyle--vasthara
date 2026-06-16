@@ -57,7 +57,7 @@ const PlanDetail = () => {
             <ChevronLeft size={24} />
           </button>
           <div>
-            <h1 className="text-xl font-display font-bold text-primary tracking-tight">Plan Details</h1>
+            <h1 className="text-xl font-display font-bold text-primary tracking-tight">Subscription Details</h1>
           </div>
         </div>
         <button className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center text-text-muted hover:text-accent transition-colors">
@@ -79,7 +79,7 @@ const PlanDetail = () => {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Saved Amount</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Paid</p>
               <p className="text-2xl font-bold text-accent">{formatCurrency(plan.totalPaid)}</p>
             </div>
           </div>
@@ -96,9 +96,9 @@ const PlanDetail = () => {
             <div className="rounded-2xl border border-success/30 bg-success-light/40 p-4 flex gap-3">
               <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm font-bold text-success">Scheme completed</p>
+                <p className="text-sm font-bold text-success">Subscription completed</p>
                 <p className="text-xs leading-5 text-text-secondary">
-                  Please collect your redemption from our main branch. Bring this Account ID and a valid photo ID for verification.
+                  Please collect your redemption rewards from our main branch. Bring this Account ID and a valid photo ID for verification.
                 </p>
               </div>
             </div>
@@ -181,7 +181,7 @@ const PlanDetail = () => {
             onClick={() => navigate('/pay-emi')}
             className="h-16 shadow-card text-base flex gap-3"
           >
-            <CreditCard size={20} /> PAY NEXT INSTALLMENT
+            <CreditCard size={20} /> PAY MONTHLY SUBSCRIPTION
           </Button>
         </div>
       )}

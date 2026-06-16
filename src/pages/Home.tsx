@@ -55,13 +55,13 @@ const Home = () => {
 
   const slides = [
     {
-      title: "Save Today, Smile Tomorrow 🌟",
-      sub: "Start your savings journey with Vasthara",
+      title: "Subscribe Today, Smile Tomorrow 🌟",
+      sub: "Start your membership journey with Vasthara",
       bg: "bg-gradient-to-br from-[#FDFCFB] to-[#E2D1C3]"
     },
     {
-      title: "Premium Money Savings Plans",
-      sub: "Secure your future with our exclusive plans",
+      title: "Premium Membership Tiers",
+      sub: "Unlock exclusive rewards and benefits",
       bg: "bg-gradient-to-br from-[#EEF2FD] to-[#CFD9DF]"
     }
   ];
@@ -197,7 +197,7 @@ const Home = () => {
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Available Investment Plans</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Available Programs</p>
             <p className="text-2xl font-bold text-primary">{schemes.length}</p>
           </div>
         </Card>
@@ -208,7 +208,7 @@ const Home = () => {
           onClick={() => navigate('/schemes-list')}
           className="bg-primary text-white border-primary hover:bg-primary-light h-14 text-base font-bold shadow-card rounded-2xl group"
         >
-          Explore All Schemes
+          Explore Programs
           <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
         </Button>
       </div>
@@ -220,9 +220,9 @@ const Home = () => {
         </h3>
         <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
           {[
-            { title: "Zero Fees", desc: "No processing charges on maturity", icon: Sparkles },
+            { title: "Zero Fees", desc: "No hidden membership fees", icon: Sparkles },
             { title: "Secure", desc: "100% safe & transparent", icon: Shield },
-            { title: "Flexible", desc: "Multiple plans for everyone", icon: TrendingUp }
+            { title: "Flexible", desc: "Multiple membership levels for everyone", icon: TrendingUp }
           ].map((item, i) => (
             <div key={i} className="min-w-[200px] bg-surface rounded-2xl p-5 space-y-2 border border-border/50">
               <item.icon className="text-accent" size={24} />
@@ -246,8 +246,8 @@ const Home = () => {
                 <Sparkles size={20} className="text-[#D4AF37]" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Trending Scheme</p>
-                <p className="text-sm font-bold truncate pr-4">Check out our famous "{featuredScheme.name}" plan!</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Trending Program</p>
+                <p className="text-sm font-bold truncate pr-4">Check out our famous "{featuredScheme.name}" membership!</p>
               </div>
             </div>
             <ArrowRight size={20} className="text-white opacity-80" />

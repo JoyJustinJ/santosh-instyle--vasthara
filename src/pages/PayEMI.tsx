@@ -18,7 +18,7 @@ import { formatCurrency, cn } from '../utils';
 const PayEMI = () => {
   const navigate = useNavigate();
   const { userSchemes, payEMI } = useSchemes() as any;
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const { showNotification } = useNotification();
 
   const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
@@ -77,11 +77,11 @@ const PayEMI = () => {
     try {
       const payment = await payWithRazorpay({
         amount: totalAmount,
-        receipt: `vasthara_emi_${Date.now()}`,
-        description: 'Installment payment',
+        receipt: `vasthara_sub_${Date.now()}`,
+        description: 'Monthly subscription payment',
         user,
         notes: {
-          purpose: 'emi',
+          purpose: 'subscription',
           userId: user?.id || user?.phone || '',
           accountIds: selectedPlans.join(','),
         },
@@ -134,7 +134,7 @@ const PayEMI = () => {
             Payment Successful!
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Your combined installments have been recorded.
+            Your subscription payments have been recorded.
           </p>
         </div>
 
@@ -149,7 +149,7 @@ const PayEMI = () => {
               <p className="text-lg font-bold text-primary">{formatCurrency(totalAmount)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Plans Updated</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Subscriptions Updated</p>
               <p className="text-lg font-bold text-accent">{selectedPlans.length}</p>
             </div>
           </div>
@@ -157,7 +157,7 @@ const PayEMI = () => {
 
         <div className="w-full space-y-4 pt-4">
           <Button fullWidth size="lg" onClick={() => navigate('/my-schemes')}>
-            View My Plans
+            View My Subscriptions
           </Button>
           <button
             onClick={() => navigate('/home')}
@@ -181,12 +181,12 @@ const PayEMI = () => {
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Pay Installments</h1>
+        <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Pay Subscriptions</h1>
       </div>
 
       <div className="space-y-8">
         <div className="space-y-4">
-          <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Select Plans to Pay</h3>
+          <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">Select Subscriptions to Pay</h3>
           <div className="space-y-3">
             {userSchemes.filter((s: any) => s.status !== 'completed' && (s.monthsPaid || 0) < (s.duration || 0)).length === 0 ? (
               <p className="text-sm text-text-muted px-2">You don't have any active plans yet.</p>

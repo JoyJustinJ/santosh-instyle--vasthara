@@ -23,7 +23,7 @@ const MySchemes = () => {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary">
             <ChevronLeft size={24} />
           </button>
-          <h1 className="text-2xl font-display font-bold text-primary tracking-tight">My Plans</h1>
+          <h1 className="text-2xl font-display font-bold text-primary tracking-tight">My Subscriptions</h1>
         </div>
         <button
           onClick={() => navigate('/schemes-list')}
@@ -39,13 +39,13 @@ const MySchemes = () => {
             <Sparkles size={48} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-display font-bold text-primary">No Active Plans</h3>
+            <h3 className="text-xl font-display font-bold text-primary">No Active Subscriptions</h3>
             <p className="text-sm text-text-secondary max-w-[240px]">
-              You haven't joined any savings schemes yet. Start saving for your future today!
+              You haven't joined any membership programs yet.
             </p>
           </div>
           <Button onClick={() => navigate('/schemes-list')} size="lg" className="shadow-card">
-            Explore Plans
+            Explore Programs
           </Button>
         </div>
       ) : (
@@ -89,9 +89,9 @@ const MySchemes = () => {
                       <div className="rounded-2xl border border-success/30 bg-success-light/40 p-4 flex gap-3">
                         <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-success">Scheme completed</p>
+                          <p className="text-sm font-bold text-success">Subscription completed</p>
                           <p className="text-xs leading-5 text-text-secondary">
-                            Please collect your redemption from our main branch. Bring your Account ID and a valid photo ID for verification.
+                            Please collect your redemption rewards from our main branch. Bring your Account ID and a valid photo ID for verification.
                           </p>
                         </div>
                       </div>
@@ -100,7 +100,7 @@ const MySchemes = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Saved Amount</p>
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Paid</p>
                         <p className="text-2xl font-bold text-primary">{formatCurrency(plan.totalPaid)}</p>
                       </div>
                       <div className="text-right space-y-1">
@@ -152,17 +152,17 @@ const MySchemes = () => {
               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
                 <TrendingUp size={20} />
               </div>
-              <h4 className="font-display font-bold text-lg">Total Savings Value</h4>
+              <h4 className="font-display font-bold text-lg">Total Program Value</h4>
             </div>
             <div className="flex justify-between items-end">
               <div>
-                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Combined Balance</p>
+                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Total Paid</p>
                 <p className="text-3xl font-bold">
                   {formatCurrency(userSchemes.reduce((acc, curr) => acc + (curr.totalPaid || (curr.monthsPaid * curr.monthlyAmount) || 0), 0))}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Active Plans</p>
+                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Active Subscriptions</p>
                 <p className="text-xl font-bold">
                   {userSchemes.length}
                 </p>

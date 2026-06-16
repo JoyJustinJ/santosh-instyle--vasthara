@@ -80,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const batch = db.batch();
 
-    if (purpose === 'emi') {
+    if (purpose === 'emi' || purpose === 'subscription') {
       const accountIds = (order.notes?.accountIds as string || '').split(',');
       let expectedTotalAmount = 0;
       const validAccounts = [];
@@ -99,8 +99,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Verify the amount paid in Razorpay matches or exceeds expected amount
       // order.amount is in paise, so divide by 100
-      if ((order.amount / 100) < expectedTotalAmount) {
-        throw new Error(`Underpayment detected. Expected ${expectedTotalAmount}, paid ${order.amount / 100}`);
+      if ((Number(order.amount) / 100) < expectedTotalAmount) {
+        throw new Error(`Underpayment detected. Expected ${expectedTotalAmount}, paid ${Number(order.amount) / 100}`);
       }
 
       // Second pass: apply updates
@@ -131,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           timestamp: FieldValue.serverTimestamp(),
         });
       }
-    } else if (purpose === 'scheme_join') {
+    } else if (purpose === 'scheme_join' || purpose === 'subscription_join') {
       const planId = order.notes?.planId as string;
       const schemeName = order.notes?.schemeName as string;
       const schemeRef = db.collection('schemes').doc(planId);
@@ -141,8 +141,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const scheme = schemeSnap.data() as any;
 
         // Verify the amount paid in Razorpay matches or exceeds the required monthly amount
-        if ((order.amount / 100) < scheme.monthlyAmount) {
-          throw new Error(`Underpayment detected for joining scheme. Expected ${scheme.monthlyAmount}, paid ${order.amount / 100}`);
+        if ((Number(order.amount) / 100) < scheme.monthlyAmount) {
+          throw new Error(`Underpayment detected for joining scheme. Expected ${scheme.monthlyAmount}, paid ${Number(order.amount) / 100}`);
         }
 
         const accountId = order.notes?.accountId as string || `ACC-2024-${Math.floor(1000 + Math.random() * 9000)}`;

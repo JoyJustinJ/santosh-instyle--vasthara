@@ -34,6 +34,11 @@ import OurStores from './pages/OurStores';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import Notifications from './pages/NotificationsPage'; // Notifications Route
+import AboutUs from './pages/AboutUs';
+import TermsConditions from './pages/TermsConditions';
+import RefundPolicy from './pages/RefundPolicy';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import ProgramRules from './pages/ProgramRules';
 
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth()!;
@@ -87,7 +92,8 @@ const AppContent = () => {
   const location = useLocation();
   const { user } = useAuth()!;
 
-  const hideNavs = ['/', '/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/complete-profile'].includes(location.pathname);
+  const publicPages = ['/about', '/terms', '/privacy', '/refund-policy', '/program-rules', '/contact'];
+  const hideNavs = ['/', '/login', '/signup', '/otp-verify', '/set-pin', '/pin-login', '/complete-profile'].includes(location.pathname) || (!user && publicPages.includes(location.pathname));
 
   return (
     <div className="mobile-container">
@@ -102,6 +108,11 @@ const AppContent = () => {
             <Route path="/signup" element={<Signup />} />
             <Route path="/otp-verify" element={<OTPVerify />} />
             <Route path="/pin-login" element={<PINLogin />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/terms" element={<TermsConditions />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/program-rules" element={<ProgramRules />} />
 
             <Route path="/admin" element={
               <AdminGuard>
@@ -186,11 +197,7 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/contact" element={
-              <ProtectedRoute>
-                <ContactUs />
-              </ProtectedRoute>
-            } />
+            <Route path="/contact" element={<ContactUs />} />
 
             <Route path="/stores" element={
               <ProtectedRoute>

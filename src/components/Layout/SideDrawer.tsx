@@ -9,7 +9,10 @@ import {
   Store,
   Phone,
   LogOut,
-  X
+  X,
+  FileText,
+  RefreshCw,
+  HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +27,11 @@ export const SideDrawer = ({ isOpen, onClose }) => {
     { label: 'Transactions', icon: Tag, path: '/transactions' },
     { label: 'Our Stores', icon: Store, path: '/stores' },
     { label: 'Contact Us', icon: Phone, path: '/contact' },
+    { label: 'About Us', icon: Info, path: '/about' },
+    { label: 'Program Rules', icon: HelpCircle, path: '/program-rules' },
+    { label: 'Terms & Conditions', icon: FileText, path: '/terms' },
+    { label: 'Privacy Policy', icon: ShieldCheck, path: '/privacy' },
+    { label: 'Refund Policy', icon: RefreshCw, path: '/refund-policy' },
   ];
 
   const handleLogout = () => {

@@ -10,20 +10,20 @@ const KnowMore = () => {
 
   const faqs = [
     {
-      q: 'How does the scheme work?',
-      a: 'Pay a fixed monthly installment for the scheme duration. Upon maturity, you receive your full saved value.'
+      q: 'How does the membership program work?',
+      a: 'Pay a fixed monthly subscription fee for the program term. Upon completion, you receive your membership benefits.'
     },
     {
-      q: 'What do I receive when my scheme completes?',
-      a: 'Upon completing all installments, you receive your full maturity amount and some gifts at maturity (subject to discretion) — redeemable at the Santosh Instyle store in Hosur.'
+      q: 'What do I receive when my subscription completes?',
+      a: 'Upon completing all subscription terms, you receive your membership rewards and loyalty gifts (subject to discretion) — redeemable at the Santosh Instyle store in Hosur.'
     },
     {
       q: 'Can I pay early or skip a month?',
-      a: 'Yes! There is no fixed due date — you can pay your monthly installment any time during the month at your convenience. However, skipping a month is not recommended as it may delay your maturity benefits.'
+      a: 'Yes! There is no fixed due date — you can pay your monthly subscription fee any time during the month at your convenience. However, skipping a month is not recommended as it may delay your loyalty rewards.'
     },
     {
-      q: 'Where can I redeem my savings?',
-      a: 'Visit the Santosh Instyle store at Nethaji Road, Hosur, Tamil Nadu. Bring your Account ID (from the app) and a valid photo ID. Our staff will process your maturity amount and gift in person.'
+      q: 'Where can I redeem my membership rewards?',
+      a: 'Visit the Santosh Instyle store at Nethaji Road, Hosur, Tamil Nadu. Bring your Account ID (from the app) and a valid photo ID. Our staff will process your membership rewards and promotional gifts in person.'
     },
   ];
 
@@ -54,10 +54,10 @@ const KnowMore = () => {
         <div className="absolute bottom-8 left-8 right-8">
           <Badge variant="warning" className="bg-accent text-white border-none mb-2">FEATURED</Badge>
           <h1 className="text-3xl font-display font-bold text-white leading-tight">
-            Vasthara Savings Plan
+            Vasthara Membership Program
           </h1>
           <p className="text-white/70 text-sm font-medium mt-1">
-            Flexible installments. Great value. Secured savings.
+            Flexible subscription tiers. Great value. Exclusive rewards.
           </p>
         </div>
       </div>
@@ -66,18 +66,18 @@ const KnowMore = () => {
         {/* About */}
         <section className="space-y-4">
           <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
-            About the Scheme
+            About the Program
           </h2>
           <p className="text-text-secondary leading-relaxed text-sm">
-            The Vasthara Savings Plan lets you save a fixed amount each month for your plan duration.
-            At the end of your plan, you receive the full saved value. Eligible plans also come with some gifts at maturity.
+            The Vasthara Membership Program lets you subscribe to a tier and pay a monthly subscription fee.
+            At the completion of your membership term, you receive your membership rewards. Eligible tiers also come with special loyalty gifts.
           </p>
 
           <div className="grid grid-cols-1 gap-4 mt-6">
             {[
-              { title: 'Zero Hidden Charges', desc: 'No deductions or hidden fees. You get back exactly what you earn at maturity.', icon: ShieldCheck },
-              { title: 'Gifts at Maturity', desc: 'Complete your installments and receive some gifts at maturity on redemption day.', icon: Gift },
-              { title: 'Pay Any Day, Any Time', desc: 'No fixed due date. Pay your installment whenever it suits you during the month.', icon: TrendingUp },
+              { title: 'Zero Hidden Charges', desc: 'No deductions or hidden fees. You receive the full value of your membership rewards upon completion.', icon: ShieldCheck },
+              { title: 'Gifts and Rewards', desc: 'Complete your subscription terms and receive special loyalty gifts on redemption day.', icon: Gift },
+              { title: 'Pay Any Day, Any Time', desc: 'No fixed due date. Pay your subscription fee whenever it suits you during the month.', icon: TrendingUp },
             ].map((item, i) => (
               <div key={i} className="flex gap-4 p-4 bg-surface rounded-2xl border border-border/50">
                 <div className="w-10 h-10 rounded-xl bg-white shadow-subtle flex items-center justify-center text-accent shrink-0">
@@ -101,18 +101,18 @@ const KnowMore = () => {
             {[
               {
                 step: '01',
-                title: 'Choose a Plan',
-                desc: 'Select a monthly installment amount that suits your budget — ₹1,000, ₹2,000, or ₹3,000 per month.',
+                title: 'Choose a Tier',
+                desc: 'Select a monthly subscription fee that suits your budget — ₹1,000, ₹2,000, or ₹3,000 per month.',
               },
               {
                 step: '02',
-                title: 'Pay for Scheme Duration',
-                desc: 'Pay your installment any day during the month — there is no fixed due date. Stay consistent for your scheme duration.',
+                title: 'Pay Monthly Subscription',
+                desc: 'Pay your subscription fee any day during the month — there is no fixed due date. Stay active for your program term.',
               },
               {
                 step: '03',
-                title: 'Get Maturity Benefits',
-                desc: 'After completing your scheme, collect your full maturity value plus some gifts at maturity at our Hosur branch.',
+                title: 'Get Loyalty Rewards',
+                desc: 'After completing your membership term, collect your full rewards plus special gifts at our Hosur branch.',
               },
             ].map((item, i) => (
               <div key={i} className="flex gap-6 relative">
@@ -146,6 +146,14 @@ const KnowMore = () => {
           </div>
         </section>
 
+        {/* Compliance Disclaimer */}
+        <Card className="p-6 border-2 border-accent/20 bg-accent/5 rounded-2xl space-y-3">
+          <h3 className="text-xs font-black text-accent uppercase tracking-widest">Important Disclaimers</h3>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            We do not accept deposits, investments, or public funds. The Vasthara Program is solely a promotional customer loyalty membership and subscription service. This is not a chit fund, recurring deposit, lending, EMI financing, or investment scheme. Payments made are subscription fees towards loyalty program membership and are redeemable only for products and promotional benefits as detailed in our program rules.
+          </p>
+        </Card>
+
         <div className="pt-4">
           <Button
             fullWidth
@@ -153,7 +161,7 @@ const KnowMore = () => {
             onClick={() => navigate('/schemes-list')}
             className="shadow-card h-16 text-base"
           >
-            Ready to Join? → View Plans
+            Ready to Join? → View Subscriptions
           </Button>
         </div>
       </div>

@@ -33,14 +33,14 @@
     "verify_btn": "VERIFY"
   },
   "home": {
-    "featured_scheme": "Our Featured Scheme",
+    "featured_scheme": "Our Featured Program",
     "know_more": "KNOW MORE",
     "join_now": "JOIN NOW"
   },
   "nav": {
     "home": "HOME",
-    "my_schemes": "MY SCHEMES",
-    "pay_emi": "PAY EMI",
+    "my_schemes": "MY SUBSCRIPTIONS",
+    "pay_emi": "PAY SUBSCRIPTIONS",
     "contact": "CONTACT"
   },
   "common": {

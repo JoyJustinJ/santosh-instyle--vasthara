@@ -54,14 +54,16 @@ const JoinScheme = () => {
       const accountId = `ACC-2024-${Math.floor(1000 + Math.random() * 9000)}`;
       const payment = await payWithRazorpay({
         amount: scheme.monthlyAmount,
-        receipt: `vasthara_join_${planId || 'plan'}_${Date.now()}`,
-        description: `${scheme.name} first month payment`,
+        receipt: `vasthara_sub_join_${planId || 'plan'}_${Date.now()}`,
+        description: `${scheme.name} Membership Fee`,
         user,
         notes: {
-          purpose: 'scheme_join',
+          purpose: 'subscription_join',
           userId: userId || '',
           planId: planId || '',
+          programId: planId || '',
           schemeName: scheme.name,
+          programName: scheme.name,
           accountId: accountId,
         },
       });
@@ -79,7 +81,7 @@ const JoinScheme = () => {
       setStep('success');
     } catch (err) {
       console.error(err);
-      showNotification("Failed to join scheme. Please try again.", "error");
+      showNotification("Failed to join program. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -93,12 +95,12 @@ const JoinScheme = () => {
         className="page-transition-wrapper p-8 flex flex-col items-center justify-center min-h-screen text-center space-y-6"
       >
         <div className="space-y-2">
-          <p className="text-xs font-black text-accent uppercase tracking-[0.2em]">First Month Payment</p>
+          <p className="text-xs font-black text-accent uppercase tracking-[0.2em]">First Month Subscription Fee</p>
           <h2 className="text-2xl font-display font-bold text-primary tracking-tight">
             Pay {formatCurrency(scheme.monthlyAmount)}
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Complete the secure Razorpay checkout to pay your first instalment and activate the scheme.
+            Complete the secure Razorpay checkout to pay your first subscription fee and activate the membership.
           </p>
         </div>
 
@@ -156,10 +158,10 @@ const JoinScheme = () => {
 
         <div className="space-y-2">
           <h2 className="text-3xl font-display font-bold text-primary tracking-tight">
-            Scheme Activated!
+            Membership Activated!
           </h2>
           <p className="text-sm font-medium text-text-secondary">
-            Your first instalment has been recorded. Welcome to {scheme.name}!
+            Your first subscription fee has been recorded. Welcome to {scheme.name}!
           </p>
         </div>
 
@@ -170,11 +172,11 @@ const JoinScheme = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Plan Name</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Program Name</p>
               <p className="text-sm font-bold text-primary">{scheme.name}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Months Paid</p>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-wider">Subscription Dues Paid</p>
               <p className="text-sm font-bold text-primary">1 / {scheme.duration}</p>
             </div>
             <div>
@@ -191,13 +193,13 @@ const JoinScheme = () => {
         <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 w-full">
           <Info size={16} className="mt-0.5 shrink-0" />
           <p className="text-xs font-medium leading-relaxed text-left">
-            Your first month is recorded. Your next instalment can be paid at your convenience within the next monthly cycle.
+            Your first month is recorded. Your next subscription payment can be paid at your convenience within the next monthly cycle.
           </p>
         </div>
 
         <div className="w-full space-y-4 pt-4">
           <Button fullWidth size="lg" onClick={() => navigate('/my-schemes')}>
-            View My Plans
+            View My Subscriptions
           </Button>
           <button
             onClick={() => navigate('/home')}
@@ -223,7 +225,7 @@ const JoinScheme = () => {
           <ChevronLeft size={24} />
         </button>
         <h1 className="text-2xl font-display font-bold text-primary tracking-tight">
-          Join Purchase Plan
+          Join Membership Program
         </h1>
       </div>
 
@@ -236,11 +238,11 @@ const JoinScheme = () => {
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly Payable</p>
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly Subscription</p>
                 <p className="text-xl font-bold text-primary">{formatCurrency(scheme.monthlyAmount)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Payable</p>
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Subscription</p>
                 <p className="text-xl font-bold text-primary">{formatCurrency(scheme.monthlyAmount * scheme.duration)}</p>
               </div>
             </div>
@@ -256,9 +258,9 @@ const JoinScheme = () => {
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
           <Info size={16} className="text-amber-600 mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">First Month Payment Required</p>
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">First Month Subscription Required</p>
             <p className="text-xs text-amber-600 leading-relaxed">
-              To activate this scheme you must pay <strong>{formatCurrency(scheme.monthlyAmount)}</strong> now as your first instalment. Future instalments can be paid monthly at your convenience.
+              To activate this membership you must pay <strong>{formatCurrency(scheme.monthlyAmount)}</strong> now as your first subscription fee. Future subscription payments can be paid monthly at your convenience.
             </p>
           </div>
         </div>
@@ -281,7 +283,7 @@ const JoinScheme = () => {
                 className="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-accent"
               />
               <label htmlFor="terms" className="text-xs font-medium text-text-secondary leading-relaxed">
-                I agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} scheme and authorise the first month payment of {formatCurrency(scheme.monthlyAmount)}.
+                I agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-accent font-bold hover:underline">Terms & Conditions</button> of the {scheme.name} membership program and authorise the first month subscription fee payment of {formatCurrency(scheme.monthlyAmount)}.
               </label>
             </div>
           </div>
@@ -321,11 +323,12 @@ const JoinScheme = () => {
                 </button>
               </div>
               <div className="p-6 overflow-y-auto text-sm text-text-secondary space-y-4 flex-1">
-                <p><strong>1. Scheme Duration & Payments:</strong> Members must pay their monthly installments consistently for the chosen scheme duration.</p>
-                <p><strong>2. Maturity Benefits:</strong> The maturity value is strictly the total accumulated amount. No extra monetary benefits are provided. Gifts at maturity are solely at the discretion of the management.</p>
-                <p><strong>3. Late Payments:</strong> There is no fixed due date within the month, but skipping a month may affect maturity benefits and gift eligibility.</p>
-                <p><strong>4. Redemption:</strong> Savings must be redeemed at the Santosh Instyle store in Hosur. Cash refunds are not permitted under any circumstances.</p>
-                <p><strong>5. Cancellation:</strong> Premature cancellation may result in loss of benefits. The management reserves the right to alter terms as necessary.</p>
+                <p><strong>1. Membership Term:</strong> Members must pay their monthly subscription fees consistently for the chosen membership duration.</p>
+                <p><strong>2. Membership Rewards:</strong> Redemption rewards are redeemable only for products and loyalty benefits. No cash refunds or monetary returns are provided. Gifts and promotional rewards are solely at the discretion of the management.</p>
+                <p><strong>3. Late Payments:</strong> There is no fixed due date within the month, but skipping a month may delay your membership completion and gift eligibility.</p>
+                <p><strong>4. Redemption:</strong> Membership rewards must be redeemed for apparel/products at the Santosh Instyle store in Hosur. Cash refunds are not permitted under any circumstances.</p>
+                <p><strong>5. Cancellation:</strong> Premature cancellation may result in loss of loyalty benefits. The management reserves the right to alter program rules as necessary.</p>
+                <p className="text-xs text-text-muted italic border-t pt-2 mt-2">Disclaimer: We do not accept deposits, investments, or public funds. This is a promotional customer loyalty membership subscription program.</p>
               </div>
               <div className="p-4 border-t border-border/50 bg-surface">
                 <Button fullWidth onClick={() => { setShowTerms(false); setAgreed(true); }}>I Agree</Button>

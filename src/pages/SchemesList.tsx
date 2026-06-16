@@ -35,10 +35,10 @@ const SchemesList = () => {
         </button>
         <div>
           <h1 className="text-2xl font-display font-bold text-primary tracking-tight">
-            Choose Your Plan
+            Choose Your Subscription
           </h1>
           <p className="text-xs font-medium text-text-secondary">
-            Select a savings plan that fits your budget
+            Select a membership level that fits your preferences
           </p>
         </div>
       </div>
@@ -76,11 +76,11 @@ const SchemesList = () => {
 
                 <div className="bg-surface rounded-2xl p-4 flex justify-between items-center">
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly Payable</p>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly Subscription</p>
                     <p className="text-xl font-bold text-primary">{formatCurrency(scheme.monthlyAmount)}</p>
                   </div>
                   <div className="text-right space-y-0.5">
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Amount</p>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Value</p>
                     <p className="text-xl font-bold text-success">{formatCurrency(scheme.monthlyAmount * scheme.duration)}</p>
                   </div>
                 </div>
@@ -97,7 +97,7 @@ const SchemesList = () => {
                       onClick={() => navigate(`/scheme-join?plan=${scheme.id}`)}
                       className="h-14"
                     >
-                      JOIN THIS PLAN
+                      SUBSCRIBE NOW
                     </Button>
                     <button
                       onClick={() => navigate('/scheme-info')}
@@ -118,8 +118,8 @@ const SchemesList = () => {
           <Sparkles size={24} />
         </div>
         <div>
-          <h4 className="font-bold text-primary text-sm">Need a custom plan?</h4>
-          <p className="text-xs text-text-secondary mt-0.5">Visit our branch for personalized savings schemes.</p>
+          <h4 className="font-bold text-primary text-sm">Need a custom level?</h4>
+          <p className="text-xs text-text-secondary mt-0.5">Visit our branch for personalized membership programs.</p>
         </div>
       </div>
     </motion.div>
