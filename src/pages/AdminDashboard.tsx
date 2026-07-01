@@ -1104,7 +1104,7 @@ const AdminDashboard = () => {
     };
 
     const handleExportCustomers = () => {
-        if (!allPlans.length) return showNotif("No customer plans to export", "error");
+        if (!usersList.length && !allPlans.length) return showNotif("No customer data to export", "error");
         
         const maxInstallments = Math.max(...allPlans.map(p => Number(p.duration) || 11), 11);
         const getOrdinal = (n) => {
@@ -1146,9 +1146,28 @@ const AdminDashboard = () => {
         
         headers.push("Count", "Total Paid");
 
-        const plansWithUsers = allPlans.map(plan => {
-            const user = usersList.find(u => u.id === plan.userId || u.phone === plan.userId) || { phone: plan.userId, firstName: 'Unknown', lastName: '' };
-            return { plan, user };
+        const plansWithUsers = [];
+        const processedPlans = new Set();
+        
+        const customersOnly = usersList.filter(u => u.role !== 'admin' && u.role !== 'staff');
+        
+        customersOnly.forEach(user => {
+            const userPlans = allPlans.filter(p => p.userId === user.id || p.userId === user.phone);
+            if (userPlans.length > 0) {
+                userPlans.forEach(plan => {
+                    processedPlans.add(plan.id);
+                    plansWithUsers.push({ plan, user });
+                });
+            } else {
+                plansWithUsers.push({ plan: null, user });
+            }
+        });
+        
+        allPlans.forEach(plan => {
+            if (!processedPlans.has(plan.id)) {
+                const user = usersList.find(u => u.id === plan.userId || u.phone === plan.userId) || { phone: plan.userId, firstName: 'Unknown', lastName: '' };
+                plansWithUsers.push({ plan, user });
+            }
         });
 
         plansWithUsers.sort((a, b) => {
@@ -1161,6 +1180,21 @@ const AdminDashboard = () => {
         let sNo = 1;
 
         const rows = plansWithUsers.map(({ plan, user }) => {
+            if (!plan) {
+                const row = [];
+                row.push(sNo++);
+                row.push(""); // Scheme ID
+                row.push(user.customerId || 'N/A');
+                row.push(user.phone || 'N/A');
+                row.push((`${user.firstName || ''} ${user.lastName || ''}`).trim());
+                row.push(""); // Doj
+                row.push(0); // Scheme Amt
+                for (let i = 0; i < maxInstallments; i++) row.push("");
+                row.push(0); // Count
+                row.push(0); // Total Paid
+                return row;
+            }
+
             const txs = allTransactions.filter(tx => tx.accountId === plan.accountId && tx.status === 'Success');
             txs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
