@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { downloadAsPDF } from '../utils/pdfUtils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import * as XLSX from 'xlsx';
 import Home from './Home';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -1113,30 +1114,26 @@ const AdminDashboard = () => {
         };
 
         const formatDateToText = (dateString) => {
-            if (!dateString) return '""';
+            if (!dateString) return '';
             
-            // Check if it's already in DD-MM-YYYY or DD/MM/YYYY
             const parts = dateString.split(/[-/]/);
             if (parts.length === 3) {
-                // If the 3rd part is year, it might be DD-MM-YYYY
                 if (parts[2].length === 4) {
-                    // Try parsing it as standard first
                     const testD = new Date(dateString);
                     if (!isNaN(testD.getTime()) && dateString.indexOf('-') === -1) {
-                        // Standard date
+                        // pass
                     } else {
-                        // Return DD/MM/YYYY directly
-                        return `"${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}"`;
+                        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
                     }
                 }
             }
 
             const d = new Date(dateString);
-            if (isNaN(d.getTime())) return `"${dateString}"`; // Fallback to raw string if unable to parse
+            if (isNaN(d.getTime())) return dateString; 
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const yyyy = d.getFullYear();
-            return `"${dd}/${mm}/${yyyy}"`; 
+            return `${dd}/${mm}/${yyyy}`; 
         };
 
         const headers = [
@@ -1199,10 +1196,10 @@ const AdminDashboard = () => {
 
             const row = [];
             row.push(sNo++);
-            row.push(`"${schemeIdStr}"`);
-            row.push(`"${user.customerId || 'N/A'}"`);
-            row.push(`" ${user.phone || 'N/A'}"`);
-            row.push(`"${(`${user.firstName || ''} ${user.lastName || ''}`).trim()}"`);
+            row.push(schemeIdStr);
+            row.push(user.customerId || 'N/A');
+            row.push(user.phone || 'N/A');
+            row.push((`${user.firstName || ''} ${user.lastName || ''}`).trim());
             
             row.push(formatDateToText(plan.enrollmentDate));
             
@@ -1212,16 +1209,14 @@ const AdminDashboard = () => {
             for (let i = 0; i < maxInstallments; i++) {
                 if (i < txs.length) {
                     const tx = txs[i];
-                    // If we have the exact legacy date string stored, use it to match legacy data perfectly
                     if (tx.date) {
-                        row.push(`"${tx.date}"`);
+                        row.push(tx.date.replace(/"/g, ''));
                     } else {
-                        // Otherwise fallback to DD/MM/YYYY
                         const d = new Date(tx.timestamp);
                         const dd = String(d.getDate()).padStart(2, '0');
                         const mm = String(d.getMonth() + 1).padStart(2, '0');
                         const yyyy = d.getFullYear();
-                        row.push(`"${dd}/${mm}/${yyyy}"`);
+                        row.push(`${dd}/${mm}/${yyyy}`);
                     }
                 } else {
                     row.push("");
@@ -1244,14 +1239,17 @@ const AdminDashboard = () => {
         totalRow[headers.length - 1] = grandTotalPaid;
         rows.push(totalRow);
 
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        const colWidths = [
+            { wch: 6 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 12 }
+        ];
+        for (let i = 1; i <= maxInstallments; i++) colWidths.push({ wch: 15 });
+        colWidths.push({ wch: 10 }, { wch: 15 });
+        ws['!cols'] = colWidths;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Customers");
+        XLSX.writeFile(wb, `Customers_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     const handleDownloadStaffCSV = () => {
@@ -1287,7 +1285,7 @@ const AdminDashboard = () => {
             const day = String(d.getDate()).padStart(2, '0');
             const month = d.toLocaleString('en-US', { month: 'short' });
             const year = d.getFullYear();
-            return `" ${day}-${month}-${year}"`; 
+            return `${day}-${month}-${year}`; 
         };
 
         const headers = ["Account ID", "Customer Name", "Customer Phone", "Scheme Name", "Status", "Duration (Months)", "Months Paid", "Total Paid (₹)", "Join Date"];
@@ -1306,15 +1304,15 @@ const AdminDashboard = () => {
 
         const rows = plansWithUsers.map(({ p, u }) => {
             const phoneStr = u.phone || p.userId || '';
-            const formattedPhone = phoneStr ? `" ${phoneStr}"` : 'N/A';
+            const formattedPhone = phoneStr || 'N/A';
             const joinedAtFormatted = formatDateToText(p.joinedAt || p.enrollmentDate || p.createdAt);
             const customerName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
 
             return [
                 p.accountId || 'N/A',
-                `"${customerName}"`,
+                customerName,
                 formattedPhone,
-                `"${p.name || p.schemeName}"`,
+                p.name || p.schemeName,
                 p.status || 'N/A',
                 p.duration || 'N/A',
                 p.monthsPaid || 0,
@@ -1323,14 +1321,10 @@ const AdminDashboard = () => {
             ];
         });
 
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `subscriptions_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Subscriptions");
+        XLSX.writeFile(wb, `subscriptions_export_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
 
@@ -2600,10 +2594,10 @@ const AdminDashboard = () => {
                         <div className="mt-8 pt-8 border-t border-border/50 space-y-4">
                             <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em]">Bulk Data Export</h3>
                             <Button fullWidth onClick={handleExportCustomers} className="flex justify-center items-center gap-2">
-                                <Download size={18} /> Export All Customers (CSV)
+                                <Download size={18} /> Export All Customers (Excel)
                             </Button>
                             <Button fullWidth variant="outline" onClick={handleExportSubscriptions} className="flex justify-center items-center gap-2">
-                                <Download size={18} /> Export Subscriptions (CSV)
+                                <Download size={18} /> Export Subscriptions (Excel)
                             </Button>
                         </div>
                     </motion.div>
@@ -2637,22 +2631,18 @@ const AdminDashboard = () => {
                     const sorted = [...defaultersList].sort((a, b) => a.userName.localeCompare(b.userName));
 
                     const rows = sorted.map(d => [
-                        `"${d.userName}"`,
-                        `" ${d.userPhone}"`,
-                        `"${d.name || d.schemeName}"`,
+                        d.userName,
+                        d.userPhone,
+                        d.name || d.schemeName,
                         d.dueMonths,
                         d.monthsPaid || 0,
                         d.duration || 'N/A'
                     ]);
 
-                    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", `defaulters_export_${new Date().toISOString().split('T')[0]}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Defaulters");
+                    XLSX.writeFile(wb, `defaulters_export_${new Date().toISOString().split('T')[0]}.xlsx`);
                 };
 
                 return (
@@ -2665,7 +2655,7 @@ const AdminDashboard = () => {
                                 <h2 className="text-xl font-display font-bold text-primary">Defaulter Tracking</h2>
                             </div>
                             <Button size="sm" onClick={handleExportDefaulters} variant="outline" className="flex items-center gap-2 px-3 py-1.5 h-auto text-xs">
-                                <Download size={14} /> Export (CSV)
+                                <Download size={14} /> Export (Excel)
                             </Button>
                         </div>
                         
