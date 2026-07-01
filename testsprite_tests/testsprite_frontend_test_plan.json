@@ -1,0 +1,592 @@
+[
+  {
+    "id": "TC001",
+    "title": "Sign in with phone number and OTP",
+    "description": "Verifies that a user can request a login code from the phone login flow, complete OTP verification, and reach the authenticated area.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated area is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to the protected experience is granted"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Complete scheme fulfillment after customer OTP confirmation",
+    "description": "Verifies that staff can initiate scheme fulfillment, trigger customer OTP verification, and complete fulfillment only after confirmation.",
+    "category": "Staff Enrollment & Fulfillment",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid staff phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the staff dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Request scheme fulfillment"
+      },
+      {
+        "type": "action",
+        "description": "Trigger customer OTP verification"
+      },
+      {
+        "type": "action",
+        "description": "Complete the fulfillment after customer confirmation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scheme fulfillment is completed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the completion is shown only after OTP confirmation"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Sign in with PIN or biometric access",
+    "description": "Verifies that an enrolled user can access the authenticated area through the PIN or biometric login flow.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /pin-login"
+      },
+      {
+        "type": "action",
+        "description": "Use the enrolled PIN or biometric access method"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated area is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to the protected experience is granted"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Open the admin dashboard after sign-in",
+    "description": "Verifies that an authenticated administrator can reach the admin dashboard from the login flow.",
+    "category": "Admin Scheme Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid administrator phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the admin dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Open the staff dashboard after sign-in",
+    "description": "Verifies that an authenticated staff user can reach the staff dashboard from the login flow.",
+    "category": "Staff Enrollment & Fulfillment",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid staff phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the staff dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the staff dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Enroll a new customer and save the record",
+    "description": "Verifies that staff can enroll a new customer from the staff dashboard and see the customer added to the system.",
+    "category": "Staff Enrollment & Fulfillment",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid staff phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the staff dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Enroll a new customer"
+      },
+      {
+        "type": "action",
+        "description": "Save the enrollment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new customer is displayed in the system"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the enrollment is reflected in the customer list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Create a scheme plan and record a monthly payment",
+    "description": "Verifies that an administrator can create a scheme plan, record a payment, and see the scheme activity update.",
+    "category": "Admin Scheme Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid administrator phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the admin dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Create a new scheme plan"
+      },
+      {
+        "type": "action",
+        "description": "Record a monthly payment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated scheme activity is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Log a monthly deposit and confirm it updates history",
+    "description": "Verifies that staff can record a monthly deposit and see the payment reflected in account history.",
+    "category": "Staff Enrollment & Fulfillment",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid staff phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the staff dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Log a monthly deposit"
+      },
+      {
+        "type": "action",
+        "description": "Save the payment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deposit is reflected in account history"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "View active customers in the admin dashboard",
+    "description": "Verifies that an administrator can open the admin area and view active customer information.",
+    "category": "Admin Scheme Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid administrator phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the admin dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify active customers are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Export transaction data as CSV",
+    "description": "Verifies that an administrator can export transaction data from the admin dashboard.",
+    "category": "Admin Scheme Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid administrator phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the admin dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Export the transaction data as CSV"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the transaction export download is initiated"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC011",
+    "title": "Download a customer report as PDF",
+    "description": "Verifies that an administrator can download a customer report from the admin dashboard.",
+    "category": "Admin Scheme Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid administrator phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the admin dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Download the customer report as PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the customer report download is initiated"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC012",
+    "title": "Download a staff receipt as PDF",
+    "description": "Verifies that staff can download a receipt PDF from the staff dashboard.",
+    "category": "Staff Enrollment & Fulfillment",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with a valid staff phone number"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with a valid OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the staff dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Download the receipt as PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the receipt download is initiated"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC013",
+    "title": "Reject incorrect OTP",
+    "description": "Verifies that submitting an incorrect OTP shows access denied feedback and does not grant entry.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /otp-verify"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the OTP field with an incorrect OTP"
+      },
+      {
+        "type": "action",
+        "description": "Submit the OTP verification form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an OTP validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to the authenticated area is denied"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC014",
+    "title": "Reject invalid phone number format",
+    "description": "Verifies that entering an invalid phone number on the login page shows validation feedback and prevents continuation.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the phone number field with an invalid phone number format"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form to request a login code"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a phone number validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login flow does not continue"
+      }
+    ],
+    "priority": "Low"
+  }
+]

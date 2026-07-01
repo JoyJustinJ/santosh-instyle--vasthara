@@ -1,0 +1,74 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ChevronLeft, FileText } from 'lucide-react';
+import { Card } from '../components/UI/Card';
+
+const TermsConditions = () => {
+    const navigate = useNavigate();
+    const { t } = useTranslation();
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="page-transition-wrapper p-6 pb-24 space-y-8"
+        >
+            <div className="flex items-center gap-4">
+                <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary">
+                    <ChevronLeft size={24} />
+                </button>
+                <h1 className="text-2xl font-display font-bold text-primary tracking-tight">{t('terms.title')}</h1>
+            </div>
+
+            <div className="space-y-6">
+                <Card className="p-6 border-none shadow-card space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                            <FileText size={20} />
+                        </div>
+                        <h2 className="text-lg font-display font-bold text-primary">{t('terms.agreement')}</h2>
+                    </div>
+
+                    <div className="space-y-4 text-xs text-text-secondary leading-relaxed">
+                        <p className="font-bold text-primary">
+                            {t('terms.intro')}
+                        </p>
+
+                        <p>
+                            1. <span className="font-semibold text-primary">{t('terms.term1_title')}</span> {t('terms.term1_desc')}
+                        </p>
+
+                        <p>
+                            2. <span className="font-semibold text-primary">{t('terms.term2_title')}</span> {t('terms.term2_desc')}
+                        </p>
+
+                        <p>
+                            3. <span className="font-semibold text-primary">{t('terms.term3_title')}</span> {t('terms.term3_desc')}
+                        </p>
+
+                        <p>
+                            4. <span className="font-semibold text-primary">{t('terms.term4_title')}</span> {t('terms.term4_desc')}
+                        </p>
+
+                        <p>
+                            5. <span className="font-semibold text-primary">{t('terms.term5_title')}</span> {t('terms.term5_desc')}
+                        </p>
+                    </div>
+                </Card>
+
+                {/* Compliance Disclaimer */}
+                <Card className="p-6 border-2 border-accent/20 bg-accent/5 rounded-2xl space-y-3">
+                    <h3 className="text-xs font-black text-accent uppercase tracking-widest">{t('terms.important_disclaimers')}</h3>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                        {t('terms.disclaimer_desc')}
+                    </p>
+                </Card>
+            </div>
+        </motion.div>
+    );
+};
+
+export default TermsConditions;
