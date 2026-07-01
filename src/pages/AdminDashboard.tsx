@@ -296,7 +296,18 @@ const AdminDashboard = () => {
 
                 txs.forEach((tx: any) => {
                     if (tx.status === 'Success' && tx.amount) {
-                        const date = getTxDate(tx.timestamp);
+                        let date = getTxDate(tx.timestamp);
+                        if (tx.date && typeof tx.date === 'string') {
+                            const parts = tx.date.split(/[-/]/);
+                            if (parts.length === 3) {
+                                const day = parseInt(parts[0], 10);
+                                const month = parseInt(parts[1], 10) - 1;
+                                let year = parseInt(parts[2], 10);
+                                if (year < 100) year += 2000;
+                                date = new Date(year, month, day);
+                            }
+                        }
+                        
                         if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
                             const plan = plans.find((p: any) => p.accountId === tx.accountId);
                             const schemeAmt = plan ? ((plan as any).amount || (plan as any).monthlyAmount || 0) : 0;
@@ -320,7 +331,8 @@ const AdminDashboard = () => {
                 // Process Scheme Popularity
                 const schemePopMap: Record<string, number> = {};
                 plans.forEach((p: any) => {
-                    const name = p.name || p.schemeName || 'Unknown';
+                    const amt = p.amount || p.monthlyAmount || 0;
+                    const name = amt ? `₹${amt} Scheme` : 'Other';
                     schemePopMap[name] = (schemePopMap[name] || 0) + 1;
                 });
                 const schemePop = Object.keys(schemePopMap).map(k => ({ name: k, value: schemePopMap[k] }));
