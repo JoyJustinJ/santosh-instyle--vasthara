@@ -558,32 +558,7 @@ const StaffDashboard = () => {
         if (receiptData) {
             return (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-                    <div id="receipt-container" className="bg-white rounded-2xl p-6 shadow-card border border-border/50 max-w-sm mx-auto text-center print-area">
-                        <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 size={32} />
-                        </div>
-                        <h2 className="text-2xl font-display font-bold text-primary mb-1">Payment Successful</h2>
-                        <p className="text-xs text-text-muted mb-6">{receiptData.date}</p>
-                        
-                        <div className="space-y-3 text-left bg-surface p-4 rounded-xl mb-6">
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Amount Paid</span>
-                                <span className="text-sm font-bold text-primary">₹{receiptData.amount}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Customer</span>
-                                <span className="text-sm font-bold text-primary text-right">{receiptData.customerName}<br/><span className="text-[10px] text-text-muted">{receiptData.phone}</span></span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Schemes</span>
-                                <span className="text-[10px] font-bold text-primary text-right max-w-[50%]">{receiptData.schemes.join(', ')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Txn ID</span>
-                                <span className="text-xs font-mono font-bold text-primary">{receiptData.transactionId}</span>
-                            </div>
-                        </div>
-                        
+                    <div className="max-w-md mx-auto space-y-4">
                         <div className="flex gap-2 mb-3 no-print">
                             <Button fullWidth onClick={() => {
                                 window.print();
@@ -596,6 +571,47 @@ const StaffDashboard = () => {
                                 <Download size={18} /> Save PDF
                             </Button>
                         </div>
+                        
+                        <div id="receipt-container" className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm">
+                            <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                                <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Cash Receipt</p>
+                            </div>
+                            
+                            <div className="flex justify-between items-end mb-6">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Date</p>
+                                    <p className="font-bold text-gray-900 text-sm">{receiptData.date}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Txn ID</p>
+                                    <p className="font-mono font-bold text-gray-900 text-xs">{receiptData.transactionId}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="border border-gray-300 p-4 mb-6">
+                                <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                    <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Received From</span>
+                                    <div className="text-right break-words max-w-[65%]">
+                                        <span className="font-bold text-gray-900 text-sm block">{receiptData.customerName}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 block mt-0.5">{receiptData.phone}</span>
+                                    </div>
+                                </div>
+                                <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                    <span className="text-xs font-bold text-gray-600 uppercase shrink-0">For Scheme(s)</span>
+                                    <span className="text-xs font-bold text-gray-900 text-right max-w-[65%] break-words">{receiptData.schemes.join(', ')}</span>
+                                </div>
+                                <div className="pt-2 flex justify-between items-center">
+                                    <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Amount Paid</span>
+                                    <span className="text-xl font-black text-green-700">₹{receiptData.amount}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest pt-4 border-t border-gray-300">
+                                This is a computer generated receipt and does not require a physical signature.
+                            </div>
+                        </div>
+
                         <Button fullWidth onClick={() => {
                             setReceiptData(null);
                             setSelectedPlans([]);
@@ -613,76 +629,102 @@ const StaffDashboard = () => {
         if (creditNoteData) {
             return (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-                    <div id="credit-note-container" className="bg-white rounded-2xl p-6 shadow-card border border-border/50 max-w-sm mx-auto text-center relative overflow-hidden print-area">
-                        <div className="absolute top-4 left-4 no-print z-20">
-                            <button onClick={() => setCreditNoteData(null)} className="text-primary p-2 hover:bg-surface rounded-full transition-colors">
-                                <ChevronLeft size={24} />
+                    <div className="max-w-md mx-auto space-y-4">
+                        <div className="flex justify-between items-center no-print">
+                            <button onClick={() => setCreditNoteData(null)} className="text-primary p-2 hover:bg-surface rounded-full transition-colors flex items-center gap-2">
+                                <ChevronLeft size={24} /> <span className="font-bold text-sm">Back</span>
                             </button>
-                        </div>
-                        {creditNoteData.duplicate && (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none rotate-[-30deg]">
-                                <span className="text-4xl font-black text-danger tracking-widest uppercase border-4 border-danger px-4 py-2">Duplicate Copy</span>
-                            </div>
-                        )}
-                        <div className="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 size={32} />
-                        </div>
-                        <h2 className="text-2xl font-display font-bold text-primary mb-1">Scheme Closed</h2>
-                        <h3 className="text-md font-bold text-accent uppercase tracking-widest mb-6">Credit Note</h3>
-                        <p className="text-xs text-text-muted mb-6">{creditNoteData.closedAt}</p>
-                        
-                        <div className="space-y-3 text-left bg-surface p-4 rounded-xl mb-6 relative z-10">
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Total Value</span>
-                                <span className="text-sm font-bold text-primary">₹{creditNoteData.totalPaid}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider shrink-0 mr-4">Customer</span>
-                                <span className="text-sm font-bold text-primary text-right">
-                                    {creditNoteData.userName || 'Unknown Customer'}<br/>
-                                    <span className="text-[10px] text-text-muted">{creditNoteData.userPhone || creditNoteData.userId}</span>
-                                </span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Scheme</span>
-                                <span className="text-[10px] font-bold text-primary text-right max-w-[50%]">{creditNoteData.schemeName || creditNoteData.name}</span>
-                            </div>
-                            {(creditNoteData.bonuses || creditNoteData.gifts) && (
-                                <div className="flex flex-col border-b border-border/50 pb-2 pt-2 gap-1 text-left">
-                                    <span className="text-xs text-text-muted uppercase tracking-wider">Scheme Rewards</span>
-                                    {creditNoteData.bonuses && <span className="text-[10px] font-bold text-accent">Bonus: {creditNoteData.bonuses}</span>}
-                                    {creditNoteData.gifts && <span className="text-[10px] font-bold text-accent">Gift: {creditNoteData.gifts}</span>}
-                                </div>
-                            )}
-                            <div className="flex justify-between mt-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Acct ID</span>
-                                <span className="text-xs font-mono font-bold text-primary">{creditNoteData.accountId.slice(0,8)}</span>
+                            <div className="flex gap-2">
+                                <Button onClick={() => window.print()} variant="outline" size="sm" className="flex justify-center items-center gap-2">
+                                    <Printer size={16} /> Print
+                                </Button>
+                                <Button onClick={() => downloadPDF('credit-note-container', `CreditNote_${creditNoteData.accountId}`)} size="sm" className="bg-primary text-white flex justify-center items-center gap-2">
+                                    <Download size={16} /> Save PDF
+                                </Button>
                             </div>
                         </div>
 
-                        {creditNoteData.transactions && creditNoteData.transactions.length > 0 && (
-                            <div className="space-y-2 text-left mb-6 relative z-10 border-t border-border/50 pt-4">
-                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Transaction History</h4>
-                                <div className="space-y-2 pr-2">
-                                    {creditNoteData.transactions.map((tx: any) => (
-                                        <div key={tx.id} className="flex justify-between items-center text-xs border-b border-border/30 pb-1 last:border-0">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-primary">{new Date(tx.timestamp).toLocaleDateString()}</span>
-                                                <span className="text-[9px] text-text-muted uppercase tracking-widest">{tx.method || 'CASH'}</span>
-                                            </div>
-                                            <span className="font-bold text-success">₹{tx.amount}</span>
+                        <div id="credit-note-container" className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm relative overflow-hidden">
+                            {creditNoteData.duplicate && (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none rotate-[-45deg] z-0">
+                                    <span className="text-6xl font-black text-gray-900 tracking-widest uppercase">DUPLICATE</span>
+                                </div>
+                            )}
+                            
+                            <div className="relative z-10">
+                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                    <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-end mb-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Closure Date</p>
+                                        <p className="font-bold text-gray-900 text-sm">{creditNoteData.closedAt}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Account ID</p>
+                                        <p className="font-mono font-bold text-gray-900 text-xs">{creditNoteData.accountId.slice(0,12)}...</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="border border-gray-300 p-4 mb-6">
+                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Customer</span>
+                                        <div className="text-right break-words max-w-[65%]">
+                                            <span className="font-bold text-gray-900 text-sm block">{creditNoteData.userName || 'Unknown Customer'}</span>
+                                            <span className="text-[10px] font-bold text-gray-500 block mt-0.5">{creditNoteData.userPhone || creditNoteData.userId}</span>
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Scheme</span>
+                                        <span className="text-xs font-bold text-gray-900 text-right max-w-[65%] break-words">{creditNoteData.schemeName || creditNoteData.name}</span>
+                                    </div>
+                                    
+                                    {(creditNoteData.bonuses || creditNoteData.gifts) && (
+                                        <div className="border-b border-gray-200 pb-2 mb-2">
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Bonuses & Gifts</span>
+                                            <div className="flex flex-col gap-1 text-right">
+                                                {creditNoteData.bonuses && <span className="text-xs font-bold text-gray-900">Bonus: {creditNoteData.bonuses}</span>}
+                                                {creditNoteData.gifts && <span className="text-xs font-bold text-gray-900">Gift: {creditNoteData.gifts}</span>}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="pt-2 flex justify-between items-center">
+                                        <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Value</span>
+                                        <span className="text-xl font-black text-gray-900">₹{creditNoteData.totalPaid}</span>
+                                    </div>
+                                </div>
+
+                                {creditNoteData.transactions && creditNoteData.transactions.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Transaction Ledger</h4>
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-gray-100 text-gray-600">
+                                                <tr>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Date</th>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Method</th>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {creditNoteData.transactions.map((tx: any) => (
+                                                    <tr key={tx.id}>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                        <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
+                                                        <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                
+                                <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest pt-4 border-t border-gray-300 mt-6">
+                                    This is a computer generated statement and does not require a physical signature.
                                 </div>
                             </div>
-                        )}
-                        
-                        <div className="flex gap-2 mb-3 no-print">
-                            <Button fullWidth onClick={() => {
-                                downloadPDF('credit-note-container', `CreditNote_${creditNoteData.accountId}`);
-                            }} className="bg-primary text-white flex justify-center items-center gap-2">
-                                <Download size={18} /> Save PDF
-                            </Button>
                         </div>
                     </div>
                 </motion.div>

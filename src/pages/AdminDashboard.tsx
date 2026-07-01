@@ -1389,74 +1389,102 @@ const AdminDashboard = () => {
         if (creditNoteData) {
             return (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-                    <div id="credit-note-container" ref={printRef} className="bg-white rounded-2xl p-6 shadow-card border border-border/50 max-w-sm mx-auto text-center relative overflow-hidden print-area">
-                        <div className="absolute top-4 left-4 no-print z-20">
-                            <button onClick={() => setCreditNoteData(null)} className="text-primary p-2 hover:bg-surface rounded-full transition-colors">
-                                <ChevronLeft size={24} />
+                    <div className="max-w-md mx-auto space-y-4">
+                        <div className="flex justify-between items-center no-print">
+                            <button onClick={() => setCreditNoteData(null)} className="text-primary p-2 hover:bg-surface rounded-full transition-colors flex items-center gap-2">
+                                <ChevronLeft size={24} /> <span className="font-bold text-sm">Back</span>
                             </button>
-                        </div>
-                        {creditNoteData.duplicate && (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none rotate-[-30deg]">
-                                <span className="text-4xl font-black text-danger tracking-widest uppercase border-4 border-danger px-4 py-2">Duplicate Copy</span>
-                            </div>
-                        )}
-                        <div className="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle size={32} />
-                        </div>
-                        <h2 className="text-2xl font-display font-bold text-primary mb-1">Scheme Closed</h2>
-                        <h3 className="text-md font-bold text-accent uppercase tracking-widest mb-6">Credit Note</h3>
-                        <p className="text-xs text-text-muted mb-6">{creditNoteData.closedAt}</p>
-                        
-                        <div className="space-y-3 text-left bg-surface p-4 rounded-xl mb-6 relative z-10">
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Total Value</span>
-                                <span className="text-sm font-bold text-primary">₹{creditNoteData.totalPaid}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider shrink-0 mr-4">Customer</span>
-                                <span className="text-sm font-bold text-primary text-right">
-                                    {creditNoteData.userName || 'Unknown Customer'}<br/>
-                                    <span className="text-[10px] text-text-muted">{creditNoteData.userPhone || creditNoteData.userId}</span>
-                                </span>
-                            </div>
-                            <div className="flex justify-between border-b border-border/50 pb-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Scheme</span>
-                                <span className="text-[10px] font-bold text-primary text-right max-w-[50%]">{creditNoteData.schemeName || creditNoteData.name}</span>
-                            </div>
-                            {(creditNoteData.bonuses || creditNoteData.gifts) && !creditNoteData.isPreClosed && (
-                                <div className="flex flex-col border-b border-border/50 pb-2 pt-2 gap-1 text-left">
-                                    <span className="text-xs text-text-muted uppercase tracking-wider">Scheme Rewards</span>
-                                    {creditNoteData.bonuses && <span className="text-[10px] font-bold text-accent">Bonus: {creditNoteData.bonuses}</span>}
-                                    {creditNoteData.gifts && <span className="text-[10px] font-bold text-accent">Gift: {creditNoteData.gifts}</span>}
-                                </div>
-                            )}
-                            <div className="flex justify-between mt-2">
-                                <span className="text-xs text-text-muted uppercase tracking-wider">Acct ID</span>
-                                <span className="text-xs font-mono font-bold text-primary">{creditNoteData.accountId.slice(0,8)}</span>
+                            <div className="flex gap-2">
+                                <Button onClick={() => window.print()} variant="outline" size="sm" className="flex justify-center items-center gap-2">
+                                    <Printer size={16} /> Print
+                                </Button>
+                                <Button onClick={downloadPDF} size="sm" className="bg-primary text-white flex justify-center items-center gap-2">
+                                    <Download size={16} /> Save PDF
+                                </Button>
                             </div>
                         </div>
 
-                        {creditNoteData.transactions && creditNoteData.transactions.length > 0 && (
-                            <div className="space-y-2 text-left mb-6 relative z-10 border-t border-border/50 pt-4">
-                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Transaction History</h4>
-                                <div className="space-y-2 pr-2">
-                                    {creditNoteData.transactions.map((tx: any) => (
-                                        <div key={tx.id} className="flex justify-between items-center text-xs border-b border-border/30 pb-1 last:border-0">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-primary">{new Date(tx.timestamp).toLocaleDateString()}</span>
-                                                <span className="text-[9px] text-text-muted uppercase tracking-widest">{tx.method || 'CASH'}</span>
-                                            </div>
-                                            <span className="font-bold text-success">₹{tx.amount}</span>
+                        <div id="credit-note-container" ref={printRef} className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm relative overflow-hidden">
+                            {creditNoteData.duplicate && (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none rotate-[-45deg] z-0">
+                                    <span className="text-6xl font-black text-gray-900 tracking-widest uppercase">DUPLICATE</span>
+                                </div>
+                            )}
+                            
+                            <div className="relative z-10">
+                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                    <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-end mb-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Closure Date</p>
+                                        <p className="font-bold text-gray-900 text-sm">{creditNoteData.closedAt}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Account ID</p>
+                                        <p className="font-mono font-bold text-gray-900 text-xs">{creditNoteData.accountId.slice(0,12)}...</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="border border-gray-300 p-4 mb-6">
+                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Customer</span>
+                                        <div className="text-right break-words max-w-[65%]">
+                                            <span className="font-bold text-gray-900 text-sm block">{creditNoteData.userName || 'Unknown Customer'}</span>
+                                            <span className="text-[10px] font-bold text-gray-500 block mt-0.5">{creditNoteData.userPhone || creditNoteData.userId}</span>
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
+                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Scheme</span>
+                                        <span className="text-xs font-bold text-gray-900 text-right max-w-[65%] break-words">{creditNoteData.schemeName || creditNoteData.name}</span>
+                                    </div>
+                                    
+                                    {(creditNoteData.bonuses || creditNoteData.gifts) && !creditNoteData.isPreClosed && (
+                                        <div className="border-b border-gray-200 pb-2 mb-2">
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Bonuses & Gifts</span>
+                                            <div className="flex flex-col gap-1 text-right">
+                                                {creditNoteData.bonuses && <span className="text-xs font-bold text-gray-900">Bonus: {creditNoteData.bonuses}</span>}
+                                                {creditNoteData.gifts && <span className="text-xs font-bold text-gray-900">Gift: {creditNoteData.gifts}</span>}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="pt-2 flex justify-between items-center">
+                                        <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Value</span>
+                                        <span className="text-xl font-black text-gray-900">₹{creditNoteData.totalPaid}</span>
+                                    </div>
+                                </div>
+
+                                {creditNoteData.transactions && creditNoteData.transactions.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Transaction Ledger</h4>
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-gray-100 text-gray-600">
+                                                <tr>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Date</th>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Method</th>
+                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {creditNoteData.transactions.map((tx: any) => (
+                                                    <tr key={tx.id}>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                        <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
+                                                        <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                
+                                <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest pt-4 border-t border-gray-300 mt-6">
+                                    This is a computer generated statement and does not require a physical signature.
                                 </div>
                             </div>
-                        )}
-                        
-                        <div className="flex gap-2 mb-3 no-print">
-                            <Button fullWidth onClick={downloadPDF} className="bg-primary text-white flex justify-center items-center gap-2">
-                                <Download size={18} /> Save PDF
-                            </Button>
                         </div>
                     </div>
                 </motion.div>
@@ -1845,140 +1873,128 @@ const AdminDashboard = () => {
                                     loading={loadingReport}
                                     className="shrink-0 h-12"
                                 >
-                                    Search
                                 </Button>
                             </div>
                         </Card>
 
                         {reportCustomer && (
                             <div className="space-y-6 relative">
-                                <div className="absolute top-0 right-0 z-10 flex gap-2">
+                                <div className="flex justify-end gap-2 mb-4">
                                     <Button onClick={downloadReportPDF} size="sm">
                                         <Download size={16} className="mr-2" /> Download PDF
                                     </Button>
+                                    {reportSchemes.filter(s => !s.status || s.status === 'active').map(scheme => (
+                                        <Button 
+                                            key={`preclose-${scheme.accountId}`}
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="border-warning text-warning hover:bg-warning hover:text-white transition-colors"
+                                            onClick={() => handleInitiateAdminPreClose(scheme)}
+                                        >
+                                            Pre-close {scheme.schemeName || scheme.name}
+                                        </Button>
+                                    ))}
                                 </div>
-                                <div id="customer-report-content" className="bg-white p-6 rounded-2xl shadow-card space-y-6">
-                                    <div className="text-center pb-6 border-b border-border">
-                                        <h2 className="text-2xl font-black text-primary uppercase tracking-wider">Customer Report</h2>
-                                        <p className="text-xs text-text-muted mt-1">Generated on {new Date().toLocaleString()}</p>
+
+                                <div id="customer-report-content" className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
+                                    <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
+                                        <div>
+                                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                            <p className="text-sm font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Account Statement</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date Generated</p>
+                                            <p className="text-sm font-bold text-gray-900">{new Date().toLocaleDateString()}</p>
+                                        </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-4 bg-surface p-4 rounded-xl border border-border">
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8">
                                         <div>
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Customer Name</p>
-                                            <p className="font-bold text-primary text-lg">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Customer Name</p>
+                                            <p className="font-bold text-gray-900 text-lg uppercase">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Phone Number</p>
-                                            <p className="font-bold text-primary text-lg">{reportCustomer.phone}</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Customer ID</p>
+                                            <p className="font-bold text-gray-900 text-sm">{reportCustomer.customerId || reportCustomer.id}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Customer ID</p>
-                                            <p className="font-bold text-text-secondary text-xs break-all">{reportCustomer.customerId || reportCustomer.id}</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Phone Number</p>
+                                            <p className="font-bold text-gray-900 text-lg">{reportCustomer.phone}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Joined Date</p>
-                                            <p className="font-bold text-text-secondary text-xs">{reportCustomer.createdAt ? new Date(reportCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Account Created</p>
+                                            <p className="font-bold text-gray-900 text-sm">{reportCustomer.createdAt ? new Date(reportCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
-                                        <div className="block border-b border-border pb-4">
-                                            <h3 className="text-lg font-black text-primary uppercase tracking-wider mb-4">Schemes & Transactions</h3>
-                                            <div className="flex bg-surface p-1 rounded-xl shadow-sm border border-border/50 overflow-x-auto w-full whitespace-nowrap hide-scrollbar">
-                                                {(['active', 'completed', 'closed'] as const).map(tab => (
-                                                    <button
-                                                        key={tab}
-                                                        onClick={() => setReportSchemeTab(tab)}
-                                                        className={cn(
-                                                            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all capitalize",
-                                                            reportSchemeTab === tab 
-                                                                ? "bg-primary text-white shadow-md" 
-                                                                : "text-text-muted hover:text-primary hover:bg-black/5"
-                                                        )}
-                                                    >
-                                                        {tab}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        
-                                        {(() => {
-                                            const filteredSchemes = reportSchemes.filter(s => {
-                                                const status = s.status || 'active';
-                                                if (reportSchemeTab === 'active') return status === 'active';
-                                                if (reportSchemeTab === 'completed') return status === 'completed' || status === 'redeemed';
-                                                if (reportSchemeTab === 'closed') return status === 'closed' || status === 'pre-closed';
-                                                return true;
-                                            });
-                                            
-                                            if (filteredSchemes.length === 0) {
-                                                return <p className="text-sm text-text-muted">No {reportSchemeTab} schemes found for this customer.</p>;
-                                            }
-                                            
-                                            return filteredSchemes.map((scheme, idx) => (
-                                                <div key={scheme.accountId} className="border-2 border-border rounded-xl p-4 space-y-4 relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 bg-primary/10 text-primary text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl">
-                                                        {scheme.status || 'Active'}
+                                    <div className="space-y-8">
+                                        {reportSchemes.map((scheme, idx) => (
+                                            <div key={scheme.accountId} className="break-inside-avoid">
+                                                <div className="bg-gray-100 p-3 flex justify-between items-center border border-gray-300 border-b-0">
+                                                    <div>
+                                                        <h4 className="font-black text-gray-900 uppercase text-lg">{scheme.schemeName || scheme.name}</h4>
+                                                        <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Account: {scheme.accountId}</p>
                                                     </div>
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Scheme {idx + 1}</p>
-                                                            <h4 className="font-bold text-primary text-lg">{scheme.schemeName || scheme.name}</h4>
-                                                        </div>
-                                                        <div className="text-right mt-1">
-                                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Total Paid</p>
-                                                            <p className="font-black text-success text-lg">₹{scheme.totalPaid || 0}</p>
-                                                        </div>
+                                                    <div className="text-right">
+                                                        <span className="inline-block px-3 py-1 bg-gray-900 text-white text-[10px] font-black uppercase tracking-wider">
+                                                            {scheme.status || 'Active'}
+                                                        </span>
                                                     </div>
-                                                    
-                                                    {(!scheme.status || scheme.status === 'active') && (
-                                                        <div className="flex justify-end mt-2">
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                className="border-warning text-warning hover:bg-warning hover:text-white transition-colors"
-                                                                onClick={() => handleInitiateAdminPreClose(scheme)}
-                                                            >
-                                                                Pre-close Scheme
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                    
+                                                </div>
+                                                
+                                                <div className="border border-gray-300 p-4 mb-2">
+                                                    <div className="flex justify-between text-sm font-bold text-gray-900 mb-4 border-b border-gray-200 pb-3">
+                                                        <div>Monthly Amount: <span className="font-black text-green-700">₹{scheme.amount || scheme.monthlyAmount}</span></div>
+                                                        <div>Duration: <span className="font-black">{scheme.duration || 11} Months</span></div>
+                                                        <div>Total Paid: <span className="font-black text-green-700 text-lg">₹{scheme.totalPaid || 0}</span></div>
+                                                    </div>
+
                                                     {(scheme.bonuses || scheme.gifts) && !scheme.isPreClosed && (
-                                                        <div className="pt-2 pb-2 bg-accent/5 rounded-lg px-3 border border-accent/20">
-                                                            <p className="text-[10px] font-black text-accent uppercase tracking-wider mb-1">Scheme Rewards</p>
-                                                            <div className="flex flex-col gap-0.5">
-                                                                {scheme.bonuses && <p className="text-xs font-bold text-primary">• {scheme.bonuses}</p>}
-                                                                {scheme.gifts && <p className="text-xs font-bold text-primary">• {scheme.gifts}</p>}
+                                                        <div className="mb-4 bg-gray-50 p-2 border border-dashed border-gray-300">
+                                                            <p className="text-[10px] font-black text-gray-600 uppercase tracking-wider mb-1">Bonuses & Gifts</p>
+                                                            <div className="flex flex-col gap-0.5 text-xs font-bold text-gray-900">
+                                                                {scheme.bonuses && <p>• {scheme.bonuses}</p>}
+                                                                {scheme.gifts && <p>• {scheme.gifts}</p>}
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    <div className="pt-3 border-t border-border">
-                                                        <p className="text-xs font-bold text-primary mb-3">Transactions for this Scheme</p>
-                                                        {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
-                                                            <div className="space-y-2">
-                                                                {reportTransactions[scheme.accountId].map((tx: any) => (
-                                                                    <div key={tx.id} className="flex justify-between items-center p-2 bg-surface rounded-lg border border-border/50 text-xs">
-                                                                        <div>
-                                                                            <p className="font-bold text-primary">₹{tx.amount}</p>
-                                                                            <p className="text-[9px] text-text-muted">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</p>
-                                                                        </div>
-                                                                        <div className="text-right">
-                                                                            <p className="font-bold text-success uppercase text-[9px]">{tx.status}</p>
-                                                                            <p className="text-[9px] text-text-muted">{tx.type || 'Manual Cash Receipt'}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-xs text-text-muted italic">No transactions found.</p>
-                                                        )}
+                                                    <div className="mt-4">
+                                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Transaction Ledger</p>
+                                                        <table className="w-full text-left text-xs border-collapse">
+                                                            <thead>
+                                                                <tr className="border-b-2 border-gray-300 text-gray-900">
+                                                                    <th className="py-2 font-black uppercase">Date</th>
+                                                                    <th className="py-2 font-black uppercase">Type</th>
+                                                                    <th className="py-2 font-black uppercase">Status</th>
+                                                                    <th className="py-2 font-black uppercase text-right">Amount</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
+                                                                    reportTransactions[scheme.accountId].map((tx: any) => (
+                                                                        <tr key={tx.id} className="border-b border-gray-200 text-gray-800">
+                                                                            <td className="py-2 font-medium">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                                            <td className="py-2">{tx.type || 'Cash Receipt'}</td>
+                                                                            <td className="py-2 font-bold text-green-700 uppercase text-[10px]">{tx.status}</td>
+                                                                            <td className="py-2 font-black text-right">₹{tx.amount}</td>
+                                                                        </tr>
+                                                                    ))
+                                                                ) : (
+                                                                    <tr>
+                                                                        <td colSpan={4} className="py-4 text-center text-gray-500 italic font-medium">No transactions found.</td>
+                                                                    </tr>
+                                                                )}
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
-                                            ));
-                                        })()}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="mt-12 pt-4 border-t-2 border-gray-900 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                        This is a computer generated statement and does not require a physical signature.
                                     </div>
                                 </div>
                             </div>
