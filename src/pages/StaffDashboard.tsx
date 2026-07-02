@@ -71,6 +71,9 @@ const StaffDashboard = () => {
     const [reportSchemes, setReportSchemes] = useState<any[]>([]);
     const [reportTransactions, setReportTransactions] = useState<Record<string, any[]>>({});
     const [loadingReport, setLoadingReport] = useState(false);
+    const [reportSchemeTab, setReportSchemeTab] = useState<'all' | 'active' | 'completed' | 'closed'>('all');
+    const [tallyStartDate, setTallyStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [tallyEndDate, setTallyEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
     const [fulfillmentOTPModalOpen, setFulfillmentOTPModalOpen] = useState(false);
     const [fulfillmentOTP, setFulfillmentOTP] = useState('');
@@ -161,7 +164,7 @@ const StaffDashboard = () => {
                 const users = await getAllUsersFromDB();
                 // Match exact branch, or include own transactions just in case
                 const branchUsers = users.filter((u: any) => u.branch === user.branch).map((u: any) => u.id);
-                relevantTx = allTx.filter((tx: any) => branchUsers.includes(tx.recordedBy) || tx.recordedBy === user?.id);
+                relevantTx = allTx.filter((tx: any) => branchUsers.includes(tx.recordedBy) || tx.recordedBy === user?.id || tx.recordedBy === 'admin' || users.find((u:any) => u.id === tx.recordedBy)?.accessLevel === 'super');
                 
                 // Attach collector's name
                 relevantTx = relevantTx.map((tx: any) => {
@@ -732,15 +735,22 @@ const StaffDashboard = () => {
         }
 
         if (activeView === 'tally') {
-            const today = new Date().toDateString();
-            const todayTx = staffTransactions.filter(t => new Date(t.timestamp).toDateString() === today);
-            const total = todayTx.reduce((acc, t) => acc + (t.amount || 0), 0);
+            const start = new Date(tallyStartDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(tallyEndDate);
+            end.setHours(23, 59, 59, 999);
+            
+            const rangeTx = staffTransactions.filter(t => {
+                const txDate = new Date(t.timestamp);
+                return txDate >= start && txDate <= end;
+            });
+            const total = rangeTx.reduce((acc, t) => acc + (t.amount || 0), 0);
             return (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                     <div className="flex items-center justify-between border-b border-border/50 pb-4">
                         <div className="flex items-center gap-4">
                             <button onClick={() => setActiveView('overview')} className="text-primary"><ChevronLeft size={24} /></button>
-                            <h2 className="text-xl font-display font-bold text-primary">Today's Tally</h2>
+                            <h2 className="text-xl font-display font-bold text-primary">Cash Tally</h2>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => downloadPDF('tally-report-content', 'Daily_Tally_Report')} className="p-2 text-accent bg-accent/10 rounded-xl hover:bg-accent/20 transition-all flex items-center gap-2 text-xs font-bold">
@@ -753,24 +763,50 @@ const StaffDashboard = () => {
                             </button>
                         </div>
                     </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">From Date</label>
+                            <input 
+                                type="date" 
+                                value={tallyStartDate} 
+                                onChange={(e) => setTallyStartDate(e.target.value)}
+                                className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">To Date</label>
+                            <input 
+                                type="date" 
+                                value={tallyEndDate} 
+                                onChange={(e) => setTallyEndDate(e.target.value)}
+                                className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                            />
+                        </div>
+                    </div>
+
                     <div id="tally-report-content" className="space-y-6">
                         <div className="bg-primary p-6 rounded-2xl text-white shadow-lg">
-                        <p className="text-xs opacity-70 uppercase tracking-widest">Total Collected Today</p>
+                        <p className="text-xs opacity-70 uppercase tracking-widest">Total Collected</p>
                         <p className="text-4xl font-bold">₹{total}</p>
                     </div>
                     <div className="space-y-3">
-                        {todayTx.map((tx: any) => (
-                            <div key={tx.id} className="p-4 bg-white rounded-xl border border-border flex justify-between items-center">
-                                <div>
-                                    <p className="text-sm font-bold">{tx.userName}</p>
-                                    <p className="text-[10px] text-gray-500">{tx.schemeName}</p>
-                                    {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
-                                        <p className="text-[9px] font-bold text-accent uppercase tracking-widest mt-1">Collected by: {tx.collectedByName}</p>
-                                    )}
+                        {rangeTx.length === 0 ? (
+                            <p className="text-center text-text-muted py-8">No transactions found for this date range.</p>
+                        ) : (
+                            rangeTx.map((tx: any) => (
+                                <div key={tx.id} className="p-4 bg-white rounded-xl border border-border flex justify-between items-center">
+                                    <div>
+                                        <p className="text-sm font-bold">{tx.userName}</p>
+                                        <p className="text-[10px] text-gray-500">{tx.schemeName}</p>
+                                        {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
+                                            <p className="text-[9px] font-bold text-accent uppercase tracking-widest mt-1">Collected by: {tx.collectedByName || 'Admin'}</p>
+                                        )}
+                                    </div>
+                                    <p className="font-bold text-primary">₹{tx.amount}</p>
                                 </div>
-                                <p className="font-bold text-primary">₹{tx.amount}</p>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                     </div>
                 </motion.div>
@@ -1226,11 +1262,24 @@ const StaffDashboard = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <h3 className="text-lg font-black text-primary uppercase tracking-wider border-b border-border pb-2">Schemes & Transactions</h3>
+                                    <div className="flex justify-between items-center border-b border-border pb-2">
+                                        <h3 className="text-lg font-black text-primary uppercase tracking-wider">Schemes & Transactions</h3>
+                                        <div className="flex gap-1">
+                                            {(['all', 'active', 'completed', 'closed'] as const).map(tab => (
+                                                <button 
+                                                    key={tab}
+                                                    onClick={() => setReportSchemeTab(tab)}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${reportSchemeTab === tab ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-primary'}`}
+                                                >
+                                                    {tab}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                     {reportSchemes.length === 0 ? (
                                         <p className="text-sm text-text-muted">No schemes found for this customer.</p>
                                     ) : (
-                                        reportSchemes.map((scheme, idx) => (
+                                        (reportSchemeTab === 'all' ? reportSchemes : reportSchemes.filter(s => (s.status || 'active') === reportSchemeTab)).map((scheme, idx) => (
                                             <div key={scheme.accountId} className="border-2 border-border rounded-xl p-4 space-y-4 relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 bg-primary/10 text-primary text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl">
                                                     {scheme.status || 'Active'}

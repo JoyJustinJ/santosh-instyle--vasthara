@@ -87,9 +87,9 @@ const PINLogin = () => {
   };
 
   const handleLogin = () => {
-    const validPin = user?.pin || localStorage.getItem('vasthara_pin');
+    const validPin = String(user?.pin || localStorage.getItem('vasthara_pin') || '');
 
-    if (pin === validPin) {
+    if (pin === validPin && validPin.length === 4) {
       unlockApp();
       
       // Show biometric enrolment prompt if not yet answered and device supports it

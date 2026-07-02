@@ -244,7 +244,7 @@ const Login = () => {
       }
 
       if (userDoc) {
-        if (userDoc.setupRequired) {
+        if (userDoc.setupRequired || (!userDoc.password && !userDoc.pin)) {
           const result = await sendOTP(sanitizedPhone);
           if (result.success) {
             setViewMode('first_time_setup_otp');
@@ -262,7 +262,7 @@ const Login = () => {
           return;
         }
 
-        const pinMatch = formData.password === userDoc.password || formData.password === userDoc.pin;
+        const pinMatch = String(formData.password) === String(userDoc.password) || String(formData.password) === String(userDoc.pin);
         if (formData.password && pinMatch) {
           setUser(userDoc);
           unlockApp();

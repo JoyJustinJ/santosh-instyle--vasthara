@@ -146,6 +146,8 @@ const AdminDashboard = () => {
     const [allTransactions, setAllTransactions] = useState<any[]>([]);
     const [showResetModal, setShowResetModal] = useState(false);
     const [showResetPinPrompt, setShowResetPinPrompt] = useState(false);
+    const [tallyStartDate, setTallyStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [tallyEndDate, setTallyEndDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [resetPin, setResetPin] = useState('');
     const [resetPinError, setResetPinError] = useState(false);
     const [updatePhoneOTPModalOpen, setUpdatePhoneOTPModalOpen] = useState(false);
@@ -165,7 +167,7 @@ const AdminDashboard = () => {
     const [reportSchemes, setReportSchemes] = useState<any[]>([]);
     const [reportTransactions, setReportTransactions] = useState<Record<string, any[]>>({});
     const [loadingReport, setLoadingReport] = useState(false);
-    const [reportSchemeTab, setReportSchemeTab] = useState<'active' | 'completed' | 'closed'>('active');
+    const [reportSchemeTab, setReportSchemeTab] = useState<'all' | 'active' | 'completed' | 'closed'>('all');
 
     // Admin Pre-close State
     const [adminPreCloseModalOpen, setAdminPreCloseModalOpen] = useState(false);
@@ -1927,8 +1929,20 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
 
+                                    <div className="flex gap-2 mb-6 pb-4 border-b border-gray-200">
+                                        {(['all', 'active', 'completed', 'closed'] as const).map(tab => (
+                                            <button 
+                                                key={tab}
+                                                onClick={() => setReportSchemeTab(tab)}
+                                                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${reportSchemeTab === tab ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                            >
+                                                {tab}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     <div className="space-y-8">
-                                        {reportSchemes.map((scheme, idx) => (
+                                        {(reportSchemeTab === 'all' ? reportSchemes : reportSchemes.filter(s => (s.status || 'active') === reportSchemeTab)).map((scheme, idx) => (
                                             <div key={scheme.accountId} className="break-inside-avoid">
                                                 <div className="bg-gray-100 p-3 flex justify-between items-center border border-gray-300 border-b-0">
                                                     <div>
@@ -2550,6 +2564,84 @@ const AdminDashboard = () => {
                     </motion.div>
                 );
 
+            case 'tally': {
+                const start = new Date(tallyStartDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(tallyEndDate);
+                end.setHours(23, 59, 59, 999);
+                
+                const rangeTx = allTransactions.filter(t => {
+                    const txDate = new Date(t.timestamp);
+                    return txDate >= start && txDate <= end;
+                });
+                const total = rangeTx.reduce((acc, t) => acc + (t.amount || 0), 0);
+                
+                return (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setActiveView('overview')} className="text-primary"><ChevronLeft size={24} /></button>
+                                <h2 className="text-xl font-display font-bold text-primary">Daily Cash Tally</h2>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => downloadPDF('admin-tally-report-content', 'Daily_Tally_Report')} className="p-2 text-accent bg-accent/10 rounded-xl hover:bg-accent/20 transition-all flex items-center gap-2 text-xs font-bold">
+                                    <Printer size={18} />
+                                    <span className="hidden sm:inline">PDF</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">From Date</label>
+                                <input 
+                                    type="date" 
+                                    value={tallyStartDate} 
+                                    onChange={(e) => setTallyStartDate(e.target.value)}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">To Date</label>
+                                <input 
+                                    type="date" 
+                                    value={tallyEndDate} 
+                                    onChange={(e) => setTallyEndDate(e.target.value)}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                />
+                            </div>
+                        </div>
+
+                        <div id="admin-tally-report-content" className="space-y-6">
+                            <div className="bg-primary p-6 rounded-2xl text-white shadow-lg">
+                                <p className="text-xs opacity-70 uppercase tracking-widest">Total Collected</p>
+                                <p className="text-4xl font-bold">₹{total}</p>
+                            </div>
+                            <div className="space-y-3">
+                                {rangeTx.length === 0 ? (
+                                    <p className="text-center text-text-muted py-8">No transactions found for this date range.</p>
+                                ) : (
+                                    rangeTx.map((tx: any) => {
+                                        return (
+                                            <div key={tx.id} className="p-4 bg-white rounded-xl border border-border flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-sm font-bold">{tx.userName || 'Customer'}</p>
+                                                    <p className="text-[10px] text-gray-500">{tx.schemeName || 'Scheme'}</p>
+                                                    <p className="text-[9px] font-bold text-accent uppercase tracking-widest mt-1">
+                                                        Collected by: {tx.recordedBy === 'admin' ? 'Admin' : (allStaff.find(s => s.id === tx.recordedBy)?.firstName || tx.recordedBy || 'Unknown')}
+                                                    </p>
+                                                </div>
+                                                <p className="font-bold text-primary">₹{tx.amount}</p>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                );
+            }
+
             case 'transactions':
                 return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
@@ -2981,6 +3073,12 @@ const AdminDashboard = () => {
                                         <FileText size={24} />
                                     </div>
                                     <p className="text-xs font-bold text-primary">Transactions</p>
+                                </Card>
+                                <Card onClick={() => setActiveView('tally')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface transition-all active:scale-95">
+                                    <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                                        <FileText size={24} />
+                                    </div>
+                                    <p className="text-xs font-bold text-primary">Daily Cash Tally</p>
                                 </Card>
                                 <Card onClick={() => setActiveView('redemptions')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface transition-all active:scale-95 col-span-2">
                                     <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
