@@ -7,7 +7,7 @@ import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 // Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
 const API_BASE = Capacitor.isNativePlatform() 
-  ? (import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app')
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://www.mysanthosh.com')
   : '';
 
 /**

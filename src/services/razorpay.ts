@@ -31,7 +31,7 @@ type RazorpayCheckoutInput = {
 
 // Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
 const API_BASE_URL = Capacitor.isNativePlatform() 
-  ? (import.meta.env.VITE_API_BASE_URL || 'https://santosh-instyle-vasthara.vercel.app')
+  ? (import.meta.env.VITE_API_BASE_URL || 'https://www.mysanthosh.com')
   : '';
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
