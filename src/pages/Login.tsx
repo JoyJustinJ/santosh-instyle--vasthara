@@ -469,10 +469,10 @@ const Login = () => {
       if (userDoc) {
         // Update password and remove setupRequired flag
         const userRef = doc(db, 'users', userDoc.id);
-        await updateDoc(userRef, {
+        await setDoc(userRef, {
             password: formData.newPassword,
             setupRequired: false
-        });
+        }, { merge: true });
 
         // Log the user in directly!
         const updatedUser = { ...userDoc, password: formData.newPassword, setupRequired: false };

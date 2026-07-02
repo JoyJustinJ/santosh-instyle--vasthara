@@ -11,7 +11,7 @@ import { Notification, NotificationType } from '../components/UI/Notification';
 import { validatePhone } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ const CompleteProfile = () => {
         updatedAt: new Date().toISOString()
       };
 
-      await updateDoc(userRef, updates);
+      await setDoc(userRef, updates, { merge: true });
       
       // Update local context
       setUser({ ...user, ...updates });
