@@ -77,7 +77,12 @@ const CompleteProfile = () => {
         updatedAt: new Date().toISOString()
       };
 
-      await setDoc(userRef, updates, { merge: true });
+      const updateResult = await updateUserViaAPI(user.id, updates);
+      if (!updateResult.success) {
+         showNotif(updateResult.error || 'Failed to update profile.', 'error');
+         setLoading(false);
+         return;
+      }
       
       // Update local context
       setUser({ ...user, ...updates });

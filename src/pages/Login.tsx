@@ -9,7 +9,7 @@ import { Button } from '../components/UI/Button';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { validatePhone } from '../utils';
 import { getUserByPhone, getStaffRequestByPhone, saveStaffRequestToDB, updateUserPassword, checkIsAdmin } from '../services/db';
-import { sendOTP, verifyOTP } from '../services/sms';
+import { sendOTP, verifyOTP, updateUserViaAPI } from '../services/sms';
 import { RecaptchaVerifier, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -468,11 +468,17 @@ const Login = () => {
       
       if (userDoc) {
         // Update password and remove setupRequired flag
-        const userRef = doc(db, 'users', userDoc.id);
-        await setDoc(userRef, {
+        // Update password and remove setupRequired flag using secure API to bypass client rules
+        const updateResult = await updateUserViaAPI(userDoc.id, {
             password: formData.newPassword,
             setupRequired: false
-        }, { merge: true });
+        });
+        
+        if (!updateResult.success) {
+           showNotif(updateResult.error || 'Failed to update account.', 'error');
+           setLoading(false);
+           return;
+        }
 
         // Log the user in directly!
         const updatedUser = { ...userDoc, password: formData.newPassword, setupRequired: false };

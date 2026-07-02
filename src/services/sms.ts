@@ -105,3 +105,39 @@ export const verifyOTP = async (phone: string, otp: string): Promise<{ success: 
     return { success: false, error: `Oops! We encountered an unexpected error (${error.message}). Please try again later.` };
   }
 };
+export const updateUserViaAPI = async (userId: string, updates: any): Promise<{ success: boolean; error?: string }> => {
+  try {
+    let ok = false;
+    let data;
+    let status = 0;
+
+    if (Capacitor.isNativePlatform()) {
+      const response = await CapacitorHttp.post({
+        url: `${API_BASE}/api/update-user`,
+        headers: { 'Content-Type': 'application/json' },
+        data: { userId, updates }
+      });
+      data = response.data;
+      status = response.status;
+      ok = status >= 200 && status < 300;
+    } else {
+      const response = await fetch(`${API_BASE}/api/update-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, updates }),
+      });
+      status = response.status;
+      ok = response.ok;
+      data = await response.json();
+    }
+
+    if (ok) {
+      return { success: true };
+    } else {
+      return { success: false, error: data?.error || 'Failed to update user.' };
+    }
+  } catch (error: any) {
+    console.error('Update User via API Error:', error);
+    return { success: false, error: 'Unable to connect to our servers.' };
+  }
+};
