@@ -1557,7 +1557,8 @@ const AdminDashboard = () => {
                             )}
                             
                             <div className="relative z-10">
-                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4 flex flex-col items-center">
+                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
                                     <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                     <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
                                 </div>
@@ -2033,9 +2034,12 @@ const AdminDashboard = () => {
 
                                 <div className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
                                     <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
-                                        <div>
-                                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
-                                            <p className="text-sm font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Account Statement</p>
+                                        <div className="flex items-center gap-4">
+                                            <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-20 h-auto object-contain mix-blend-multiply block" />
+                                            <div>
+                                                <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
+                                                <p className="text-sm font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Account Statement</p>
+                                            </div>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date Generated</p>
@@ -2166,7 +2170,10 @@ const AdminDashboard = () => {
                                         <table style={{ width: '100%', borderBottom: '2px solid #111827', paddingBottom: '24px', marginBottom: '32px' }}>
                                             <tbody>
                                                 <tr>
-                                                    <td style={{ verticalAlign: 'top', width: '60%' }}>
+                                                    <td style={{ verticalAlign: 'middle', width: '15%' }}>
+                                                        <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ width: '80px', height: 'auto', mixBlendMode: 'multiply', display: 'block' }} />
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'middle', width: '45%' }}>
                                                         <h1 style={{ margin: '0 0 4px 0', color: '#111827', fontSize: '26px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>SANTOSH INSTYLE VASTRA</h1>
                                                         <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>Official Account Statement</p>
                                                     </td>

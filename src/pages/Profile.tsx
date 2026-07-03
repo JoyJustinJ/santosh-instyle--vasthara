@@ -137,7 +137,7 @@ const Profile = () => {
 
           // 1. Update password using the API (bypasses Firestore client rules)
           const { updateUserViaAPI } = await import('../services/sms');
-          const updateResult = await updateUserViaAPI(uid, { password: passwordForm.newPassword, setupRequired: false });
+          const updateResult = await updateUserViaAPI(uid, { password: passwordForm.newPassword, setupRequired: false, pin: "" });
           
           if (!updateResult.success) {
             throw new Error(updateResult.error || 'Failed to update password');

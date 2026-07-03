@@ -7,7 +7,7 @@ import { SCHEMES } from '../constants';
 export const getSchemesFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "schemes"));
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         return data;
     } catch (e) {
         console.warn("Firebase fetching failed, returning constants.", e);
@@ -37,7 +37,7 @@ export const deleteSchemeFromDB = async (schemeId: string) => {
 export const getStaffRequestsFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "staff_requests"));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     } catch (e) {
         throw e;
     }
@@ -57,7 +57,7 @@ export const getStaffRequestByPhone = async (phone: string) => {
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const staffRequest = querySnapshot.docs[0];
-            return { id: staffRequest.id, ...staffRequest.data() };
+            return { ...staffRequest.data(), id: staffRequest.id };
         }
         return null;
     } catch (e) {
@@ -109,7 +109,7 @@ export const getTransactionsFromDB = async (userId?: string, accountId?: string)
         }
 
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const results = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
             .sort((a: any, b: any) => safeDate(a.timestamp || a.date).getTime() - safeDate(b.timestamp || b.date).getTime());
         return results;
     } catch (e) {
@@ -225,7 +225,7 @@ export const getUserFromDB = async (uidOrPhoneOrId: string) => {
         const docRef = doc(db, "users", uidOrPhoneOrId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
+            return { ...docSnap.data(), id: docSnap.id };
         }
 
         // 2. Try Phone field (exact and with/without +91 prefix)
@@ -241,7 +241,7 @@ export const getUserFromDB = async (uidOrPhoneOrId: string) => {
             const querySnapPhone = await getDocs(qPhone);
             if (!querySnapPhone.empty) {
                 const docData = querySnapPhone.docs[0];
-                return { id: docData.id, ...docData.data() };
+                return { ...docData.data(), id: docData.id };
             }
         }
 
@@ -250,7 +250,7 @@ export const getUserFromDB = async (uidOrPhoneOrId: string) => {
         const querySnapCustId = await getDocs(qCustId);
         if (!querySnapCustId.empty) {
             const docData = querySnapCustId.docs[0];
-            return { id: docData.id, ...docData.data() };
+            return { ...docData.data(), id: docData.id };
         }
 
         return null;
@@ -275,7 +275,7 @@ export const getUserByPhone = async (phoneOrId: string) => {
             const querySnapPhone = await getDocsFromServer(qPhone);
             if (!querySnapPhone.empty) {
                 const docData = querySnapPhone.docs[0];
-                return { id: docData.id, ...docData.data() };
+                return { ...docData.data(), id: docData.id };
             }
         }
 
@@ -284,7 +284,7 @@ export const getUserByPhone = async (phoneOrId: string) => {
         const querySnapCustId = await getDocsFromServer(qCustId);
         if (!querySnapCustId.empty) {
             const docData = querySnapCustId.docs[0];
-            return { id: docData.id, ...docData.data() };
+            return { ...docData.data(), id: docData.id };
         }
 
         return null;
@@ -328,7 +328,7 @@ export const updateUserProfile = async (uid: string, updates: any) => {
 export const getAllUsersFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "users"));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     } catch (e) {
         console.error("Error fetching all users:", e);
         return [];
@@ -373,7 +373,7 @@ export const getUserPlansFromDB = async (userId: string) => {
     try {
         const q = query(collection(db, "user_schemes"), where("userId", "==", userId));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     } catch (e) {
         console.error("Error fetching user plans:", e);
         return [];
@@ -383,7 +383,7 @@ export const getUserPlansFromDB = async (userId: string) => {
 export const getAllUserPlansFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "user_schemes"));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     } catch (e) {
         console.error("Error fetching all user plans:", e);
         return [];
@@ -502,7 +502,7 @@ export const getNotificationsFromDB = async (userId: string) => {
             where("userId", "==", userId)
         );
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
             .sort((a: any, b: any) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime());
     } catch (e) {
         console.error("Error fetching notifications:", e);
@@ -571,7 +571,7 @@ export const getAuditLogsFromDB = async () => {
     try {
         const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     } catch (e) {
         console.error("Error fetching audit logs:", e);
         return [];

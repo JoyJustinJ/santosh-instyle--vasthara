@@ -579,7 +579,8 @@ const StaffDashboard = () => {
                         </div>
                         
                         <div id="receipt-container" className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm">
-                            <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                            <div className="text-center border-b-2 border-gray-900 pb-4 mb-4 flex flex-col items-center">
+                                <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
                                 <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                 <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Cash Receipt</p>
                             </div>
@@ -658,7 +659,8 @@ const StaffDashboard = () => {
                             )}
                             
                             <div className="relative z-10">
-                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
+                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4 flex flex-col items-center">
+                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
                                     <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                     <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
                                 </div>
@@ -789,6 +791,11 @@ const StaffDashboard = () => {
                     </div>
 
                     <div id="tally-report-content" className="space-y-6">
+                        <div className="text-center pb-4 flex flex-col items-center">
+                            <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
+                            <h2 className="text-xl font-black text-primary uppercase tracking-wider">Daily Cash Tally</h2>
+                            <p className="text-xs text-text-muted mt-1">{tallyStartDate} to {tallyEndDate}</p>
+                        </div>
                         <div className="bg-primary p-6 rounded-2xl text-white shadow-lg">
                         <p className="text-xs opacity-70 uppercase tracking-widest">Total Collected</p>
                         <p className="text-4xl font-bold">₹{total}</p>
@@ -1240,7 +1247,8 @@ const StaffDashboard = () => {
                                 </Button>
                             </div>
                             <div id="customer-report-content" className="bg-white p-6 rounded-2xl shadow-card space-y-6">
-                                <div className="text-center pb-6 border-b border-border">
+                                <div className="text-center pb-6 border-b border-border flex flex-col items-center">
+                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
                                     <h2 className="text-2xl font-black text-primary uppercase tracking-wider">Customer Report</h2>
                                     <p className="text-xs text-text-muted mt-1">Generated on {new Date().toLocaleString()}</p>
                                 </div>

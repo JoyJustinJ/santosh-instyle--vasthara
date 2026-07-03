@@ -412,7 +412,7 @@ const Login = () => {
       }
       
       if (userDoc) {
-        const updateResult = await updateUserViaAPI(userDoc.id, { password: formData.newPassword });
+        const updateResult = await updateUserViaAPI(userDoc.id, { password: formData.newPassword, pin: "" });
         
         if (!updateResult.success) {
            showNotif(updateResult.error || 'Failed to update password.', 'error');
@@ -481,7 +481,8 @@ const Login = () => {
         // Update password and remove setupRequired flag using secure API to bypass client rules
         const updateResult = await updateUserViaAPI(userDoc.id, {
             password: formData.newPassword,
-            setupRequired: false
+            setupRequired: false,
+            pin: ""
         });
         
         if (!updateResult.success) {
