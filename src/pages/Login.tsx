@@ -183,7 +183,8 @@ const Login = () => {
                 }
               } catch (createError: any) {
                 if (createError.code === 'auth/email-already-in-use') {
-                  adminEmail = `admin_${sanitizedPhone}_${Date.now()}@vastra.com`;
+                  const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(7);
+                  adminEmail = `admin_${sanitizedPhone}_${uniqueId}@vastra.com`;
                   const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, formData.password);
                   await setDoc(doc(db, "users", userCredential.user.uid), {
                     id: userCredential.user.uid,
