@@ -55,13 +55,22 @@ const Profile = () => {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      const { createUserProfile } = await import('../services/db');
-      const updatedUser = { ...user, ...formData, avatar: avatarPreview || user?.avatar } as any;
-      await createUserProfile(updatedUser);
+      const { updateUserViaAPI } = await import('../services/sms');
+      const updates = { ...formData, avatar: avatarPreview || user?.avatar };
+      const uid = user?.id || user?.phone;
+      if (!uid) throw new Error('User ID not found.');
+      
+      const result = await updateUserViaAPI(uid, updates);
+      if (!result.success) {
+         throw new Error(result.error || 'Failed to update profile');
+      }
+      
+      const updatedUser = { ...user, ...updates } as any;
       updateUserContext(updatedUser);
       setIsEditing(false);
     } catch (e) {
       console.error(e);
+      alert('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -126,9 +135,13 @@ const Profile = () => {
           const uid = user?.id || user?.phone;
           if (!uid) throw new Error('User ID not found. Please log in again.');
 
-          // 1. Update password in Firestore using the dedicated function (setDoc merge)
-          const { updateUserPassword } = await import('../services/db');
-          await updateUserPassword(uid, passwordForm.newPassword);
+          // 1. Update password using the API (bypasses Firestore client rules)
+          const { updateUserViaAPI } = await import('../services/sms');
+          const updateResult = await updateUserViaAPI(uid, { password: passwordForm.newPassword, setupRequired: false });
+          
+          if (!updateResult.success) {
+            throw new Error(updateResult.error || 'Failed to update password');
+          }
 
           // 2. Update the local auth context so subsequent API calls use the new password
           updateUserContext({ ...user, password: passwordForm.newPassword } as any);
@@ -141,8 +154,6 @@ const Profile = () => {
               await updatePassword(auth.currentUser, passwordForm.newPassword);
             }
           } catch (authErr: any) {
-            // Firebase Auth may require re-authentication for sensitive ops;
-            // the Firestore update already succeeded, so we just warn.
             console.warn('Firebase Auth password update skipped:', authErr.code);
           }
 
