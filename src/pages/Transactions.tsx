@@ -100,10 +100,15 @@ const Transactions = () => {
                     <table style={{ width: '100%', borderBottom: '2px solid #f3f4f6', paddingBottom: '24px', marginBottom: '32px' }}>
                         <tbody>
                             <tr>
-                                <td style={{ verticalAlign: 'top', width: '50%' }}>
-                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
+                                <td style={{ verticalAlign: 'top', width: '60%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ width: '80px', height: 'auto', display: 'block', mixBlendMode: 'multiply' }} />
+                                        <div>
+                                            <h2 style={{ margin: '0', color: '#111827', fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>SANTOSH INSTYLE VASTRA</h2>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td style={{ verticalAlign: 'top', width: '50%', textAlign: 'right' }}>
+                                <td style={{ verticalAlign: 'top', width: '40%', textAlign: 'right' }}>
                                     <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>
                                     <div style={{ display: 'inline-block', padding: '4px 12px', background: '#dcfce7', color: '#166534', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', border: '1px solid #bbf7d0' }}>PAID</div>
                                     <table style={{ marginLeft: 'auto', borderCollapse: 'collapse' }}>
