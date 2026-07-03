@@ -329,7 +329,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!snap.empty) {
              const data = snap.docs[0].data();
              rawPin = data.password || data.pin || '';
-             if (rawPin) localStorage.setItem('vasthara_pin', rawPin);
+             if (data.pin) localStorage.setItem('vasthara_pin', data.pin);
           }
         } catch (e) {
           console.error("Failed to dynamically fetch pin for token", e);

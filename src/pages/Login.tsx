@@ -268,7 +268,9 @@ const Login = () => {
           unlockApp();
           // Store phone and pin for future biometric re-login and route protection
           localStorage.setItem('vasthara_last_phone', userDoc.phone);
-          localStorage.setItem('vasthara_pin', formData.password);
+          if (userDoc.pin) {
+              localStorage.setItem('vasthara_pin', userDoc.pin);
+          }
           setLoading(false);
           navigate('/home');
           return;
@@ -492,7 +494,9 @@ const Login = () => {
         setUser(updatedUser);
         unlockApp();
         localStorage.setItem('vasthara_last_phone', updatedUser.phone);
-        localStorage.setItem('vasthara_pin', formData.newPassword);
+        if (updatedUser.pin) {
+            localStorage.setItem('vasthara_pin', updatedUser.pin);
+        }
         
         showNotif('Account setup complete! Welcome.', 'success');
         setLoading(false);
