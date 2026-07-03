@@ -97,57 +97,65 @@ const Transactions = () => {
                     style={{ maxWidth: '780px', margin: '0 auto', padding: '40px', border: '1px solid #e5e7eb', borderRadius: '8px', background: '#ffffff', fontFamily: 'Arial, sans-serif', color: '#111827' }}
                 >
                     {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #f3f4f6', paddingBottom: '24px', marginBottom: '32px' }}>
-                        <div>
-                            <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>
-                            <div style={{ display: 'inline-block', padding: '4px 12px', background: '#dcfce7', color: '#166534', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', border: '1px solid #bbf7d0' }}>PAID</div>
-                            <table style={{ marginLeft: 'auto', borderCollapse: 'collapse' }}>
-                                <tbody>
-                                    <tr>
-                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Invoice No:</td>
-                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>#{invoicePrimaryKey}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Date:</td>
-                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.date || safeDate(tx.timestamp).toLocaleDateString()}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Reference:</td>
-                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.referenceId || invoicePrimaryKey}</td>
-                                    </tr>
-                                    {paymentId && (
-                                        <tr>
-                                            <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Gateway ID:</td>
-                                            <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{paymentId}</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <table style={{ width: '100%', borderBottom: '2px solid #f3f4f6', paddingBottom: '24px', marginBottom: '32px' }}>
+                        <tbody>
+                            <tr>
+                                <td style={{ verticalAlign: 'top', width: '50%' }}>
+                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
+                                </td>
+                                <td style={{ verticalAlign: 'top', width: '50%', textAlign: 'right' }}>
+                                    <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>
+                                    <div style={{ display: 'inline-block', padding: '4px 12px', background: '#dcfce7', color: '#166534', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', border: '1px solid #bbf7d0' }}>PAID</div>
+                                    <table style={{ marginLeft: 'auto', borderCollapse: 'collapse' }}>
+                                        <tbody>
+                                            <tr>
+                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Invoice No:</td>
+                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>#{invoicePrimaryKey}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Date:</td>
+                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.date || safeDate(tx.timestamp).toLocaleDateString()}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Reference:</td>
+                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.referenceId || invoicePrimaryKey}</td>
+                                            </tr>
+                                            {paymentId && (
+                                                <tr>
+                                                    <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Gateway ID:</td>
+                                                    <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{paymentId}</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     {/* Billing */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '32px' }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed From</div>
-                            <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
-                                <strong style={{ color: '#111827' }}>Vastra (Santhosh Silks)</strong><br />
-                                Hosur Branch<br />
-                                Tamil Nadu, India
-                            </div>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed To</div>
-                            <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
-                                <strong style={{ color: '#111827' }}>{user?.firstName || 'Customer'} {user?.lastName || ''}</strong><br />
-                                Phone: +91 {user?.phone}<br />
-                                {user?.email ? 'Email: ' + user.email : 'No email provided'}
-                            </div>
-                        </div>
-                    </div>
+                    <table style={{ width: '100%', marginBottom: '32px' }}>
+                        <tbody>
+                            <tr>
+                                <td style={{ verticalAlign: 'top', width: '50%', paddingRight: '16px' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed From</div>
+                                    <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
+                                        <strong style={{ color: '#111827' }}>Vastra (Santhosh Silks)</strong><br />
+                                        Hosur Branch<br />
+                                        Tamil Nadu, India
+                                    </div>
+                                </td>
+                                <td style={{ verticalAlign: 'top', width: '50%', paddingLeft: '16px' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed To</div>
+                                    <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
+                                        <strong style={{ color: '#111827' }}>{user?.firstName || 'Customer'} {user?.lastName || ''}</strong><br />
+                                        Phone: +91 {user?.phone}<br />
+                                        {user?.email ? 'Email: ' + user.email : 'No email provided'}
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     {/* Items Table */}
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px' }}>
@@ -171,20 +179,27 @@ const Transactions = () => {
                     </table>
 
                     {/* Totals */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '32px' }}>
-                        <table style={{ width: '280px', borderCollapse: 'collapse' }}>
-                            <tbody>
-                                <tr>
-                                    <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', color: '#4b5563' }}>Subtotal:</td>
-                                    <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(tx.amount)}</td>
-                                </tr>
-                                <tr>
-                                    <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>Total Paid:</td>
-                                    <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>{formatCurrency(tx.amount)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table style={{ width: '100%', marginBottom: '32px' }}>
+                        <tbody>
+                            <tr>
+                                <td style={{ width: '60%' }}></td>
+                                <td style={{ width: '40%' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <tbody>
+                                            <tr>
+                                                <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', color: '#4b5563' }}>Subtotal:</td>
+                                                <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(tx.amount)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>Total Paid:</td>
+                                                <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>{formatCurrency(tx.amount)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     {/* Footer */}
                     <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
