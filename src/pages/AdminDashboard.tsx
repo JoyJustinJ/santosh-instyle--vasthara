@@ -991,13 +991,13 @@ const AdminDashboard = () => {
 
     const downloadReportPDF = async () => {
         showNotif('Generating PDF, please wait...', 'info');
-        const element = document.getElementById('customer-report-content');
+        const element = document.getElementById('customer-report-print-content');
         if (!element) {
             showNotif('Error: Report element not found', 'error');
             return;
         }
         try {
-            await downloadAsPDF(element, `${reportCustomer?.firstName || 'customer'}_report`);
+            await downloadAsPDF(element, `${reportCustomer?.firstName || 'customer'}_statement`);
             showNotif('PDF downloaded successfully!', 'success');
         } catch (error: any) {
             console.error("Error generating PDF:", error);
@@ -2031,7 +2031,7 @@ const AdminDashboard = () => {
                                     </Button>
                                 </div>
 
-                                <div id="customer-report-content" className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
+                                <div className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
                                     <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
                                         <div>
                                             <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
@@ -2157,6 +2157,134 @@ const AdminDashboard = () => {
                                     
                                     <div className="mt-12 pt-4 border-t-2 border-gray-900 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                                         This is a computer generated statement and does not require a physical signature.
+                                    </div>
+                                </div>
+
+                                {/* Hidden Print Version */}
+                                <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0, pointerEvents: 'none', zIndex: -50 }}>
+                                    <div id="customer-report-print-content" style={{ width: '800px', background: '#ffffff', padding: '40px', fontFamily: 'Arial, sans-serif', color: '#111827' }}>
+                                        <table style={{ width: '100%', borderBottom: '2px solid #111827', paddingBottom: '24px', marginBottom: '32px' }}>
+                                            <tbody>
+                                                <tr>
+                                                    <td style={{ verticalAlign: 'top', width: '60%' }}>
+                                                        <h1 style={{ margin: '0 0 4px 0', color: '#111827', fontSize: '26px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>SANTOSH INSTYLE VASTHARA</h1>
+                                                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>Official Account Statement</p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top', width: '40%', textAlign: 'right' }}>
+                                                        <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Date Generated</p>
+                                                        <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#111827' }}>{new Date().toLocaleDateString()}</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <table style={{ width: '100%', marginBottom: '40px' }}>
+                                            <tbody>
+                                                <tr>
+                                                    <td style={{ verticalAlign: 'top', width: '25%' }}>
+                                                        <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Customer Name</p>
+                                                        <p style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#111827', textTransform: 'uppercase' }}>{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top', width: '25%' }}>
+                                                        <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Customer ID</p>
+                                                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#111827' }}>{reportCustomer.customerId || reportCustomer.id}</p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top', width: '25%' }}>
+                                                        <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Phone Number</p>
+                                                        <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111827' }}>{reportCustomer.phone}</p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top', width: '25%' }}>
+                                                        <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Account Created</p>
+                                                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#111827' }}>{reportCustomer.createdAt ? new Date(reportCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        {(reportSchemeTab === 'all' ? reportSchemes : reportSchemes.filter(s => (s.status || 'active') === reportSchemeTab)).map((scheme, idx) => (
+                                            <div key={scheme.accountId} style={{ marginBottom: '32px', pageBreakInside: 'avoid' }}>
+                                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #d1d5db' }}>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td style={{ background: '#f3f4f6', padding: '12px 16px', borderBottom: '1px solid #d1d5db' }}>
+                                                                <table style={{ width: '100%' }}>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td style={{ verticalAlign: 'middle' }}>
+                                                                                <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 900, color: '#111827', textTransform: 'uppercase' }}>{scheme.schemeName || scheme.name}</h4>
+                                                                                <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>Account: {scheme.accountId}</p>
+                                                                            </td>
+                                                                            <td style={{ verticalAlign: 'middle', textAlign: 'right' }}>
+                                                                                <span style={{ 
+                                                                                    display: 'inline-block', padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', 
+                                                                                    background: scheme.isPreClosed ? '#b91c1c' : scheme.status === 'completed' ? '#15803d' : scheme.status === 'closed' ? '#374151' : '#111827',
+                                                                                    color: '#ffffff'
+                                                                                }}>
+                                                                                    {scheme.isPreClosed ? 'Pre-Closed' : (scheme.status || 'Active')}
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style={{ padding: '16px' }}>
+                                                                <table style={{ width: '100%', marginBottom: '16px', borderBottom: '1px solid #e5e7eb', paddingBottom: '16px' }}>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td style={{ fontSize: '13px', fontWeight: 700, color: '#111827' }}>Monthly Amount: <span style={{ color: '#15803d', fontWeight: 900 }}>₹{scheme.amount || scheme.monthlyAmount}</span></td>
+                                                                            <td style={{ fontSize: '13px', fontWeight: 700, color: '#111827', textAlign: 'center' }}>Duration: <span style={{ fontWeight: 900 }}>{scheme.duration || 11} Months</span></td>
+                                                                            <td style={{ fontSize: '13px', fontWeight: 700, color: '#111827', textAlign: 'right' }}>Total Paid: <span style={{ color: '#15803d', fontWeight: 900, fontSize: '16px' }}>₹{scheme.totalPaid || 0}</span></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+
+                                                                {(scheme.bonuses || scheme.gifts) && !scheme.isPreClosed && (
+                                                                    <div style={{ marginBottom: '16px', padding: '12px', background: '#f9fafb', border: '1px dashed #d1d5db' }}>
+                                                                        <p style={{ margin: '0 0 8px 0', fontSize: '10px', fontWeight: 900, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>Bonuses & Gifts</p>
+                                                                        {scheme.bonuses && <p style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 700, color: '#111827' }}>• {scheme.bonuses}</p>}
+                                                                        {scheme.gifts && <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#111827' }}>• {scheme.gifts}</p>}
+                                                                    </div>
+                                                                )}
+
+                                                                <p style={{ margin: '0 0 12px 0', fontSize: '10px', fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '2px' }}>Transaction Ledger</p>
+                                                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
+                                                                    <thead>
+                                                                        <tr style={{ borderBottom: '2px solid #d1d5db' }}>
+                                                                            <th style={{ padding: '8px 4px', fontWeight: 900, textTransform: 'uppercase', color: '#111827' }}>Date</th>
+                                                                            <th style={{ padding: '8px 4px', fontWeight: 900, textTransform: 'uppercase', color: '#111827', textAlign: 'center' }}>Type</th>
+                                                                            <th style={{ padding: '8px 4px', fontWeight: 900, textTransform: 'uppercase', color: '#111827', textAlign: 'center' }}>Status</th>
+                                                                            <th style={{ padding: '8px 4px', fontWeight: 900, textTransform: 'uppercase', color: '#111827', textAlign: 'right' }}>Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
+                                                                            reportTransactions[scheme.accountId].map((tx: any) => (
+                                                                                <tr key={tx.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                                                    <td style={{ padding: '8px 4px', fontWeight: 600, color: '#374151' }}>{tx.date || new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                                                    <td style={{ padding: '8px 4px', color: '#374151', textAlign: 'center' }}>{tx.type || 'Cash'}</td>
+                                                                                    <td style={{ padding: '8px 4px', fontWeight: 700, color: '#15803d', textTransform: 'uppercase', fontSize: '10px', textAlign: 'center' }}>{tx.status}</td>
+                                                                                    <td style={{ padding: '8px 4px', fontWeight: 900, color: '#111827', textAlign: 'right' }}>₹{tx.amount}</td>
+                                                                                </tr>
+                                                                            ))
+                                                                        ) : (
+                                                                            <tr>
+                                                                                <td colSpan={4} style={{ padding: '16px 4px', textAlign: 'center', color: '#6b7280', fontStyle: 'italic', fontWeight: 600 }}>No transactions found.</td>
+                                                                            </tr>
+                                                                        )}
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ))}
+
+                                        <div style={{ marginTop: '48px', paddingTop: '16px', borderTop: '2px solid #111827', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                                            This is a computer generated statement and does not require a physical signature.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
