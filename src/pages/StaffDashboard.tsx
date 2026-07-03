@@ -81,6 +81,14 @@ const StaffDashboard = () => {
     const [fulfillmentTarget, setFulfillmentTarget] = useState<any>(null);
     const [reportSourceView, setReportSourceView] = useState<ViewState | null>(null);
 
+    // Referral Report State (managers only)
+    const [referralReportData, setReferralReportData] = useState<any[]>([]);
+    const [referralMonthStart, setReferralMonthStart] = useState(() => {
+        const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0];
+    });
+    const [referralMonthEnd, setReferralMonthEnd] = useState(() => new Date().toISOString().split('T')[0]);
+    const [loadingReferrals, setLoadingReferrals] = useState(false);
+
     const downloadPDF = async (elementId: string, filename: string) => {
         showNotification('Generating PDF, please wait...', 'info');
         const element = document.getElementById(elementId);
@@ -1486,6 +1494,15 @@ const StaffDashboard = () => {
                         </Card>
                     )}
 
+                    {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
+                        <Card onClick={() => { setReferralReportData([]); setActiveView('referrals'); }} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface col-span-2")}>
+                            <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                                <Users size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Incentive Referral Report</p>
+                        </Card>
+                    )}
+
 
 
                     {user?.accessLevel === 'manager' && (
@@ -1520,6 +1537,169 @@ const StaffDashboard = () => {
                         </>
                     )}
                 </div>
+            </motion.div>
+        );
+        // ====== REFERRAL REPORT VIEW (managers only) ======
+        if (activeView === 'referrals' && (user?.accessLevel === 'super' || user?.accessLevel === 'manager')) {
+            const handleFetchReferralReport = async () => {
+                if (!referralMonthStart || !referralMonthEnd) return;
+                setLoadingReferrals(true);
+                try {
+                    const { collection, getDocs, query } = await import('firebase/firestore');
+                    const { db } = await import('../firebase');
+                    const { getAllUsersFromDB } = await import('../services/db');
+                    const snap = await getDocs(query(collection(db, 'user_schemes')));
+                    const allUsers: any[] = await getAllUsersFromDB();
+                    const userMap: Record<string, any> = {};
+                    allUsers.forEach((u: any) => { userMap[u.id] = u; if (u.phone) userMap[u.phone] = u; });
+                    const staffMap: Record<string, any> = {};
+                    allUsers.filter((u: any) => u.role === 'staff').forEach((s: any) => {
+                        if (s.empId) staffMap[s.empId] = s;
+                        staffMap[s.id] = s;
+                    });
+                    const start = new Date(referralMonthStart);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(referralMonthEnd);
+                    end.setHours(23, 59, 59, 999);
+                    const results: any[] = [];
+                    snap.forEach((doc) => {
+                        const data = doc.data();
+                        const refCode = data.referralCode || data.referralEmpId;
+                        if (!refCode) return;
+                        const joinedAt = data.joinedAt ? new Date(data.joinedAt) : null;
+                        if (!joinedAt || joinedAt < start || joinedAt > end) return;
+                        const enrollee = userMap[data.userId] || {};
+                        const referrer = staffMap[refCode] || {};
+                        results.push({
+                            schemeId: doc.id, schemeName: data.schemeName || data.name || '',
+                            enrolleeName: `${enrollee.firstName || ''} ${enrollee.lastName || ''}`.trim() || data.userId,
+                            enrolleePhone: enrollee.phone || data.userId,
+                            enrolledAt: joinedAt.toLocaleDateString(),
+                            referrerEmpId: refCode,
+                            referrerName: referrer.firstName ? `${referrer.firstName} ${referrer.lastName || ''}`.trim() : refCode,
+                            amount: data.amount || data.monthlyAmount || 0,
+                        });
+                    });
+                    setReferralReportData(results);
+                    if (results.length === 0) showNotification('No referrals found for this date range.', 'info');
+                } catch (e) {
+                    showNotification('Failed to fetch referral data', 'error');
+                } finally {
+                    setLoadingReferrals(false);
+                }
+            };
+
+            const handleExportExcel = async () => {
+                if (!referralReportData.length) return;
+                const XLSX = await import('xlsx');
+                const headers = ['Scheme ID', 'Scheme Name', 'Enrollee Name', 'Enrollee Phone', 'Enrolled Date', 'Referrer EMP ID', 'Referrer Name', 'Monthly Amount'];
+                const rows = referralReportData.map(r => [r.schemeId, r.schemeName, r.enrolleeName, r.enrolleePhone, r.enrolledAt, r.referrerEmpId, r.referrerName, r.amount]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Referral Details');
+                const summary: Record<string, { name: string; count: number; total: number }> = {};
+                referralReportData.forEach(r => {
+                    if (!summary[r.referrerEmpId]) summary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0 };
+                    summary[r.referrerEmpId].count++;
+                    summary[r.referrerEmpId].total += Number(r.amount);
+                });
+                const sumRows = Object.entries(summary).map(([id, v]) => [id, v.name, v.count, v.total]);
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Name', 'Total Referrals', 'Total Monthly Value'], ...sumRows]), 'Summary');
+                XLSX.writeFile(wb, `Incentive_Report_${referralMonthStart}_to_${referralMonthEnd}.xlsx`);
+            };
+
+            const empSummary: Record<string, { name: string; count: number; total: number }> = {};
+            referralReportData.forEach(r => {
+                if (!empSummary[r.referrerEmpId]) empSummary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0 };
+                empSummary[r.referrerEmpId].count++;
+                empSummary[r.referrerEmpId].total += Number(r.amount);
+            });
+
+            return (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setActiveView('overview')} className="text-primary"><ChevronLeft size={24} /></button>
+                            <h2 className="text-xl font-display font-bold text-primary">Incentive Referral Report</h2>
+                        </div>
+                        {referralReportData.length > 0 && (
+                            <button onClick={handleExportExcel} className="p-2 text-accent bg-accent/10 rounded-xl hover:bg-accent/20 transition-all flex items-center gap-2 text-xs font-bold">
+                                <Download size={18} /> <span className="hidden sm:inline">Export Excel</span>
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="bg-accent/10 p-4 rounded-xl flex items-start gap-3">
+                        <Users className="text-accent flex-shrink-0" size={20} />
+                        <p className="text-xs text-accent font-bold">Shows all scheme enrollments where a staff referral code was used, filtered by enrollment date range. Use this to calculate incentive bonuses.</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">From Date</label>
+                            <input type="date" value={referralMonthStart} onChange={e => setReferralMonthStart(e.target.value)} className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">To Date</label>
+                            <input type="date" value={referralMonthEnd} onChange={e => setReferralMonthEnd(e.target.value)} className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+                        </div>
+                        <div className="flex items-end">
+                            <Button onClick={handleFetchReferralReport} loading={loadingReferrals} className="w-full sm:w-auto">
+                                <Search size={16} className="mr-2" /> Fetch Report
+                            </Button>
+                        </div>
+                    </div>
+
+                    {referralReportData.length > 0 && (
+                        <>
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Summary by Employee ({Object.keys(empSummary).length} staff)</h3>
+                                {Object.entries(empSummary).map(([empId, s]) => (
+                                    <Card key={empId} className="p-4 border-none shadow-subtle bg-white">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold text-primary text-sm">{s.name}</p>
+                                                <p className="text-[10px] text-text-muted mt-0.5">EMP ID: {empId}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold text-accent">{s.count} referral{s.count !== 1 ? 's' : ''}</p>
+                                                <p className="text-xs text-text-muted">₹{s.total.toLocaleString()}/mo total</p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] mt-4">Detailed Enrollments ({referralReportData.length})</h3>
+                                {referralReportData.map((r, idx) => (
+                                    <Card key={r.schemeId || idx} className="p-4 border-none shadow-subtle bg-white">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-primary text-sm">{r.enrolleeName}</p>
+                                                <p className="text-[10px] text-text-muted mt-0.5">{r.enrolleePhone} • {r.schemeName}</p>
+                                                <p className="text-[10px] text-text-muted">Enrolled: {r.enrolledAt}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold text-accent">Ref: {r.referrerName}</p>
+                                                <p className="text-[10px] text-text-muted">EMP: {r.referrerEmpId}</p>
+                                                <p className="text-sm font-bold text-success">₹{r.amount}/mo</p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                    {referralReportData.length === 0 && !loadingReferrals && (
+                        <p className="text-sm text-center text-text-muted py-8">Select a date range and click "Fetch Report" to load incentive data.</p>
+                    )}
+                </motion.div>
+            );
+        }
+
+        // ====== DEFAULT: OVERVIEW ======
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                <div>Overview placeholder - this branch is never reached if all views are handled above.</div>
             </motion.div>
         );
     };

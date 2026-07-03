@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Receipt, Download, RefreshCw, Calendar, Tag, UserCheck, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Receipt, Download, RefreshCw, Tag, UserCheck, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getTransactionsFromDB, getUserPlansFromDB, getSchemesFromDB } from '../services/db';
 import { Badge, Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
-import { formatCurrency, cn, safeDate, formatDate } from '../utils';
+import { formatCurrency, cn, safeDate } from '../utils';
 import { downloadAsPDF } from '../utils/pdfUtils';
 
 const Transactions = () => {
@@ -35,23 +35,18 @@ const Transactions = () => {
                 const userPlans = Array.from(
                     new Map(planGroups.flat().map((plan: any) => [plan.id || plan.accountId, plan])).values()
                 );
-
                 const mapping: Record<string, string> = {};
-                // Map from accountId to schemeName
                 userPlans.forEach((p: any) => {
                     mapping[p.id || p.accountId] = p.name || p.schemeName;
                 });
-                // Also map from schemeId for fallback
                 allSchemes.forEach((s: any) => {
                     mapping[s.id] = s.name;
                 });
                 setPlanMap(mapping);
-
-                // Sort by timestamp descending
                 const sorted = txData.sort((a: any, b: any) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime());
                 setTransactions(sorted);
             } catch (err) {
-                console.error("Error fetching transaction data:", err);
+                console.error('Error fetching transaction data:', err);
             }
         }
         setLoading(false);
@@ -63,159 +58,138 @@ const Transactions = () => {
 
     const renderInvoiceOverlay = () => {
         if (!selectedInvoiceTx) return null;
-        const t = selectedInvoiceTx;
-        const resolvedSchemeName = t.schemeName || planMap[t.accountId] || planMap[t.schemeId] || 'General Payment';
-        const invoicePrimaryKey = t.invoicePrimaryKey || t.id;
-        const paymentId = t.razorpayPaymentId || t.gatewayPaymentId || '';
+        const tx = selectedInvoiceTx;
+        const resolvedSchemeName = tx.schemeName || planMap[tx.accountId] || planMap[tx.schemeId] || 'General Payment';
+        const invoicePrimaryKey = tx.invoicePrimaryKey || tx.id;
+        const paymentId = tx.razorpayPaymentId || tx.gatewayPaymentId || '';
 
         return (
-            <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto print:bg-white print:overflow-visible">
-                <style>
-                    {`
-                    .invoice-container { max-width: 800px; margin: 0 auto; padding: 40px; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: #fff; }
-                    .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; }
-                    .logo-section img { max-width: 140px; height: auto; }
-                    .invoice-details { text-align: right; }
-                    .invoice-details h1 { margin: 0 0 10px 0; color: #111827; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
-                    .details-table { margin-left: auto; text-align: right; border-collapse: collapse; }
-                    .details-table td { padding: 3px 0; font-size: 13px; }
-                    .details-table td.label { font-weight: 600; color: #6b7280; padding-right: 15px; }
-                    .details-table td.value { font-weight: 600; color: #111827; }
-                    .billing-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
-                    .billing-block { width: 45%; }
-                    .billing-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-                    .billing-content { font-size: 14px; color: #374151; }
-                    .billing-content strong { color: #111827; }
-                    table.items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                    table.items th { background-color: #f9fafb; border-bottom: 2px solid #e5e7eb; text-align: left; padding: 12px; font-size: 13px; font-weight: 600; color: #4b5563; text-transform: uppercase; }
-                    table.items th.right { text-align: right; }
-                    table.items td { padding: 16px 12px; border-bottom: 1px solid #f3f4f6; font-size: 15px; color: #111827; }
-                    table.items td.right { text-align: right; }
-                    .totals-section { display: flex; justify-content: flex-end; margin-bottom: 40px; }
-                    .totals-table { width: 300px; border-collapse: collapse; }
-                    .totals-table td { padding: 8px 12px; font-size: 15px; }
-                    .totals-table td.label { text-align: right; font-weight: 500; color: #4b5563; }
-                    .totals-table td.amount { text-align: right; font-weight: 600; color: #111827; }
-                    .totals-table tr.grand-total td { border-top: 2px solid #e5e7eb; font-size: 18px; font-weight: 700; color: #000; padding-top: 12px; }
-                    .invoice-footer { text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-                    .status-badge { display: inline-block; padding: 4px 12px; background-color: #dcfce7; color: #166534; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; border: 1px solid #bbf7d0; }
-                    
-                    @media print {
-                        body * { visibility: hidden; }
-                        .print-overlay, .print-overlay * { visibility: visible; }
-                        .print-overlay { position: absolute; left: 0; top: 0; width: 100%; }
-                        .no-print { display: none !important; }
-                        .invoice-container { box-shadow: none; border: none; padding: 0; }
-                    }
-                    
-                    @media (max-width: 640px) {
-                        .invoice-container { padding: 20px; border: none; border-radius: 0; }
-                        .invoice-header { flex-direction: column; align-items: center; text-align: center; }
-                        .invoice-details { text-align: center; margin-top: 20px; width: 100%; }
-                        .details-table { margin: 0 auto; text-align: left; }
-                        .details-table td { font-size: 14px; text-align: left; padding: 4px 0; }
-                        .details-table td.label { padding-right: 20px; }
-                        .billing-section { flex-direction: column; gap: 24px; }
-                        .billing-block { width: 100%; }
-                        table.items th, table.items td { padding: 12px 8px; font-size: 13px; }
-                        .totals-section { justify-content: center; }
-                        .totals-table { width: 100%; }
-                    }
-                    `}
-                </style>
-
-                <div className="print-overlay min-h-screen bg-gray-50 pb-10 font-sans">
-                    <div className="no-print max-w-[800px] mx-auto p-4 flex justify-between items-center sticky top-0 bg-gray-50 z-10 border-b shadow-sm mb-6">
-                        <button onClick={() => setSelectedInvoiceTx(null)} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
-                            &larr; Back
-                        </button>
-                        <button onClick={async () => {
+            <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
+                {/* Action bar - not captured in PDF */}
+                <div className="max-w-[800px] mx-auto p-4 flex justify-between items-center sticky top-0 bg-gray-50 z-10 border-b shadow-sm mb-6">
+                    <button
+                        onClick={() => setSelectedInvoiceTx(null)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}
+                    >
+                        &larr; Back
+                    </button>
+                    <button
+                        id="invoice-download-btn"
+                        onClick={async () => {
+                            const btn = document.getElementById('invoice-download-btn') as HTMLButtonElement;
+                            if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
                             const el = document.getElementById('invoice-pdf-content');
                             if (el) {
-                                await downloadAsPDF(el, `Invoice_${invoicePrimaryKey}`);
+                                try { await downloadAsPDF(el, 'Invoice_' + invoicePrimaryKey); }
+                                catch (e) { console.error(e); }
                             }
-                        }} className="flex items-center gap-2 px-5 py-2 bg-primary text-white rounded-lg font-bold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition-all">
-                            <Download size={16} /> Download PDF
-                        </button>
-                    </div>
+                            if (btn) { btn.innerHTML = 'Download PDF'; btn.disabled = false; }
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 20px', background: '#1e3a5f', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}
+                    >
+                        <Download size={16} /> Download PDF
+                    </button>
+                </div>
 
-                    <div id="invoice-pdf-content" className="invoice-container text-gray-800">
-                        <div className="invoice-header">
-                            <div className="logo-section">
-                                <img src="/vasthara-logo.jpg" alt="Vastra Logo" />
-                            </div>
-                            <div className="invoice-details">
-                                <h1>INVOICE</h1>
-                                <div className="status-badge">PAID</div>
-                                <table className="details-table">
-                                    <tbody>
-                                        <tr><td className="label">Invoice No:</td><td className="value">#{invoicePrimaryKey}</td></tr>
-                                        <tr><td className="label">Date:</td><td className="value">{t.date || safeDate(t.timestamp).toLocaleDateString()}</td></tr>
-                                        <tr><td className="label">Reference:</td><td className="value">{t.referenceId || invoicePrimaryKey}</td></tr>
-                                        {paymentId && <tr><td className="label">Gateway ID:</td><td className="value">{paymentId}</td></tr>}
-                                    </tbody>
-                                </table>
-                            </div>
+                {/* PDF content — all inline styles for html2canvas compatibility */}
+                <div
+                    id="invoice-pdf-content"
+                    style={{ maxWidth: '780px', margin: '0 auto', padding: '40px', border: '1px solid #e5e7eb', borderRadius: '8px', background: '#ffffff', fontFamily: 'Arial, sans-serif', color: '#111827' }}
+                >
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #f3f4f6', paddingBottom: '24px', marginBottom: '32px' }}>
+                        <div>
+                            <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
                         </div>
-
-                        <div className="billing-section">
-                            <div className="billing-block">
-                                <div className="billing-title">Billed From</div>
-                                <div className="billing-content">
-                                    <strong>Vastra (Santhosh Silks)</strong><br />
-                                    Hosur Branch<br />
-                                    Tamil Nadu, India
-                                </div>
-                            </div>
-                            <div className="billing-block">
-                                <div className="billing-title">Billed To</div>
-                                <div className="billing-content">
-                                    <strong>{user?.firstName || 'Customer'} {user?.lastName || ''}</strong><br />
-                                    Phone: +91 {user?.phone}<br />
-                                    {user?.email ? 'Email: ' + user.email : 'No email provided'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <table className="items">
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Payment Method</th>
-                                    <th className="right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <strong>Subscription Payment</strong><br />
-                                        <span style={{ fontSize: '13px', color: '#6b7280' }}>Scheme: {resolvedSchemeName}</span>
-                                    </td>
-                                    <td>{t.method || 'Razorpay / Standard'}</td>
-                                    <td className="right">{formatCurrency(t.amount)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div className="totals-section">
-                            <table className="totals-table">
+                        <div style={{ textAlign: 'right' }}>
+                            <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>
+                            <div style={{ display: 'inline-block', padding: '4px 12px', background: '#dcfce7', color: '#166534', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', border: '1px solid #bbf7d0' }}>PAID</div>
+                            <table style={{ marginLeft: 'auto', borderCollapse: 'collapse' }}>
                                 <tbody>
                                     <tr>
-                                        <td className="label">Subtotal:</td>
-                                        <td className="amount">{formatCurrency(t.amount)}</td>
+                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Invoice No:</td>
+                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>#{invoicePrimaryKey}</td>
                                     </tr>
-                                    <tr className="grand-total">
-                                        <td className="label">Total Paid:</td>
-                                        <td className="amount">{formatCurrency(t.amount)}</td>
+                                    <tr>
+                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Date:</td>
+                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.date || safeDate(tx.timestamp).toLocaleDateString()}</td>
                                     </tr>
+                                    <tr>
+                                        <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Reference:</td>
+                                        <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.referenceId || invoicePrimaryKey}</td>
+                                    </tr>
+                                    {paymentId && (
+                                        <tr>
+                                            <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Gateway ID:</td>
+                                            <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{paymentId}</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
+                    </div>
 
-                        <div className="invoice-footer">
-                            <p><strong>Thank you for choosing Vastra.</strong></p>
-                            <p>This is a computer-generated document and does not require a physical signature.</p>
+                    {/* Billing */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '32px' }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed From</div>
+                            <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
+                                <strong style={{ color: '#111827' }}>Vastra (Santhosh Silks)</strong><br />
+                                Hosur Branch<br />
+                                Tamil Nadu, India
+                            </div>
                         </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed To</div>
+                            <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
+                                <strong style={{ color: '#111827' }}>{user?.firstName || 'Customer'} {user?.lastName || ''}</strong><br />
+                                Phone: +91 {user?.phone}<br />
+                                {user?.email ? 'Email: ' + user.email : 'No email provided'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px' }}>
+                        <thead>
+                            <tr>
+                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'left', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Description</th>
+                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'left', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Payment Method</th>
+                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'right', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827' }}>
+                                    <strong>Subscription Payment</strong><br />
+                                    <span style={{ fontSize: '13px', color: '#6b7280' }}>Scheme: {resolvedSchemeName}</span>
+                                </td>
+                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827' }}>{tx.method || 'Razorpay / Standard'}</td>
+                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827', textAlign: 'right' }}>{formatCurrency(tx.amount)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {/* Totals */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '32px' }}>
+                        <table style={{ width: '280px', borderCollapse: 'collapse' }}>
+                            <tbody>
+                                <tr>
+                                    <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', color: '#4b5563' }}>Subtotal:</td>
+                                    <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(tx.amount)}</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>Total Paid:</td>
+                                    <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>{formatCurrency(tx.amount)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                        <p><strong>Thank you for choosing Vastra.</strong></p>
+                        <p>This is a computer-generated document and does not require a physical signature.</p>
                     </div>
                 </div>
             </div>
@@ -233,7 +207,6 @@ const Transactions = () => {
             <div className="bg-primary pt-12 pb-24 px-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/10 rounded-full -ml-16 -mb-16" />
-
                 <div className="flex items-center gap-4 relative z-10">
                     <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-white/80 hover:text-white">
                         <ChevronLeft size={24} />
@@ -242,7 +215,6 @@ const Transactions = () => {
                         {t('transactions.title')}
                     </h1>
                 </div>
-
                 <div className="mt-8 relative z-10">
                     <p className="text-white/80 font-medium">{t('transactions.recent_payments')}</p>
                 </div>
@@ -257,7 +229,7 @@ const Transactions = () => {
                         </h2>
                         <button
                             onClick={fetchTransactions}
-                            className={cn("p-2 rounded-full bg-surface-alt text-primary transition-transform", loading && "animate-spin")}
+                            className={cn('p-2 rounded-full bg-surface-alt text-primary transition-transform', loading && 'animate-spin')}
                             disabled={loading}
                         >
                             <RefreshCw size={18} />
@@ -280,43 +252,40 @@ const Transactions = () => {
                                 </div>
                             </div>
                         ) : (
-                            transactions.map((tx) => (
+                            transactions.map((txItem) => (
                                 <motion.div
-                                    key={tx.id}
+                                    key={txItem.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="p-5 rounded-2xl border border-border/30 bg-surface shadow-subtle grid grid-cols-1 sm:grid-cols-[1.5fr,1fr,auto] items-center gap-4"
                                 >
-                                    {/* Left: Transaction Details */}
                                     <div className="space-y-2 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <Badge variant="success">{t('transactions.paid')}</Badge>
                                             <span className="text-[10px] font-bold text-text-muted whitespace-nowrap">
-                                                {tx.date || safeDate(tx.timestamp).toLocaleDateString()}
+                                                {txItem.date || safeDate(txItem.timestamp).toLocaleDateString()}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2 min-w-0">
                                             <Tag size={14} className="text-accent flex-shrink-0" />
                                             <p className="text-sm font-bold text-primary uppercase truncate">
-                                                {tx.schemeName || t('transactions.subscription_payment')}
+                                                {txItem.schemeName || t('transactions.subscription_payment')}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Middle: Amount (Stacked on mobile, side-by-side on desktop) */}
                                     <div className="py-3 sm:py-0 px-0 sm:px-6 border-y sm:border-y-0 sm:border-x border-border/10 flex flex-row sm:flex-col justify-between sm:justify-center items-center sm:items-end gap-2">
                                         <p className="text-[9px] font-black text-text-muted uppercase tracking-widest opacity-60">{t('transactions.amount')}</p>
                                         <p className="text-lg font-bold text-primary leading-none">
-                                            {formatCurrency(tx.amount)}
+                                            {formatCurrency(txItem.amount)}
                                         </p>
                                     </div>
 
-                                    {/* Right: Actions */}
                                     <div className="flex justify-end pl-0 sm:pl-2">
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => setSelectedInvoiceTx(tx)}
+                                            onClick={() => setSelectedInvoiceTx(txItem)}
                                             className="h-10 px-5 border-primary/10 text-primary hover:bg-primary hover:text-white hover:border-primary transition-all rounded-xl shadow-sm hover:shadow-md active:scale-95"
                                         >
                                             <Download size={16} className="mr-2" />

@@ -14,7 +14,7 @@ import { sendOTP, verifyOTP } from '../services/sms';
 const SecuritySettings = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const { isBiometricEnabled, setBiometricEnabled, user } = useAuth()!;
+    const { isBiometricEnabled, setBiometricEnabled, user, setUser: setUserInContext } = useAuth()!;
     const [notification, setNotification] = useState<{ message: string; type: NotificationType } | null>(null);
     const [hasStoredCredId, setHasStoredCredId] = useState(false);
     const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -77,24 +77,36 @@ const SecuritySettings = () => {
         } else {
             const result = await verifyOTP(user?.phone || '', passwordForm.otp);
             if (result.success) {
-                const { createUserProfile } = await import('../services/db');
-                const updatedUser = { ...user, password: passwordForm.newPassword } as any;
-                await createUserProfile(updatedUser);
-                
-                const { auth } = await import('../firebase');
-                if (auth.currentUser) {
-                    const { updatePassword } = await import('firebase/auth');
+                try {
+                    const uid = user?.id || user?.phone;
+                    if (!uid) throw new Error('User not found');
+
+                    // 1. Targeted Firestore update (does NOT wipe other fields)
+                    const { updateUserPassword } = await import('../services/db');
+                    await updateUserPassword(uid, passwordForm.newPassword);
+
+                    // 2. Update local auth context state immediately
+                    setUserInContext({ ...(user as any), password: passwordForm.newPassword });
+
+                    // 3. Try Firebase Auth password update for email-linked accounts
                     try {
-                        await updatePassword(auth.currentUser, passwordForm.newPassword);
+                        const { auth } = await import('../firebase');
+                        if (auth.currentUser) {
+                            const { updatePassword } = await import('firebase/auth');
+                            await updatePassword(auth.currentUser, passwordForm.newPassword);
+                        }
                     } catch (authErr) {
-                        console.error("Could not update Firebase Auth password:", authErr);
+                        console.warn("Firebase Auth password update skipped:", authErr);
                     }
+
+                    showNotif("Password updated successfully!");
+                    setChangingPassword(false);
+                    setOtpSent(false);
+                    setPasswordForm({ newPassword: '', otp: '' });
+                } catch (err) {
+                    console.error('Password update failed:', err);
+                    showNotif("Failed to update password. Please try again.", 'error');
                 }
-                
-                showNotif("Password updated successfully!");
-                setChangingPassword(false);
-                setOtpSent(false);
-                setPasswordForm({ newPassword: '', otp: '' });
             } else {
                 showNotif(result.error || "Invalid OTP.", 'error');
             }

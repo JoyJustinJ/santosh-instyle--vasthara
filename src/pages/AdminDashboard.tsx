@@ -2029,17 +2029,6 @@ const AdminDashboard = () => {
                                     <Button onClick={downloadReportPDF} size="sm">
                                         <Download size={16} className="mr-2" /> Download PDF
                                     </Button>
-                                    {reportSchemes.filter(s => !s.status || s.status === 'active').map(scheme => (
-                                        <Button 
-                                            key={`preclose-${scheme.accountId}`}
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="border-warning text-warning hover:bg-warning hover:text-white transition-colors"
-                                            onClick={() => handleInitiateAdminPreClose(scheme)}
-                                        >
-                                            Pre-close {scheme.schemeName || scheme.name}
-                                        </Button>
-                                    ))}
                                 </div>
 
                                 <div id="customer-report-content" className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
@@ -2093,9 +2082,24 @@ const AdminDashboard = () => {
                                                         <h4 className="font-black text-gray-900 uppercase text-lg">{scheme.schemeName || scheme.name}</h4>
                                                         <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Account: {scheme.accountId}</p>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <span className="inline-block px-3 py-1 bg-gray-900 text-white text-[10px] font-black uppercase tracking-wider">
-                                                            {scheme.status || 'Active'}
+                                                    <div className="flex items-center gap-3">
+                                                        {scheme.isPreClosed && (
+                                                            <span className="inline-block px-3 py-1 bg-red-700 text-white text-[10px] font-black uppercase tracking-wider">PRE-CLOSED</span>
+                                                        )}
+                                                        {!scheme.isPreClosed && (!scheme.status || scheme.status === 'active') && (
+                                                            <button
+                                                                onClick={() => handleInitiateAdminPreClose(scheme)}
+                                                                className="px-3 py-1.5 bg-orange-100 border border-orange-400 text-orange-700 text-[10px] font-black uppercase tracking-wider rounded hover:bg-orange-400 hover:text-white transition-colors"
+                                                            >
+                                                                ⚠ Pre-Close This Scheme
+                                                            </button>
+                                                        )}
+                                                        <span className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
+                                                            scheme.status === 'completed' ? 'bg-green-700 text-white' :
+                                                            scheme.status === 'closed' ? 'bg-gray-700 text-white' :
+                                                            'bg-gray-900 text-white'
+                                                        }`}>
+                                                            {scheme.isPreClosed ? 'Pre-Closed' : (scheme.status || 'Active')}
                                                         </span>
                                                     </div>
                                                 </div>
