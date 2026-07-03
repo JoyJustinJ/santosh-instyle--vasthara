@@ -8,6 +8,7 @@ import { getTransactionsFromDB, getUserPlansFromDB, getSchemesFromDB } from '../
 import { Badge, Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { formatCurrency, cn, safeDate, formatDate } from '../utils';
+import { downloadAsPDF } from '../utils/pdfUtils';
 
 const Transactions = () => {
     const { user } = useAuth()!;
@@ -128,12 +129,17 @@ const Transactions = () => {
                         <button onClick={() => setSelectedInvoiceTx(null)} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 active:scale-95 transition-all">
                             &larr; Back
                         </button>
-                        <button onClick={() => window.print()} className="flex items-center gap-2 px-5 py-2 bg-primary text-white rounded-lg font-bold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition-all">
+                        <button onClick={async () => {
+                            const el = document.getElementById('invoice-pdf-content');
+                            if (el) {
+                                await downloadAsPDF(el, `Invoice_${invoicePrimaryKey}`);
+                            }
+                        }} className="flex items-center gap-2 px-5 py-2 bg-primary text-white rounded-lg font-bold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition-all">
                             <Download size={16} /> Download PDF
                         </button>
                     </div>
 
-                    <div className="invoice-container text-gray-800">
+                    <div id="invoice-pdf-content" className="invoice-container text-gray-800">
                         <div className="invoice-header">
                             <div className="logo-section">
                                 <img src="/vasthara-logo.jpg" alt="Vastra Logo" />

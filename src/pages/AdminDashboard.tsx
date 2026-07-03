@@ -2073,7 +2073,7 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2 mb-6 pb-4 border-b border-gray-200">
+                                    <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-200">
                                         {(['all', 'active', 'completed', 'closed'] as const).map(tab => (
                                             <button 
                                                 key={tab}
@@ -2122,20 +2122,20 @@ const AdminDashboard = () => {
                                                         <table className="w-full text-left text-xs border-collapse">
                                                             <thead>
                                                                 <tr className="border-b-2 border-gray-300 text-gray-900">
-                                                                    <th className="py-2 font-black uppercase">Date</th>
-                                                                    <th className="py-2 font-black uppercase">Type</th>
-                                                                    <th className="py-2 font-black uppercase">Status</th>
-                                                                    <th className="py-2 font-black uppercase text-right">Amount</th>
+                                                                    <th className="py-2 pr-1 font-black uppercase">Date</th>
+                                                                    <th className="py-2 px-1 font-black uppercase text-center">Type</th>
+                                                                    <th className="py-2 px-1 font-black uppercase text-center">Status</th>
+                                                                    <th className="py-2 pl-1 font-black uppercase text-right">Amount</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
                                                                     reportTransactions[scheme.accountId].map((tx: any) => (
                                                                         <tr key={tx.id} className="border-b border-gray-200 text-gray-800">
-                                                                            <td className="py-2 font-medium">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</td>
-                                                                            <td className="py-2">{tx.type || 'Cash Receipt'}</td>
-                                                                            <td className="py-2 font-bold text-green-700 uppercase text-[10px]">{tx.status}</td>
-                                                                            <td className="py-2 font-black text-right">₹{tx.amount}</td>
+                                                                            <td className="py-2 pr-1 font-medium">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                                            <td className="py-2 px-1 text-center">{tx.type || 'Cash'}</td>
+                                                                            <td className="py-2 px-1 font-bold text-green-700 uppercase text-[10px] text-center">{tx.status}</td>
+                                                                            <td className="py-2 pl-1 font-black text-right">₹{tx.amount}</td>
                                                                         </tr>
                                                                     ))
                                                                 ) : (
@@ -3271,7 +3271,7 @@ const AdminDashboard = () => {
                                         <p className="font-bold text-sm text-primary">{log.action}</p>
                                         <p className="text-[10px] text-text-muted flex items-center gap-1"><Clock size={10} /> {new Date(log.timestamp).toLocaleString()}</p>
                                     </div>
-                                    <p className="text-xs text-gray-700 mb-2">{typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}</p>
+                                    <p className="text-xs text-gray-700 mb-2 break-all">{typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}</p>
                                     <div className="flex justify-between items-center pt-2 border-t border-border/50">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-primary/60">Performed By</span>
                                         <span className="text-xs font-bold text-primary">{getActorName(log.performedBy)} ({log.role})</span>
