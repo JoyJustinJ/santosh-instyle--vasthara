@@ -108,7 +108,7 @@ export const SideDrawer = ({ isOpen, onClose }) => {
             <div className="p-8 border-t border-border">
               {!Capacitor.isNativePlatform() && !window.matchMedia('(display-mode: standalone)').matches && (
                 <a 
-                  href={`/vasthara-app.apk?v=${new Date().getTime()}`} 
+                  href={`/vasthara.apk?v=${new Date().getTime()}`} 
                   download
                   className="flex items-center gap-4 text-success hover:opacity-80 transition-opacity mb-6"
                   onClick={onClose}

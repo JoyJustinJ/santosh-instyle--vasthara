@@ -222,7 +222,7 @@ const StartPage = () => {
               </p>
             </div>
             
-            <a href={`/vasthara-app.apk?v=${new Date().getTime()}`} download className="block">
+            <a href={`/vasthara.apk?v=${new Date().getTime()}`} download className="block">
               <Button fullWidth className="h-14 bg-success hover:bg-[#16a34a] text-white rounded-2xl shadow-[0_8px_30px_rgba(34,197,94,0.3)] border-none">
                 <Download className="mr-2" size={20} />
                 Download APK Version
