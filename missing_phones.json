@@ -1,0 +1,92 @@
+[
+  {
+    "Name": "ANITHA",
+    "OriginalPhone": 883891121,
+    "AssignedTempPhone": "9695437246",
+    "CustomerID": "VS1011"
+  },
+  {
+    "Name": "Jeevakani ",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9826032727",
+    "CustomerID": "VS1028"
+  },
+  {
+    "Name": "Joyee ",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9940547332",
+    "CustomerID": "VS1029"
+  },
+  {
+    "Name": "Manju K",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9331377525",
+    "CustomerID": "VS1044"
+  },
+  {
+    "Name": "Mohan Kumar",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9368243820",
+    "CustomerID": "VS1046"
+  },
+  {
+    "Name": "Nagarajan K",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9266578585",
+    "CustomerID": "VS1050"
+  },
+  {
+    "Name": "Nandhini N ",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9989120577",
+    "CustomerID": "VS1051"
+  },
+  {
+    "Name": "R Banu Abdul",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9616435737",
+    "CustomerID": "VS1060"
+  },
+  {
+    "Name": "Renuka",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9820145725",
+    "CustomerID": "VS1065"
+  },
+  {
+    "Name": "S Uma",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9673770004",
+    "CustomerID": "VS1070"
+  },
+  {
+    "Name": "Sathya priya V",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9129238186",
+    "CustomerID": "VS1077"
+  },
+  {
+    "Name": "Sunitha",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9171329773",
+    "CustomerID": "VS1086"
+  },
+  {
+    "Name": "USHA ",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9172730261",
+    "CustomerID": "VS1089"
+  },
+  {
+    "Name": "Vasanthi C",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "9920255637",
+    "CustomerID": "VS1090"
+  },
+  {
+    "Name": "Unknown Customer",
+    "OriginalPhone": "MISSING",
+    "AssignedTempPhone": "NOT FOUND",
+    "CustomerID": "NOT FOUND"
+  }
+]

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vastra Financial Services - Manage your schemes and financial profile easily." />
+  <meta name="theme-color" content="#0F172A" />
+  
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Vastra Financial" />
+  <meta property="og:description" content="Vastra Financial Services - Manage your schemes and financial profile easily." />
+  <meta property="og:image" content="/vasthara-logo.jpg" />
+  
+  <link rel="icon" type="image/jpeg" href="/vasthara-logo.jpg" />
+  <link rel="apple-touch-icon" href="/vasthara-logo.jpg" />
+  <title>Vastra Financial</title>
+
+  <!-- Inline Splash Screen: shown immediately, no JS needed, hides when React mounts -->
+  <style>
+    #app-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+    #app-splash.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #app-splash img {
+      width: 120px;
+      height: 120px;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      object-fit: cover;
+    }
+    #app-splash .splash-title {
+      margin-top: 20px;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      letter-spacing: 1px;
+    }
+    #app-splash .splash-subtitle {
+      margin-top: 6px;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    #app-splash .splash-loader {
+      margin-top: 40px;
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: splash-spin 0.8s linear infinite;
+    }
+    @keyframes splash-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Splash Screen (visible until React hydrates) -->
+  <div id="app-splash">
+    <img src="/vasthara-logo.jpg" alt="Vastra Logo" />
+    <div class="splash-title">VASTRA</div>
+    <div class="splash-subtitle">Financial Services</div>
+    <div class="splash-loader"></div>
+  </div>
+
+  <div id="root"></div>
+  <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "909051366907",
+    "project_id": "vasthara-8f0cf",
+    "storage_bucket": "vasthara-8f0cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:909051366907:android:170cc7f9608ffc85ec8f5e",
+        "android_client_info": {
+          "package_name": "com.santoshinstyle.vasthara"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "909051366907-gi3ior37h4ja6o3oe46lle874rdn26oi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg5RyeCD4JEbragkeA1p3KnDESUl9SkXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "909051366907-gi3ior37h4ja6o3oe46lle874rdn26oi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
