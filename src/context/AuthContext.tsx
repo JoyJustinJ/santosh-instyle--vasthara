@@ -69,21 +69,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isAdmin = localStorage.getItem('is_admin_authenticated') === 'true';
     if (isAdmin) return { role: 'admin', firstName: 'Admin', lastName: 'User', id: 'admin', pin: 'ADMIN_BYPASS' };
     
-    const saved = localStorage.getItem('vasthara_user_minimal');
+    const saved = localStorage.getItem('vastra_user_minimal');
     if (!saved) return null;
     try {
       return JSON.parse(saved);
     } catch {
-      localStorage.removeItem('vasthara_user_minimal');
+      localStorage.removeItem('vastra_user_minimal');
       return null;
     }
   });
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(() => {
-    return sessionStorage.getItem('vasthara_unlocked_session') === 'true';
+    return sessionStorage.getItem('vastra_unlocked_session') === 'true';
   });
   const [isBiometricEnabled, setBiometricEnabledState] = useState(() => {
-    return localStorage.getItem('vasthara_biometric_enabled') === 'true';
+    return localStorage.getItem('vastra_biometric_enabled') === 'true';
   });
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             referralStaff: userData.referralStaff,
             empId: userData.empId
           };
-          localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalData));
+          localStorage.setItem('vastra_user_minimal', JSON.stringify(minimalData));
         } else {
           // New Google/Email user — create a basic profile in Firestore automatically
           const basicData: any = {
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             // Mark as unlocked since Google login is a fresh auth
             setIsUnlocked(true);
-            sessionStorage.setItem('vasthara_unlocked_session', 'true');
+            sessionStorage.setItem('vastra_unlocked_session', 'true');
             
             setUser(basicData);
             const minimalBasic = {
@@ -181,20 +181,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               createdAt: basicData.createdAt,
               empId: basicData.empId
             };
-            localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimalBasic));
+            localStorage.setItem('vastra_user_minimal', JSON.stringify(minimalBasic));
           } else {
             // Do NOT call setUser. The user is in the middle of signup.
             // When OTPVerify successfully completes, it will set the user and local storage.
             // If they close the app, they start from scratch and are not partially logged in.
             setUser(null);
-            localStorage.removeItem('vasthara_user_minimal');
+            localStorage.removeItem('vastra_user_minimal');
           }
         }
       } else {
         // Firebase is logged out.
         // If they have a valid local session (e.g. from manual PIN/Phone login), DO NOT clear it.
         // We rely on the PIN system for session security anyway.
-        const savedUser = localStorage.getItem('vasthara_user_minimal');
+        const savedUser = localStorage.getItem('vastra_user_minimal');
         if (!savedUser && localStorage.getItem('is_admin_authenticated') !== 'true') {
           setUser(null);
         }
@@ -251,13 +251,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.warn("Firebase signOut threw an error. Clearing local session anyway.", e);
     } finally {
       setIsUnlocked(false);
-      sessionStorage.removeItem('vasthara_unlocked_session');
+      sessionStorage.removeItem('vastra_unlocked_session');
 
       // Clear user state and manual login session
       setUser(null);
-      localStorage.removeItem('vasthara_user_minimal');
-      localStorage.removeItem('vasthara_pin');
-      localStorage.removeItem('vasthara_last_phone');
+      localStorage.removeItem('vastra_user_minimal');
+      localStorage.removeItem('vastra_pin');
+      localStorage.removeItem('vastra_last_phone');
       localStorage.removeItem('is_admin_authenticated');
       localStorage.removeItem('is_primary_admin');
     }
@@ -265,12 +265,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const unlockApp = () => {
     setIsUnlocked(true);
-    sessionStorage.setItem('vasthara_unlocked_session', 'true');
+    sessionStorage.setItem('vastra_unlocked_session', 'true');
   };
 
   const setBiometricEnabled = (enabled: boolean) => {
     setBiometricEnabledState(enabled);
-    localStorage.setItem('vasthara_biometric_enabled', enabled ? 'true' : 'false');
+    localStorage.setItem('vastra_biometric_enabled', enabled ? 'true' : 'false');
   };
 
   const handleSetUser = (userData: any) => {
@@ -302,9 +302,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         referralStaff: userData.referralStaff,
         empId: userData.empId
       };
-      localStorage.setItem('vasthara_user_minimal', JSON.stringify(minimal));
+      localStorage.setItem('vastra_user_minimal', JSON.stringify(minimal));
     } else {
-      localStorage.removeItem('vasthara_user_minimal');
+      localStorage.removeItem('vastra_user_minimal');
     }
   };
 
@@ -319,7 +319,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // This happens for Pay4SMS (Phone OTP) users because Firebase is bypassed.
     if (user && user.phone) {
       // We encode the phone and pin as a custom token for the backend to verify manually
-      let rawPin = user.password || user.pin || localStorage.getItem('vasthara_pin') || '';
+      let rawPin = user.password || user.pin || localStorage.getItem('vastra_pin') || '';
       
       // If we somehow lost the pin locally (due to previous bug), fetch it dynamically
       if (!rawPin) {
@@ -329,7 +329,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!snap.empty) {
              const data = snap.docs[0].data();
              rawPin = data.password || data.pin || '';
-             if (data.pin) localStorage.setItem('vasthara_pin', data.pin);
+             if (data.pin) localStorage.setItem('vastra_pin', data.pin);
           }
         } catch (e) {
           console.error("Failed to dynamically fetch pin for token", e);

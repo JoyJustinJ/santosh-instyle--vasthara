@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
       "checkout.razorpay.com",
       "api.razorpay.com",
       "*.razorpay.com",
-      "santosh-instyle-vasthara.vercel.app"
+      "santosh-instyle-vastra.vercel.app"
     ]
   },
   plugins: {

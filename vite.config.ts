@@ -12,20 +12,20 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         manifest: {
-          name: 'Vasthara',
-          short_name: 'Vasthara',
-          description: 'Vasthara Financial Services',
+          name: 'Vastra',
+          short_name: 'Vastra',
+          description: 'Vastra Financial Services',
           theme_color: '#0F172A',
           background_color: '#FAFAFA',
           display: 'standalone',
           icons: [
             {
-              src: 'vasthara-icon.png',
+              src: 'vastra-icon.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'vasthara-icon.png',
+              src: 'vastra-icon.png',
               sizes: '512x512',
               type: 'image/png'
             }
@@ -61,7 +61,7 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
-          target: 'https://santosh-instyle-vasthara.vercel.app',
+          target: 'https://santosh-instyle-vastra.vercel.app',
           changeOrigin: true,
           secure: true,
         }

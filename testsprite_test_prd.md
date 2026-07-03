@@ -1,7 +1,7 @@
-# Test PRD: Vasthara Application
+# Test PRD: Vastra Application
 
 ## 1. Objective
-To thoroughly test the frontend application of the Vasthara CRM using TestSprite's automated E2E testing framework. This PRD focuses on validating the core user flows, authentication, and staff/admin operations.
+To thoroughly test the frontend application of the Vastra CRM using TestSprite's automated E2E testing framework. This PRD focuses on validating the core user flows, authentication, and staff/admin operations.
 
 ## 2. Scope of Testing
 The automated tests will cover the following critical areas:

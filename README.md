@@ -2,7 +2,7 @@
 
 </div>
 
-# Santosh Instyle - Vasthara App
+# Santosh Instyle - Vastra App
 
 A mobile-first financial scheme management app.
 
@@ -34,7 +34,7 @@ For Play Store upload, create a release signing config in Android Studio and run
 
 ## Razorpay Payments
 
-Vasthara uses Razorpay Standard Checkout for installment payments.
+Vastra uses Razorpay Standard Checkout for installment payments.
 
 Required environment variables:
 

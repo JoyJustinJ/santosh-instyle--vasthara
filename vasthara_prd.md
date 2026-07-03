@@ -1,7 +1,7 @@
-# Product Requirements Document (PRD) - Vasthara CRM
+# Product Requirements Document (PRD) - Vastra CRM
 
 ## 1. Product Overview
-Vasthara is a comprehensive Customer Relationship Management (CRM) and Scheme Management Progressive Web Application (PWA) built for Santosh Instyle. It digitizes the management of customer investment schemes, monthly installment tracking, staff referral incentives, and administrative oversight. The system provides role-based access for Customers, Staff, and Administrators to securely manage financial records and rewards.
+Vastra is a comprehensive Customer Relationship Management (CRM) and Scheme Management Progressive Web Application (PWA) built for Santosh Instyle. It digitizes the management of customer investment schemes, monthly installment tracking, staff referral incentives, and administrative oversight. The system provides role-based access for Customers, Staff, and Administrators to securely manage financial records and rewards.
 
 ## 2. Target Audience & Roles
 *   **Customer:** End-users who subscribe to investment/savings schemes (e.g., 500 Rs Scheme, 1000 Rs Scheme). They can view their payment history, download receipts, and process scheme fulfillments.

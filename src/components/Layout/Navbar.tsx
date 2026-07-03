@@ -5,7 +5,7 @@ import { Menu, Bell, Globe, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationDrawer } from './NotificationDrawer';
 import { getNotificationsFromDB } from '../../services/db';
-import vastharaIcon from '../../assets/logo.jpg';
+import vastraIcon from '../../assets/logo.jpg';
 
 export const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const { t, i18n } = useTranslation();
@@ -45,7 +45,7 @@ export const Navbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
           onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/home')}
           className="flex items-center gap-2 cursor-pointer group shrink-0"
         >
-          <img src={vastharaIcon} alt="Vastra Logo" className="h-7 sm:h-9 w-auto object-contain mix-blend-multiply" />
+          <img src={vastraIcon} alt="Vastra Logo" className="h-7 sm:h-9 w-auto object-contain mix-blend-multiply" />
           <span className="font-display font-black text-lg sm:text-xl text-primary tracking-tight">VASTRA</span>
         </div>
 

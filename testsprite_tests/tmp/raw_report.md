@@ -4,7 +4,7 @@
 ---
 
 ## 1️⃣ Document Metadata
-- **Project Name:** santosh-instyle--vasthara-main
+- **Project Name:** santosh-instyle--vastra-main
 - **Date:** 2026-06-30
 - **Prepared by:** TestSprite AI Team
 

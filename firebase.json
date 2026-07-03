@@ -2,7 +2,7 @@
   "auth": {
     "providers": {
       "googleSignIn": {
-        "oAuthBrandDisplayName": "Vasthara",
+        "oAuthBrandDisplayName": "Vastra",
         "supportEmail": "jkjustin1805@gmail.com"
       }
     }

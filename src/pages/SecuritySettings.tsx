@@ -54,7 +54,7 @@ const SecuritySettings = () => {
 
     const handleClearBiometrics = () => {
         const userId = user?.id || user?.phone;
-        localStorage.removeItem('vasthara_biometric_credId');
+        localStorage.removeItem('vastra_biometric_credId');
         localStorage.removeItem(getBiometricCredentialKey(userId));
         setBiometricEnabled(false);
         setHasStoredCredId(false);

@@ -4,8 +4,8 @@ import fs from "fs";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCYrpQj3QfEw9n7H5dzAyIeAY-SFbj4qiE",
-    authDomain: "vasthara-8f0cf.firebaseapp.com",
-    projectId: "vasthara-8f0cf",
+    authDomain: "vastra-8f0cf.firebaseapp.com",
+    projectId: "vastra-8f0cf",
 };
 
 const app = initializeApp(firebaseConfig);

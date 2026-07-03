@@ -98,7 +98,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
-  const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
+  const userHasPin = !!user.pin || !!localStorage.getItem('vastra_pin');
 
   if (!userHasPin) {
     if (location.pathname !== '/set-pin') {

@@ -17,7 +17,7 @@ import { NumericKeypad } from '../components/UI/NumericKeypad';
 import { Notification, NotificationType } from '../components/UI/Notification';
 import { sendOTP, verifyOTP } from '../services/sms';
 import { updateUserPIN } from '../services/db';
-import vastharaIcon from '../assets/logo.jpg';
+import vastraIcon from '../assets/logo.jpg';
 
 
 const PINLogin = () => {
@@ -52,7 +52,7 @@ const PINLogin = () => {
       return;
     }
 
-    if (!user.pin && !localStorage.getItem('vasthara_pin')) {
+    if (!user.pin && !localStorage.getItem('vastra_pin')) {
       navigate('/set-pin', { replace: true });
       return;
     }
@@ -87,13 +87,13 @@ const PINLogin = () => {
   };
 
   const handleLogin = () => {
-    const validPin = String(user?.pin || localStorage.getItem('vasthara_pin') || '');
+    const validPin = String(user?.pin || localStorage.getItem('vastra_pin') || '');
 
     if (pin === validPin && validPin.length === 4) {
       unlockApp();
       
       // Show biometric enrolment prompt if not yet answered and device supports it
-      if (!localStorage.getItem('vasthara_biometric_prompted') && biometricAvailable) {
+      if (!localStorage.getItem('vastra_biometric_prompted') && biometricAvailable) {
         setShowBiometricPrompt(true);
       } else {
         navigate('/home');
@@ -124,7 +124,7 @@ const PINLogin = () => {
     try {
       storeBiometricCredentialId('true', user?.id || user?.phone);
       setBiometricEnabled(true);
-      localStorage.setItem('vasthara_biometric_prompted', 'true');
+      localStorage.setItem('vastra_biometric_prompted', 'true');
     } catch (err) {
       console.error('Biometric registration failed', err);
     } finally {
@@ -134,7 +134,7 @@ const PINLogin = () => {
   };
 
   const handleSkipBiometrics = () => {
-    localStorage.setItem('vasthara_biometric_prompted', 'true');
+    localStorage.setItem('vastra_biometric_prompted', 'true');
     setShowBiometricPrompt(false);
     navigate('/home');
   };
@@ -194,7 +194,7 @@ const PINLogin = () => {
     if (result.success) {
       showNotif("Verification successful!", 'success');
       
-      localStorage.removeItem('vasthara_pin');
+      localStorage.removeItem('vastra_pin');
       const userId = user?.id || (user as any)?.uid || user?.phone;
       if (userId) {
          await updateUserPIN(userId, '');
@@ -264,7 +264,7 @@ const PINLogin = () => {
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="flex flex-col items-center">
           <div className="w-40 flex items-center justify-center overflow-hidden">
-            <img src={vastharaIcon} alt="Vastra" className="w-full h-auto object-contain mix-blend-multiply" />
+            <img src={vastraIcon} alt="Vastra" className="w-full h-auto object-contain mix-blend-multiply" />
           </div>
         </div>
 

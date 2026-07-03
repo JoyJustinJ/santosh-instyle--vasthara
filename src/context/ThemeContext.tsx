@@ -11,8 +11,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('vasthara_theme');
-    const userSelectedTheme = localStorage.getItem('vasthara_theme_user_selected') === 'true';
+    const saved = localStorage.getItem('vastra_theme');
+    const userSelectedTheme = localStorage.getItem('vastra_theme_user_selected') === 'true';
     if (userSelectedTheme && (saved === 'dark' || saved === 'light')) return saved;
     return 'light';
   });
@@ -21,11 +21,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    localStorage.setItem('vasthara_theme', theme);
+    localStorage.setItem('vastra_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    localStorage.setItem('vasthara_theme_user_selected', 'true');
+    localStorage.setItem('vastra_theme_user_selected', 'true');
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 

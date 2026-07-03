@@ -1,13 +1,13 @@
-# Vasthara 3.0 - Official User Manual
+# Vastra 3.0 - Official User Manual
 **A Complete Guide for Administrators, Managers, and Staff**
 
-Welcome to the Vasthara Loyalty & Savings platform. This manual provides a highly detailed, step-by-step overview of how to manage the system, handle customers, process transactions, and track analytics based on your specific organizational role.
+Welcome to the Vastra Loyalty & Savings platform. This manual provides a highly detailed, step-by-step overview of how to manage the system, handle customers, process transactions, and track analytics based on your specific organizational role.
 
 ---
 
 ## 1. Understanding System Access and Roles
 
-The Vasthara system operates on a strict, tiered access model to ensure data security, privacy, and operational efficiency across all branches. 
+The Vastra system operates on a strict, tiered access model to ensure data security, privacy, and operational efficiency across all branches. 
 
 | Role | Access Level | Key Responsibilities |
 | :--- | :--- | :--- |
@@ -33,7 +33,7 @@ The Primary Admin account is the highest level of authority in the system. It ha
 ### Global Communications (Broadcasts)
 - Navigate to the 'Send Broadcast' section.
 - Input a clear title and message. You can choose to push this message to "All Customers" or select a custom group of users.
-- **Delivery:** When a customer next opens their Vasthara app, the broadcast will immediately display as a mandatory central popup on their home screen. Once acknowledged, it will not appear again.
+- **Delivery:** When a customer next opens their Vastra app, the broadcast will immediately display as a mandatory central popup on their home screen. Once acknowledged, it will not appear again.
 
 ### System Reset Protocol
 - **Reset Application:** Located under system settings, this is a highly destructive tool designed only for preparing the environment for a new production launch or sweeping data wipe.
@@ -61,7 +61,7 @@ Branch Managers have powerful administrative tools designed to assist in daily b
 Super Staff members act as team leads and handle the onboarding of new employees into the digital system.
 
 ### Staff Approvals
-1. When a new employee downloads the Vasthara application and registers as a staff member, they are placed in a "Pending" queue and cannot access the system.
+1. When a new employee downloads the Vastra application and registers as a staff member, they are placed in a "Pending" queue and cannot access the system.
 2. Super Staff members must navigate to the 'Approvals' tab.
 3. Review the pending requests, verify the employee's identity, and click "Approve" to grant them access to the Standard Staff Dashboard.
 
@@ -72,7 +72,7 @@ Super Staff members act as team leads and handle the onboarding of new employees
 Standard Staff are the backbone of the customer experience, handling all frontline financial interactions.
 
 ### Customer Enrollment and Referrals
-1. **App Download:** Guide new customers to download the VASTHARA 3.0 Android app. You can find the direct download link on the main website's start page.
+1. **App Download:** Guide new customers to download the VASTRA 3.0 Android app. You can find the direct download link on the main website's start page.
 2. **Referral Tracking:** Your personal **Referral Code** is simply your registered 10-digit mobile number (displayed permanently at the top of your Staff Dashboard).
 3. **Earning Incentives:** Instruct the customer to enter your mobile number in the "Referral Staff" field during their signup process. The system will permanently link them to your profile, and your "Total Referrals" count will increase automatically.
 

@@ -101,7 +101,7 @@ const Transactions = () => {
                         <tbody>
                             <tr>
                                 <td style={{ verticalAlign: 'top', width: '50%' }}>
-                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
+                                    <img src="/vastra-logo.jpg" alt="Vastra Logo" style={{ maxWidth: '140px', height: 'auto', display: 'block' }} />
                                 </td>
                                 <td style={{ verticalAlign: 'top', width: '50%', textAlign: 'right' }}>
                                     <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>

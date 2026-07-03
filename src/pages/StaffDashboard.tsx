@@ -580,7 +580,7 @@ const StaffDashboard = () => {
                         
                         <div id="receipt-container" className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm">
                             <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
-                                <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                 <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Cash Receipt</p>
                             </div>
                             
@@ -659,7 +659,7 @@ const StaffDashboard = () => {
                             
                             <div className="relative z-10">
                                 <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
-                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                     <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
                                 </div>
                                 

@@ -53,10 +53,10 @@ const PINSetup = () => {
         setLoading(true);
         try {
           // Store locally for setup completion state, but NOT the plaintext PIN
-          localStorage.setItem('vasthara_pin_setup_complete', 'true');
-          localStorage.setItem('vasthara_pin', pin);
+          localStorage.setItem('vastra_pin_setup_complete', 'true');
+          localStorage.setItem('vastra_pin', pin);
           if (user?.phone) {
-            localStorage.setItem('vasthara_last_phone', user.phone);
+            localStorage.setItem('vastra_last_phone', user.phone);
           }
 
           // Persist to DB if user is logged in
@@ -76,7 +76,7 @@ const PINSetup = () => {
           } else {
             unlockApp();
             // Show biometric prompt for new PIN setup (if device supports it)
-            if (biometricAvailable && !localStorage.getItem('vasthara_biometric_prompted')) {
+            if (biometricAvailable && !localStorage.getItem('vastra_biometric_prompted')) {
               setStep(3);
             } else {
               navigate('/home');
@@ -105,13 +105,13 @@ const PINSetup = () => {
       console.error('Biometric registration failed', err);
       showNotification('Biometric setup failed. You can enable it later in Security Settings.', 'info');
     } finally {
-      localStorage.setItem('vasthara_biometric_prompted', 'true');
+      localStorage.setItem('vastra_biometric_prompted', 'true');
       navigate('/home');
     }
   };
 
   const handleSkipBiometrics = () => {
-    localStorage.setItem('vasthara_biometric_prompted', 'true');
+    localStorage.setItem('vastra_biometric_prompted', 'true');
     navigate('/home');
   };
 

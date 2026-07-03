@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/UI/Button';
 import { Card } from '../components/UI/Card';
-import vastharaIcon from '../assets/logo.jpg';
+import vastraIcon from '../assets/logo.jpg';
 import { useAuth } from '../context/AuthContext';
 
 const StartPage = () => {
@@ -27,7 +27,7 @@ const StartPage = () => {
 
   React.useEffect(() => {
     if (!loading && user) {
-      const userHasPin = !!user.pin || !!localStorage.getItem('vasthara_pin');
+      const userHasPin = !!user.pin || !!localStorage.getItem('vastra_pin');
       if (!userHasPin) {
         navigate('/set-pin', { replace: true });
       } else if (!isUnlocked) {
@@ -47,7 +47,7 @@ const StartPage = () => {
           className="w-full flex items-center justify-center"
         >
           <div className="w-40 mx-auto">
-            <img src={vastharaIcon} alt="Vastra" className="w-full h-auto object-contain rounded-2xl bg-white p-2" />
+            <img src={vastraIcon} alt="Vastra" className="w-full h-auto object-contain rounded-2xl bg-white p-2" />
           </div>
         </motion.div>
       </div>
@@ -96,7 +96,7 @@ const StartPage = () => {
             className="w-32 rounded-3xl bg-white shadow-2xl flex items-center justify-center p-2 relative group cursor-pointer"
           >
             <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-3xl" />
-            <img src={vastharaIcon} alt="Vastra Logo" className="w-full h-auto object-contain rounded-[20px]" />
+            <img src={vastraIcon} alt="Vastra Logo" className="w-full h-auto object-contain rounded-[20px]" />
           </motion.div>
           
           <motion.h2
@@ -222,7 +222,7 @@ const StartPage = () => {
               </p>
             </div>
             
-            <a href={`/vasthara.apk?v=${new Date().getTime()}`} download className="block">
+            <a href={`/vastra.apk?v=${new Date().getTime()}`} download className="block">
               <Button fullWidth className="h-14 bg-success hover:bg-[#16a34a] text-white rounded-2xl shadow-[0_8px_30px_rgba(34,197,94,0.3)] border-none">
                 <Download className="mr-2" size={20} />
                 Download APK Version

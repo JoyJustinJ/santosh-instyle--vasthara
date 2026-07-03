@@ -189,7 +189,7 @@ const AdminDashboard = () => {
         try {
             const { checkBiometricAvailability, verifyBiometric } = await import('../utils/biometrics');
             const available = await checkBiometricAvailability();
-            const biometricEnabled = localStorage.getItem('vasthara_biometric_enabled') === 'true' || contextBiometricEnabled;
+            const biometricEnabled = localStorage.getItem('vastra_biometric_enabled') === 'true' || contextBiometricEnabled;
             
             if (available && biometricEnabled) {
                 const success = await verifyBiometric();
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
         setResetPinError(false);
         if (val.length === 4) {
             // Get correct PIN, fallback to local storage if user.pin is missing
-            const correctPin = user?.pin || localStorage.getItem('vasthara_pin');
+            const correctPin = user?.pin || localStorage.getItem('vastra_pin');
             if (val === correctPin) {
                 setShowResetPinPrompt(false);
                 setShowResetModal(true);
@@ -1558,7 +1558,7 @@ const AdminDashboard = () => {
                             
                             <div className="relative z-10">
                                 <div className="text-center border-b-2 border-gray-900 pb-4 mb-4">
-                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                     <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
                                 </div>
                                 
@@ -2034,7 +2034,7 @@ const AdminDashboard = () => {
                                 <div className="bg-white p-8 rounded-none border border-gray-300 shadow-sm max-w-4xl mx-auto font-sans text-gray-900">
                                     <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
                                         <div>
-                                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTHARA</h1>
+                                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
                                             <p className="text-sm font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Account Statement</p>
                                         </div>
                                         <div className="text-right">
@@ -2167,7 +2167,7 @@ const AdminDashboard = () => {
                                             <tbody>
                                                 <tr>
                                                     <td style={{ verticalAlign: 'top', width: '60%' }}>
-                                                        <h1 style={{ margin: '0 0 4px 0', color: '#111827', fontSize: '26px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>SANTOSH INSTYLE VASTHARA</h1>
+                                                        <h1 style={{ margin: '0 0 4px 0', color: '#111827', fontSize: '26px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900 }}>SANTOSH INSTYLE VASTRA</h1>
                                                         <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>Official Account Statement</p>
                                                     </td>
                                                     <td style={{ verticalAlign: 'top', width: '40%', textAlign: 'right' }}>

@@ -15,7 +15,7 @@ import { auth } from '../firebase';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import vastharaIcon from '../assets/logo.jpg';
+import vastraIcon from '../assets/logo.jpg';
 
 
 // Removed hardcoded admin fallback variables.
@@ -159,7 +159,7 @@ const Login = () => {
           const isPrimary = !adminData.docId || adminData.docId === 'main_admin';
 
           // --- BEGIN ADMIN FIREBASE AUTH FIX ---
-          let adminEmail = adminData.authEmail || `admin_${sanitizedPhone}@vasthara.com`;
+          let adminEmail = adminData.authEmail || `admin_${sanitizedPhone}@vastra.com`;
           try {
             await signInWithEmailAndPassword(auth, adminEmail, formData.password);
           } catch (e: any) {
@@ -183,7 +183,7 @@ const Login = () => {
                 }
               } catch (createError: any) {
                 if (createError.code === 'auth/email-already-in-use') {
-                  adminEmail = `admin_${sanitizedPhone}_${Date.now()}@vasthara.com`;
+                  adminEmail = `admin_${sanitizedPhone}_${Date.now()}@vastra.com`;
                   const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, formData.password);
                   await setDoc(doc(db, "users", userCredential.user.uid), {
                     id: userCredential.user.uid,
@@ -267,9 +267,9 @@ const Login = () => {
           setUser(userDoc);
           unlockApp();
           // Store phone and pin for future biometric re-login and route protection
-          localStorage.setItem('vasthara_last_phone', userDoc.phone);
+          localStorage.setItem('vastra_last_phone', userDoc.phone);
           if (userDoc.pin) {
-              localStorage.setItem('vasthara_pin', userDoc.pin);
+              localStorage.setItem('vastra_pin', userDoc.pin);
           }
           setLoading(false);
           navigate('/home');
@@ -493,9 +493,9 @@ const Login = () => {
         const updatedUser = { ...userDoc, password: formData.newPassword, setupRequired: false };
         setUser(updatedUser);
         unlockApp();
-        localStorage.setItem('vasthara_last_phone', updatedUser.phone);
+        localStorage.setItem('vastra_last_phone', updatedUser.phone);
         if (updatedUser.pin) {
-            localStorage.setItem('vasthara_pin', updatedUser.pin);
+            localStorage.setItem('vastra_pin', updatedUser.pin);
         }
         
         showNotif('Account setup complete! Welcome.', 'success');
@@ -591,7 +591,7 @@ const Login = () => {
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="flex flex-col items-center">
           <div className="w-40 flex items-center justify-center overflow-hidden">
-            <img src={vastharaIcon} alt="Vastra" className="w-full h-auto object-contain mix-blend-multiply" />
+            <img src={vastraIcon} alt="Vastra" className="w-full h-auto object-contain mix-blend-multiply" />
           </div>
         </div>
 

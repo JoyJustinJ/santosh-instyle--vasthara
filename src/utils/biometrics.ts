@@ -12,16 +12,16 @@ export const checkBiometricAvailability = async () => {
 export const biometricSupported = checkBiometricAvailability;
 
 export const getBiometricCredentialKey = (userId?: string) => {
-    return `vasthara_biometric_enabled_${userId || 'default'}`;
+    return `vastra_biometric_enabled_${userId || 'default'}`;
 };
 
 export const getStoredBiometricCredentialId = (userId?: string) => {
-    return localStorage.getItem(getBiometricCredentialKey(userId)) || localStorage.getItem('vasthara_biometric_credId');
+    return localStorage.getItem(getBiometricCredentialKey(userId)) || localStorage.getItem('vastra_biometric_credId');
 };
 
 export const storeBiometricCredentialId = (credentialId: string, userId?: string) => {
     localStorage.setItem(getBiometricCredentialKey(userId), 'true');
-    localStorage.setItem('vasthara_biometric_credId', 'true');
+    localStorage.setItem('vastra_biometric_credId', 'true');
 };
 
 export const verifyBiometric = async (): Promise<boolean> => {
