@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:4173",
+  "loginUser": "6383672133",
+  "loginPassword": "R!shvanth123",
+  "executionArgs": {
+    "projectName": "santosh-instyle--vastra-main",
+    "projectPath": "c:\\app\\santosh-instyle--vastra-main",
+    "testIds": [],
+    "additionalInstruction": "",
+    "serverMode": "production",
+    "envs": {
+      "API_KEY": "sk-user-765qgZUpEenImB8Jh_NarsE3wOU8xkQJsCn32MLw4ZXuWTp_ObsDtaQ5966gQvdqttlLgNRI5mSXszirTAVJfjMihGv_nV5KHV4e6nl8MO0R1IOXJNyWLzAszk0BgRHVS6E"
+    }
+  },
+  "serverPort": 60258
+}

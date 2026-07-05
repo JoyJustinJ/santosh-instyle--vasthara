@@ -1,0 +1,8 @@
+{
+    "rewrites": [
+        {
+            "source": "/((?!api/.*|vastra\\.apk).*)",
+            "destination": "/index.html"
+        }
+    ]
+}

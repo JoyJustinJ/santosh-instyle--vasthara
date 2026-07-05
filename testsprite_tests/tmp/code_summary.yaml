@@ -1,0 +1,80 @@
+version: "2"
+type: frontend
+tech_stack:
+  - React
+  - TypeScript
+  - Vite
+  - Tailwind CSS
+  - Firebase
+routes:
+  - path: /login
+    file: src/pages/Login.tsx
+    auth_required: false
+    description: User login page with phone number
+  - path: /pin-login
+    file: src/pages/PINLogin.tsx
+    auth_required: false
+    description: Biometric or PIN login page
+  - path: /otp-verify
+    file: src/pages/OTPVerify.tsx
+    auth_required: false
+    description: OTP verification for login
+  - path: /admin
+    file: src/pages/AdminDashboard.tsx
+    auth_required: true
+    description: Main Admin dashboard
+  - path: /staff
+    file: src/pages/StaffDashboard.tsx
+    auth_required: true
+    description: Staff dashboard
+  - path: /
+    file: src/App.tsx
+    auth_required: false
+    description: Customer home view or landing
+features:
+  - name: User Authentication
+    description: Login with phone number and OTP or PIN/Biometric
+    files:
+      - src/pages/Login.tsx
+      - src/pages/OTPVerify.tsx
+      - src/pages/PINLogin.tsx
+    entry_route: /login
+    user_interactions:
+      - Fill phone number input field
+      - Click Login button to receive OTP
+      - Enter OTP in verification page
+      - Optionally use PIN or biometric if enrolled
+    api_calls:
+      - method: POST
+        endpoint: /api/send-otp
+      - method: POST
+        endpoint: /api/verify-otp
+    auth_required: false
+  - name: Admin Scheme Management
+    description: Admins can view and create investment schemes, collect installments, and view analytics
+    files:
+      - src/pages/AdminDashboard.tsx
+    entry_route: /admin
+    user_interactions:
+      - Click to view all active customers
+      - Create a new scheme plan
+      - Record monthly payments for customers
+      - Download customer reports as PDF
+      - Export transaction data as CSV
+    api_calls: []
+    auth_required: true
+  - name: Staff Enrollment & Fulfillment
+    description: Staff can enroll new customers and process scheme fulfillments via OTP
+    files:
+      - src/pages/StaffDashboard.tsx
+    entry_route: /staff
+    user_interactions:
+      - Enroll a new customer
+      - Log a monthly deposit
+      - Request scheme fulfillment which triggers an OTP to the customer
+      - Download receipt PDF
+    api_calls:
+      - method: POST
+        endpoint: /api/send-otp
+    auth_required: true
+known_limitations: []

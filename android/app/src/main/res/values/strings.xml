@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">My Santhosh App</string>
+    <string name="title_activity_main">My Santhosh App</string>
+    <string name="package_name">com.santoshinstyle.vastra</string>
+    <string name="custom_url_scheme">com.santoshinstyle.vastra</string>
+    <string name="server_client_id">909051366907-gi3ior37h4ja6o3oe46lle874rdn26oi.apps.googleusercontent.com</string>
+</resources>

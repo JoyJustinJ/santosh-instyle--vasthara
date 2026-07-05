@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Vastra",
+        "supportEmail": "jkjustin1805@gmail.com"
+      }
+    }
+  }
+}
