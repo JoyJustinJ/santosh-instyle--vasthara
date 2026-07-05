@@ -10,7 +10,7 @@ import { Input } from '../components/UI/Input';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { CreateCustomerAccount } from '../components/CreateCustomerAccount';
 import { EnrollCustomer } from '../components/EnrollCustomer';
-import { formatCurrency, cn, validatePhone } from '../utils';
+import { formatCurrency, cn, validatePhone, safeDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -861,7 +861,7 @@ const StaffDashboard = () => {
                             {(() => {
                                 const visibleSchemes = customerActiveSchemes.filter((s: any) => {
                                     const now = new Date();
-                                    const joinDate = new Date(s.joinedAt || now);
+                                    const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
                                     const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
                                     // +1 includes the current month as a payable installment
                                     const totalInstallmentsDue = monthsElapsed + 1;
@@ -873,7 +873,7 @@ const StaffDashboard = () => {
                                 if (visibleSchemes.length > 0) {
                                     return visibleSchemes.map((s: any) => {
                                         const now = new Date();
-                                        const joinDate = new Date(s.joinedAt || now);
+                                        const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
                                         const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
                                         const totalInstallmentsDue = monthsElapsed + 1;
                                         const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);

@@ -24,6 +24,13 @@ export const safeDate = (timestamp: any): Date => {
   if (timestamp.seconds) {
       return new Date(timestamp.seconds * 1000);
   }
+  if (typeof timestamp === 'string') {
+      // Check for DD-MM-YYYY or DD/MM/YYYY format
+      const parts = timestamp.includes('-') ? timestamp.split('-') : timestamp.split('/');
+      if (parts.length === 3 && parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
+          return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
+  }
   return new Date(timestamp);
 };
 
