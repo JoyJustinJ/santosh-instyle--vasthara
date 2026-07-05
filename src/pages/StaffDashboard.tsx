@@ -217,7 +217,7 @@ const StaffDashboard = () => {
                 const res = await sendOTP(phone);
                 if (res.success) {
                     setDepositOTPModalOpen(true);
-                    showNotification(`OTP sent to customer. (OTP: ${res.otp || ''})`, 'success');
+                    showNotification('OTP sent to customer', 'success');
                 } else {
                     showNotification('Failed to send OTP to customer. Cannot proceed.', 'error');
                 }
@@ -411,7 +411,7 @@ const StaffDashboard = () => {
             const res = await sendOTP(newPhone);
             if (res.success) {
                 setUpdatePhoneOTPModalOpen(true);
-                showNotification(`OTP sent to new phone number (OTP: ${res.otp || ''})`, 'info');
+                showNotification("OTP sent to new phone number", 'info');
             } else {
                 showNotification("Failed to send OTP", 'error');
             }
@@ -1012,7 +1012,7 @@ const StaffDashboard = () => {
                                                             setFulfillmentTarget(scheme);
                                                             setFulfillmentOTP('');
                                                             setFulfillmentOTPModalOpen(true);
-                                                            showNotification(`OTP sent to ${userProfile.phone}. (OTP: ${result.otp || ''})`, 'info');
+                                                            showNotification(`OTP sent to ${userProfile.phone}`, 'info');
                                                         } else {
                                                             showNotification('Failed to send OTP to customer', 'error');
                                                         }
