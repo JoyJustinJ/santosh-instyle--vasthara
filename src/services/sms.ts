@@ -21,7 +21,7 @@ const normalizePhone = (phone: string): string => {
   return digits;
 };
 
-export const sendOTP = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+export const sendOTP = async (phone: string): Promise<{ success: boolean; error?: string; otp?: string }> => {
   try {
     const normalizedPhone = normalizePhone(phone);
     let data;
@@ -49,7 +49,7 @@ export const sendOTP = async (phone: string): Promise<{ success: boolean; error?
     }
 
     if (ok) {
-      return { success: true };
+      return { success: true, otp: data?.otp };
     } else {
       if (status >= 500) return { success: false, error: 'Our server is experiencing issues. Please try again later.' };
       if (status === 404) return { success: false, error: 'The OTP service is currently unavailable.' };

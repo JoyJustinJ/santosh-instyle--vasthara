@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Pay4SMS often returns a simple string or ID, check if it looks successful
     if (response.ok) {
-      return res.status(200).json({ message: 'OTP sent successfully', reference: resultText });
+      return res.status(200).json({ message: 'OTP sent successfully', reference: resultText, otp });
     } else {
       console.error('Pay4SMS Error:', resultText);
       return res.status(500).json({ error: 'Failed to send SMS' });
