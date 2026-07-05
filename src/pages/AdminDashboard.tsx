@@ -517,7 +517,7 @@ const AdminDashboard = () => {
             const res = await sendOTP(phone);
             if (res.success) {
                 setDepositOTPModalOpen(true);
-                showNotif(`OTP sent to customer. (OTP: ${res.otp || ''})`, 'success');
+                showNotif(`OTP sent to customer. (OTP: ${res.otp || ''})`, 'warning');
             } else {
                 showNotif('Failed to send OTP to customer. Cannot proceed.', 'error');
             }
@@ -861,7 +861,7 @@ const AdminDashboard = () => {
             const res = await sendOTP(newPhone);
             if (res.success) {
                 setUpdatePhoneOTPModalOpen(true);
-                showNotif(`OTP sent to new phone number (OTP: ${res.otp || ''})`, 'info');
+                showNotif(`OTP sent to new phone number (OTP: ${res.otp || ''})`, 'warning');
             } else {
                 showNotif("Failed to send OTP", 'error');
             }
@@ -945,7 +945,7 @@ const AdminDashboard = () => {
             if (result.success) {
                 setAdminPreCloseTarget(plan);
                 setAdminPreCloseModalOpen(true);
-                showNotif(`OTP sent to ${reportCustomer.phone} for pre-close verification. (OTP: ${result.otp || ''})`, 'info');
+                showNotif(`OTP sent to ${reportCustomer.phone} for pre-close verification. (OTP: ${result.otp || ''})`, 'warning');
             } else {
                 showNotif('Failed to send OTP for pre-close.', 'error');
             }
