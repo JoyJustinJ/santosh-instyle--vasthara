@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, XCircle, Shield, FileText, Download, Printer, List, BarChart3, AlertTriangle, PlusCircle } from 'lucide-react';
 import { downloadAsPDF } from '../utils/pdfUtils';
-import { downloadFile } from '../utils/download';
+import { downloadFile, workbookToBase64 } from '../utils/download';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -1574,7 +1574,8 @@ const StaffDashboard = () => {
                         const data = doc.data();
                         const refCode = data.referralCode || data.referralEmpId;
                         if (!refCode) return;
-                        const joinedAt = data.joinedAt ? new Date(data.joinedAt) : null;
+                        const dateStr = data.enrollmentDate || data.joinedAt || data.enrolledAt || data.createdAt;
+                        const joinedAt = dateStr ? new Date(dateStr) : null;
                         if (!joinedAt || joinedAt < start || joinedAt > end) return;
                         const enrollee = userMap[data.userId] || {};
                         const referrer = staffMap[refCode] || {};
@@ -1612,7 +1613,8 @@ const StaffDashboard = () => {
                 });
                 const sumRows = Object.entries(summary).map(([id, v]) => [id, v.name, v.count, v.total]);
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Name', 'Total Referrals', 'Total Monthly Value'], ...sumRows]), 'Summary');
-                XLSX.writeFile(wb, `Incentive_Report_${referralMonthStart}_to_${referralMonthEnd}.xlsx`);
+                const base64Data = workbookToBase64(wb, XLSX);
+                await downloadFile(base64Data, `Incentive_Report_${referralMonthStart}_to_${referralMonthEnd}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true);
             };
 
             const empSummary: Record<string, { name: string; count: number; total: number }> = {};
@@ -1641,16 +1643,16 @@ const StaffDashboard = () => {
                         <p className="text-xs text-accent font-bold">Shows all scheme enrollments where a staff referral code was used, filtered by enrollment date range. Use this to calculate incentive bonuses.</p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
-                        <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-4 bg-surface p-4 rounded-xl border border-border items-end">
+                        <div className="flex-1 min-w-[150px]">
                             <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">From Date</label>
                             <input type="date" value={referralMonthStart} onChange={e => setReferralMonthStart(e.target.value)} className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-[150px]">
                             <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">To Date</label>
                             <input type="date" value={referralMonthEnd} onChange={e => setReferralMonthEnd(e.target.value)} className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" />
                         </div>
-                        <div className="flex items-end">
+                        <div className="w-full sm:w-auto mt-2 sm:mt-0">
                             <Button onClick={handleFetchReferralReport} loading={loadingReferrals} className="w-full sm:w-auto">
                                 <Search size={16} className="mr-2" /> Fetch Report
                             </Button>

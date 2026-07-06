@@ -104,5 +104,11 @@ export async function downloadAsPDF(
         pageIndex++;
     }
 
-    pdf.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
+    const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const dataUri = pdf.output('datauristring');
+    const base64Data = dataUri.split(',')[1];
+    
+    // Import dynamically to avoid circular dependencies if any
+    const { downloadFile } = await import('./download');
+    await downloadFile(base64Data, finalFilename, 'application/pdf', true);
 }

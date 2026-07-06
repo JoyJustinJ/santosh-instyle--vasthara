@@ -1436,14 +1436,10 @@ const AdminDashboard = () => {
                 const refCode = data.referralCode || data.referralEmpId;
                 if (!refCode) return;
 
-                // Parse enrollment date
                 let enrollDate: Date | null = null;
-                if (data.enrolledAt) {
-                    enrollDate = getTxDate(data.enrolledAt);
-                } else if (data.joinedAt) {
-                    enrollDate = new Date(data.joinedAt);
-                } else if (data.createdAt) {
-                    enrollDate = getTxDate(data.createdAt);
+                const dateStr = data.enrollmentDate || data.enrolledAt || data.joinedAt || data.createdAt;
+                if (dateStr) {
+                    enrollDate = getTxDate(dateStr);
                 }
 
                 if (enrollDate && enrollDate >= start && enrollDate <= end) {
@@ -3306,8 +3302,8 @@ const AdminDashboard = () => {
                             </p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
-                            <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-4 bg-surface p-4 rounded-xl border border-border items-end">
+                            <div className="flex-1 min-w-[150px]">
                                 <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">From Date</label>
                                 <input
                                     type="date"
@@ -3316,7 +3312,7 @@ const AdminDashboard = () => {
                                     className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                                 />
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-[150px]">
                                 <label className="block text-xs font-bold text-text-muted mb-1 uppercase tracking-wider">To Date</label>
                                 <input
                                     type="date"
@@ -3325,7 +3321,7 @@ const AdminDashboard = () => {
                                     className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                                 />
                             </div>
-                            <div className="flex items-end">
+                            <div className="w-full sm:w-auto mt-2 sm:mt-0">
                                 <Button onClick={handleFetchReferralReport} loading={loadingReferrals} className="w-full sm:w-auto">
                                     <Search size={16} className="mr-2" /> Fetch Report
                                 </Button>
