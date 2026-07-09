@@ -135,24 +135,31 @@ const AppContent = () => {
     window.addEventListener('offline', handleOffline);
 
     // Capacitor Hardware Back Button Handler
+    // Store the specific listener handle so cleanup only removes THIS listener,
+    // leaving other native listeners (pause/resume etc.) intact.
+    let backButtonHandle: { remove: () => Promise<void> } | null = null;
+
     if (Capacitor.isNativePlatform()) {
       CapacitorApp.addListener('backButton', ({ canGoBack }) => {
         const pathname = window.location.pathname;
         const isAtRoot = pathname === '/' || pathname === '/home' || pathname === '/login' || pathname === '/signup';
-        
+
         if (!canGoBack || isAtRoot) {
           CapacitorApp.exitApp();
         } else {
           window.history.back();
         }
+      }).then(handle => {
+        backButtonHandle = handle;
       });
     }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (Capacitor.isNativePlatform()) {
-        CapacitorApp.removeAllListeners();
+      // Remove ONLY the back button listener, not all Capacitor listeners
+      if (backButtonHandle) {
+        backButtonHandle.remove();
       }
     };
   }, []);

@@ -31,11 +31,12 @@ export async function downloadFile(
                 base64Data = btoa(unescape(encodeURIComponent(data)));
             }
 
-            // Write to the app's cache directory (always writable, no permissions needed)
+            // Write to the app's stable data directory (persists across OS cache clears,
+            // ensuring the Share Sheet can reliably open the file after writing)
             const result = await Filesystem.writeFile({
                 path: fileName,
                 data: base64Data,
-                directory: Directory.Cache,
+                directory: Directory.Data,
             });
 
             // Share the file via the native OS share sheet

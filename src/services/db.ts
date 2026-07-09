@@ -21,6 +21,7 @@ export const saveSchemeToDB = async (scheme: any) => {
         await addAuditLog('SCHEME_SAVE', '', { schemeId: scheme.id, schemeName: scheme.name });
     } catch (e) {
         console.error("Error saving scheme to DB:", e);
+        throw e;
     }
 };
 
@@ -30,6 +31,7 @@ export const deleteSchemeFromDB = async (schemeId: string) => {
         await addAuditLog('SCHEME_DELETE', '', { schemeId });
     } catch (e) {
         console.error("Error deleting scheme from DB:", e);
+        throw e;
     }
 };
 
@@ -48,6 +50,7 @@ export const saveStaffRequestToDB = async (request: any) => {
         await setDoc(doc(db, "staff_requests", request.id), request);
     } catch (e) {
         console.error("Error saving staff request:", e);
+        throw e;
     }
 };
 
@@ -71,6 +74,7 @@ export const deleteStaffRequestFromDB = async (requestId: string) => {
         await deleteDoc(doc(db, "staff_requests", requestId));
     } catch (e) {
         console.error("Error deleting staff request:", e);
+        throw e;
     }
 };
 
@@ -216,6 +220,7 @@ export const createUserProfile = async (uidOrData: any, userData?: any) => {
         });
     } catch (e) {
         console.error("Error creating user profile:", e);
+        throw e;
     }
 };
 
@@ -301,6 +306,7 @@ export const updateUserPIN = async (uid: string, pin: string) => {
         await addAuditLog('USER_PIN_UPDATE', '', { userId: uid });
     } catch (e) {
         console.error("Error updating user PIN:", e);
+        throw e;
     }
 };
 
@@ -311,6 +317,7 @@ export const updateUserPassword = async (uid: string, password: string) => {
         await addAuditLog('USER_PASSWORD_UPDATE', '', { userId: uid });
     } catch (e) {
         console.error("Error updating user password:", e);
+        throw e;
     }
 };
 
@@ -366,6 +373,7 @@ export const updateAdminSettings = async (settings: any) => {
         await addAuditLog('ADMIN_SETTINGS_UPDATE', '', { adminId: settings.adminId || 'main_admin' });
     } catch (e) {
         console.error("Error updating admin settings:", e);
+        throw e;
     }
 };
 
@@ -484,14 +492,14 @@ export const getAllAdminsFromDB = async () => {
 export const deleteAdminFromDB = async (adminDocId: string) => {
     // Safety: never allow deleting the primary admin document
     if (adminDocId === 'main_admin') {
-        console.error("Cannot delete the primary admin document.");
-        return;
+        throw new Error("Cannot delete the primary admin document.");
     }
     try {
         await deleteDoc(doc(db, "admins", adminDocId));
         await addAuditLog('ADMIN_DELETE', '', { adminDocId });
     } catch (e) {
         console.error("Error deleting admin:", e);
+        throw e;
     }
 };
 // ================= NOTIFICATIONS =================
@@ -530,6 +538,7 @@ export const deleteNotificationFromDB = async (notificationId: string) => {
         await deleteDoc(doc(db, "notifications", notificationId));
     } catch (e) {
         console.error("Error deleting notification:", e);
+        throw e;
     }
 };
 
@@ -541,6 +550,7 @@ export const clearAllNotificationsFromDB = async (userId: string) => {
         await Promise.all(deletePromises);
     } catch (e) {
         console.error("Error clearing notifications:", e);
+        throw e;
     }
 };
 
@@ -549,6 +559,7 @@ export const markNotificationAsRead = async (notificationId: string) => {
         await setDoc(doc(db, "notifications", notificationId), { read: true }, { merge: true });
     } catch (e) {
         console.error("Error marking notification as read:", e);
+        throw e;
     }
 };
 
