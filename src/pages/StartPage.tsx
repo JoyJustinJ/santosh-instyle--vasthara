@@ -475,7 +475,6 @@ const StartPage = () => {
           {isLast ? (
             <>
               Start
-              <Sparkles size={16} />
             </>
           ) : (
             <>
