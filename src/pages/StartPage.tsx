@@ -108,7 +108,7 @@ const StartPage = () => {
       title: 'Loyalty Plans',
       titleHighlight: 'Built For You',
       description:
-        'Join exclusive jewellery schemes designed to reward your trust — flexible EMI options, transparent tracking, and premium customer benefits at every step.',
+        'Join exclusive schemes designed to reward your trust — flexible subscription options, transparent tracking, and premium customer benefits at every step.',
       illustration: (
         <div className="slide-icon-ring">
           <ShieldCheck
@@ -146,7 +146,7 @@ const StartPage = () => {
       title: 'Join Vastra',
       titleHighlight: 'Today',
       description:
-        'Create your account in seconds and start your premium jewellery loyalty journey with Vasthara.',
+        'Create your account in seconds and start your premium loyalty journey with Vasthara.',
       illustration: (
         <div className="slide-icon-ring" style={{ width: 128, height: 128, borderRadius: 40 }}>
           <img
