@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Capacitor } from '@capacitor/core';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
@@ -485,6 +485,17 @@ const StartPage = () => {
           )}
         </button>
       </nav>
+
+      {/* ── Quick Links Footer ── */}
+      <div className="absolute bottom-4 left-0 w-full flex items-center justify-center gap-6 text-xs text-text-secondary z-30">
+        <Link to="/about" className="hover:text-primary transition-colors">
+          About Us
+        </Link>
+        <span className="w-1 h-1 rounded-full bg-border"></span>
+        <Link to="/terms" className="hover:text-primary transition-colors">
+          Terms & Conditions
+        </Link>
+      </div>
     </div>
   );
 };
