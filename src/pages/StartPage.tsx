@@ -218,6 +218,18 @@ const StartPage = () => {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
+      {/* ── Top Floating Actions ── */}
+      {!Capacitor.isNativePlatform() && (
+        <a 
+          href="/vastra.apk" 
+          download 
+          className="absolute top-6 right-6 z-50 flex items-center gap-1.5 font-semibold text-accent hover:text-accent/80 transition-colors bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm text-sm"
+        >
+          <Download size={16} />
+          App
+        </a>
+      )}
+
       {/* ── Slides Track ── */}
       <div
         className="slides-track"
@@ -488,16 +500,6 @@ const StartPage = () => {
 
       {/* ── Quick Links Footer ── */}
       <div className="absolute bottom-3 left-0 w-full flex flex-col items-center justify-center gap-3 text-xs text-text-secondary z-30">
-        {!Capacitor.isNativePlatform() && (
-          <a 
-            href="/vastra.apk" 
-            download 
-            className="flex items-center gap-1.5 font-semibold text-accent hover:text-accent/80 transition-colors bg-surface/50 px-4 py-2 rounded-full border border-border shadow-subtle"
-          >
-            <Download size={14} />
-            Download Android App
-          </a>
-        )}
         <div className="flex items-center justify-center gap-4">
           <Link to="/about" className="hover:text-primary transition-colors">
             About Us
