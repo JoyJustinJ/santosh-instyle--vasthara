@@ -51,7 +51,7 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
           disabled={disabled}
           onClick={() => handlePress(num)}
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center text-3xl font-display font-medium text-text-primary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
+            "w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-display font-medium text-text-primary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
             disabled && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -67,7 +67,7 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
         disabled={disabled}
         onClick={() => handlePress(0)}
         className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center text-3xl font-display font-medium text-text-primary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
+          "w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-display font-medium text-text-primary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
           disabled && "opacity-50 cursor-not-allowed"
         )}
       >
@@ -79,11 +79,11 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
         disabled={disabled || value.length === 0}
         onClick={handleDelete}
         className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center text-text-secondary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
+          "w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-text-secondary mx-auto transition-colors focus:outline-none focus:bg-accent/10 active:bg-accent/20",
           (disabled || value.length === 0) && "opacity-50 cursor-not-allowed"
         )}
       >
-        <Delete size={28} strokeWidth={1.5} />
+        <Delete className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.5} />
       </motion.button>
     </div>
   );

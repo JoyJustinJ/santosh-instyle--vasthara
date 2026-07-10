@@ -122,7 +122,7 @@ const PINSetup = () => {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
-        className="page-transition-wrapper p-8 flex flex-col min-h-screen items-center justify-center bg-surface"
+        className="page-transition-wrapper p-6 md:p-8 flex flex-col min-h-[100dvh] items-center justify-center bg-surface"
       >
         <div className="w-full max-w-sm space-y-6 text-center">
           <div className="w-20 h-20 mx-auto bg-primary rounded-[28px] flex items-center justify-center shadow-card">
@@ -160,45 +160,45 @@ const PINSetup = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="page-transition-wrapper p-8 flex flex-col min-h-screen bg-surface"
+      className="page-transition-wrapper p-4 md:p-8 flex flex-col min-h-[100dvh] bg-surface"
     >
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-4 md:mb-6">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary hover:bg-white rounded-full transition-colors">
           <ChevronLeft size={24} />
         </button>
         {isChangeMode && <h1 className="text-lg font-display font-bold text-primary">Security</h1>}
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center space-y-12">
-        <div className="w-24 h-24 bg-accent-light rounded-[32px] flex items-center justify-center text-accent">
-          <Shield size={48} strokeWidth={1.5} />
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6 md:space-y-12">
+        <div className="w-16 h-16 md:w-24 md:h-24 bg-accent-light rounded-[24px] md:rounded-[32px] flex items-center justify-center text-accent shrink-0">
+          <Shield className="w-8 h-8 md:w-12 md:h-12" strokeWidth={1.5} />
         </div>
 
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-display font-bold text-primary tracking-tight">
+        <div className="text-center space-y-1 md:space-y-2">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-primary tracking-tight">
             {step === 1 ? (isChangeMode ? 'Change Your Security PIN' : 'Set Your Security PIN') : 'Confirm Your PIN'}
           </h1>
-          <p className="text-sm font-medium text-text-secondary">
+          <p className="text-xs md:text-sm font-medium text-text-secondary px-2">
             {step === 1
               ? 'Choose a 4-digit PIN to log in quickly next time'
               : 'Re-enter your PIN to verify'}
           </p>
         </div>
 
-        <div className="w-full space-y-8 relative">
+        <div className="w-full space-y-6 md:space-y-8 relative">
           <div
-            className={cn('flex justify-center gap-6', error && 'animate-shake')}
+            className={cn('flex justify-center gap-4 md:gap-6', error && 'animate-shake')}
           >
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={cn(
-                  'w-14 h-14 rounded-full border-2 border-border flex items-center justify-center transition-all',
+                  'w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-border flex items-center justify-center transition-all',
                   currentVal[i] ? 'bg-primary border-primary' : 'bg-surface',
                   error && 'border-danger'
                 )}
               >
-                {currentVal[i] && <div className="w-3 h-3 bg-white rounded-full" />}
+                {currentVal[i] && <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-white rounded-full" />}
               </div>
             ))}
           </div>
@@ -209,21 +209,23 @@ const PINSetup = () => {
           />
 
           {error && (
-            <p className="text-center text-xs font-bold text-danger uppercase tracking-widest">
+            <p className="text-center text-[10px] md:text-xs font-bold text-danger uppercase tracking-widest absolute -bottom-5 w-full">
               PINs do not match. Try again.
             </p>
           )}
         </div>
 
-        <Button
-          fullWidth
-          size="lg"
-          onClick={handleNext}
-          disabled={currentVal.length < 4}
-          loading={loading}
-        >
-          {step === 1 ? 'Set PIN' : 'Verify & Finish'}
-        </Button>
+        <div className="w-full max-w-[280px] md:max-w-none mx-auto pt-2 md:pt-4">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleNext}
+            disabled={currentVal.length < 4}
+            loading={loading}
+          >
+            {step === 1 ? 'Set PIN' : 'Verify & Finish'}
+          </Button>
+        </div>
       </div>
     </motion.div>
   );
