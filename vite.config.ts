@@ -20,14 +20,14 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: 'vastra-icon.png',
+              src: 'vasthara-logo.jpg',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/jpeg'
             },
             {
-              src: 'vastra-icon.png',
+              src: 'vasthara-logo.jpg',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/jpeg'
             }
           ]
         },

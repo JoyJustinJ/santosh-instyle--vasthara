@@ -260,6 +260,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('vastra_last_phone');
       localStorage.removeItem('is_admin_authenticated');
       localStorage.removeItem('is_primary_admin');
+      localStorage.removeItem('vastra_biometric_enabled');
+      localStorage.removeItem('vastra_biometric_prompted');
+      setBiometricEnabledState(false);
     }
   };
 
@@ -343,7 +346,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return 'ADMIN_BYPASS';
     }
 
-    throw new Error('User is completely logged out. Please log in again.');
+    return null;
   };
 
   const value = useMemo(() => ({

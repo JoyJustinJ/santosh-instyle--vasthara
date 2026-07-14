@@ -140,10 +140,18 @@ const Login = () => {
     setLoading(true);
     try {
       // ── 1. Admin check (Firestore strictly) ──────────
-      const adminData: any = await checkIsAdmin(sanitizedPhone);
+      // Try all phone format variants so stored format doesn't matter
+      let adminData: any = null;
+      for (const candidate of getPhoneCandidates(sanitizedPhone)) {
+        adminData = await checkIsAdmin(candidate);
+        if (adminData) break;
+      }
 
       // Admin identified in Firestore strictly
-      const isAdminById = adminData && adminData.adminId === sanitizedPhone;
+      const isAdminById = adminData && (
+        adminData.adminId === sanitizedPhone ||
+        getPhoneCandidates(sanitizedPhone).includes(adminData.adminId)
+      );
 
       if (isAdminById) {
         // Verify credentials

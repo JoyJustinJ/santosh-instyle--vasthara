@@ -12,9 +12,8 @@ if (!getApps().length) {
   }
 }
 
-const db = getFirestore();
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const db = getFirestore();
   // Enable CORS for APK deployments
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');

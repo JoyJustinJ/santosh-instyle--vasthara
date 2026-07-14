@@ -87,7 +87,7 @@ const PINLogin = () => {
   };
 
   const handleLogin = () => {
-    const validPin = String(user?.pin || localStorage.getItem('vastra_pin') || '');
+    const validPin = String(user?.pin ?? localStorage.getItem('vastra_pin') ?? '');
 
     if (pin === validPin && validPin.length === 4) {
       unlockApp();

@@ -35,7 +35,6 @@ if (!getApps().length) {
     console.error('Firebase Admin init error:', err);
   }
 }
-const db = getFirestore();
 
 const setCorsHeaders = (req: VercelRequest, res: VercelResponse) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -59,6 +58,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const db = getFirestore();
 
   // Verify Firebase Auth Token
   const authHeader = req.headers.authorization;
@@ -103,10 +108,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Error verifying Firebase token:', error);
       return res.status(401).json({ error: `Unauthorized: Invalid token - ${error instanceof Error ? error.message : String(error)}` });
     }
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const keySecret = process.env.RAZORPAY_KEY_SECRET;

@@ -1,7 +1,7 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { recordTransactionInDB } from '../services/db';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
@@ -21,10 +21,9 @@ export const ProgramProvider = ({ children }: { children: React.ReactNode }) => 
       setLoading(false);
       return;
     }
-    const unsub = onSnapshot(collection(db, "user_schemes"), (snapshot) => {
-      const data = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter((s: any) => s.userId === user?.id || s.userId === user?.phone);
+    const q = query(collection(db, "user_schemes"), where("userId", "==", currentUserId));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setUserSchemes(data);
       setLoading(false);
     });

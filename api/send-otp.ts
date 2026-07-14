@@ -13,7 +13,7 @@ if (!getApps().length) {
   }
 }
 
-const db = getFirestore();
+const getDb = () => getFirestore();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS for APK deployments
@@ -49,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // 2. Save OTP to Firestore
+    const db = getDb();
     await db.collection('otps').doc(phone).set({
       otp,
       expiresAt,
@@ -63,13 +64,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Pay4SMS API call
     const pay4smsUrl = `http://pay4sms.in/sendsms/?token=${TOKEN}&sender=${SENDER_ID}&number=${phone}&message=${encodeURIComponent(MESSAGE)}&templateid=${TEMPLATE_ID}&credit=2`;
-    
+
     const response = await fetch(pay4smsUrl);
     const resultText = await response.text();
 
     // Pay4SMS often returns a simple string or ID, check if it looks successful
     if (response.ok) {
-      return res.status(200).json({ message: 'OTP sent successfully', reference: resultText, otp });
+      return res.status(200).json({ message: 'OTP sent successfully', reference: resultText });
     } else {
       console.error('Pay4SMS Error:', resultText);
       return res.status(500).json({ error: 'Failed to send SMS' });
