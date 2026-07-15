@@ -8,7 +8,7 @@ import { getTransactionsFromDB, getUserPlansFromDB, getSchemesFromDB } from '../
 import { Badge, Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { formatCurrency, cn, safeDate } from '../utils';
-import { downloadAsPDF } from '../utils/pdfUtils';
+import { downloadAsSinglePagePDF } from '../utils/pdfUtils';
 
 const Transactions = () => {
     const { user } = useAuth()!;
@@ -62,154 +62,170 @@ const Transactions = () => {
         const resolvedSchemeName = tx.schemeName || planMap[tx.accountId] || planMap[tx.schemeId] || 'General Payment';
         const invoicePrimaryKey = tx.invoicePrimaryKey || tx.id;
         const paymentId = tx.razorpayPaymentId || tx.gatewayPaymentId || '';
+        const invoiceDate = tx.date || safeDate(tx.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
         return (
-            <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
-                {/* Action bar - not captured in PDF */}
-                <div className="max-w-[800px] mx-auto p-4 flex justify-between items-center sticky top-0 bg-gray-50 z-10 border-b shadow-sm mb-6">
+            <div className="fixed inset-0 z-[100] bg-gray-100 overflow-y-auto flex flex-col items-center">
+                {/* Action bar — not captured in PDF */}
+                <div style={{ width: '100%', maxWidth: '794px', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f3f4f6', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 10 }}>
                     <button
                         onClick={() => setSelectedInvoiceTx(null)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
                     >
-                        &larr; Back
+                        ← Back
                     </button>
                     <button
                         id="invoice-download-btn"
                         onClick={async () => {
                             const btn = document.getElementById('invoice-download-btn') as HTMLButtonElement;
-                            if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
+                            if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
                             const el = document.getElementById('invoice-pdf-content');
                             if (el) {
-                                try { await downloadAsPDF(el, 'Invoice_' + invoicePrimaryKey); }
+                                try { await downloadAsSinglePagePDF(el, 'Invoice_' + invoicePrimaryKey); }
                                 catch (e) { console.error(e); }
                             }
-                            if (btn) { btn.innerHTML = 'Download PDF'; btn.disabled = false; }
+                            if (btn) { btn.innerHTML = '⬇ Download PDF'; btn.disabled = false; }
                         }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 20px', background: '#1e3a5f', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 20px', background: '#1e3a5f', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
                     >
                         <Download size={16} /> Download PDF
                     </button>
                 </div>
 
-                {/* PDF content — all inline styles for html2canvas compatibility */}
+                {/*
+                  A4 page: 794px × 1123px at 96 dpi.
+                  All content must fit inside this box — no scrolling inside the PDF element.
+                  padding: 48px sides, 40px top/bottom keeps content in the printable area.
+                */}
                 <div
                     id="invoice-pdf-content"
-                    style={{ maxWidth: '780px', margin: '0 auto', padding: '40px', border: '1px solid #e5e7eb', borderRadius: '8px', background: '#ffffff', fontFamily: 'Arial, sans-serif', color: '#111827' }}
+                    style={{
+                        width: '794px',
+                        minWidth: '794px',
+                        maxWidth: '794px',
+                        height: '1123px',
+                        minHeight: '1123px',
+                        maxHeight: '1123px',
+                        overflow: 'hidden',
+                        boxSizing: 'border-box',
+                        padding: '40px 48px',
+                        background: '#ffffff',
+                        fontFamily: 'Arial, Helvetica, sans-serif',
+                        color: '#111827',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        margin: '16px 0 24px',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                    }}
                 >
-                    {/* Header */}
-                    <table style={{ width: '100%', borderBottom: '2px solid #f3f4f6', paddingBottom: '24px', marginBottom: '32px' }}>
-                        <tbody>
-                            <tr>
-                                <td style={{ verticalAlign: 'top', width: '60%' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                        <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ width: '80px', height: 'auto', display: 'block', mixBlendMode: 'multiply' }} />
-                                        <div>
-                                            <h2 style={{ margin: '0', color: '#111827', fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>SANTOSH INSTYLE VASTRA</h2>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ verticalAlign: 'top', width: '40%', textAlign: 'right' }}>
-                                    <h1 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>INVOICE</h1>
-                                    <div style={{ display: 'inline-block', padding: '4px 12px', background: '#dcfce7', color: '#166534', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', border: '1px solid #bbf7d0' }}>PAID</div>
-                                    <table style={{ marginLeft: 'auto', borderCollapse: 'collapse' }}>
-                                        <tbody>
-                                            <tr>
-                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Invoice No:</td>
-                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>#{invoicePrimaryKey}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Date:</td>
-                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.date || safeDate(tx.timestamp).toLocaleDateString()}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Reference:</td>
-                                                <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{tx.referenceId || invoicePrimaryKey}</td>
-                                            </tr>
-                                            {paymentId && (
-                                                <tr>
-                                                    <td style={{ padding: '3px 15px 3px 0', fontSize: '13px', fontWeight: 600, color: '#6b7280' }}>Gateway ID:</td>
-                                                    <td style={{ padding: '3px 0', fontSize: '13px', fontWeight: 600, color: '#111827' }}>{paymentId}</td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {/* ── Header stripe ── */}
+                    <div style={{ background: '#1e3a5f', margin: '-40px -48px 0', padding: '20px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <img src="/vasthara-logo.jpg" alt="Vastra Logo" style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '8px', background: 'white', padding: '4px' }} />
+                            <div>
+                                <div style={{ color: 'white', fontSize: '18px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.2 }}>SANTOSH INSTYLE VASTRA</div>
+                                <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', marginTop: '2px' }}>Hosur Branch · Tamil Nadu, India</div>
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ color: 'white', fontSize: '28px', fontWeight: 900, letterSpacing: '2px' }}>INVOICE</div>
+                            <div style={{ display: 'inline-block', marginTop: '6px', padding: '3px 14px', background: '#22c55e', color: 'white', borderRadius: '999px', fontSize: '11px', fontWeight: 800, letterSpacing: '1px' }}>✓ PAID</div>
+                        </div>
+                    </div>
 
-                    {/* Billing */}
-                    <table style={{ width: '100%', marginBottom: '32px' }}>
-                        <tbody>
-                            <tr>
-                                <td style={{ verticalAlign: 'top', width: '50%', paddingRight: '16px' }}>
-                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed From</div>
-                                    <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
-                                        <strong style={{ color: '#111827' }}>Vastra (Santhosh Silks)</strong><br />
-                                        Hosur Branch<br />
-                                        Tamil Nadu, India
-                                    </div>
-                                </td>
-                                <td style={{ verticalAlign: 'top', width: '50%', paddingLeft: '16px' }}>
-                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Billed To</div>
-                                    <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7 }}>
-                                        <strong style={{ color: '#111827' }}>{user?.firstName || 'Customer'} {user?.lastName || ''}</strong><br />
-                                        Phone: +91 {user?.phone}<br />
-                                        {user?.email ? 'Email: ' + user.email : 'No email provided'}
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {/* ── Invoice meta ── */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', marginBottom: '24px' }}>
+                        <table style={{ borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <tbody>
+                                <tr>
+                                    <td style={{ padding: '3px 20px 3px 0', color: '#6b7280', fontWeight: 600 }}>Invoice No</td>
+                                    <td style={{ padding: '3px 0', color: '#111827', fontWeight: 700 }}>#{invoicePrimaryKey}</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '3px 20px 3px 0', color: '#6b7280', fontWeight: 600 }}>Date</td>
+                                    <td style={{ padding: '3px 0', color: '#111827', fontWeight: 700 }}>{invoiceDate}</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '3px 20px 3px 0', color: '#6b7280', fontWeight: 600 }}>Reference</td>
+                                    <td style={{ padding: '3px 0', color: '#111827', fontWeight: 700 }}>{tx.referenceId || invoicePrimaryKey}</td>
+                                </tr>
+                                {paymentId && (
+                                    <tr>
+                                        <td style={{ padding: '3px 20px 3px 0', color: '#6b7280', fontWeight: 600 }}>Gateway ID</td>
+                                        <td style={{ padding: '3px 0', color: '#111827', fontWeight: 700 }}>{paymentId}</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-                    {/* Items Table */}
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px' }}>
+                    {/* ── Divider ── */}
+                    <div style={{ height: '1px', background: '#e5e7eb', marginBottom: '24px' }} />
+
+                    {/* ── Billing ── */}
+                    <div style={{ display: 'flex', gap: '32px', marginBottom: '28px' }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>Billed From</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Vastra (Santhosh Silks)</div>
+                            <div style={{ fontSize: '13px', color: '#4b5563', lineHeight: 1.6 }}>
+                                Hosur Branch<br />
+                                Tamil Nadu, India
+                            </div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>Billed To</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>
+                                {user?.firstName || 'Customer'} {user?.lastName || ''}
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#4b5563', lineHeight: 1.6 }}>
+                                +91 {user?.phone}<br />
+                                {user?.email || 'No email provided'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Items table ── */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
                         <thead>
-                            <tr>
-                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'left', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Description</th>
-                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'left', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Payment Method</th>
-                                <th style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', textAlign: 'right', padding: '12px', fontSize: '13px', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase' }}>Amount</th>
+                            <tr style={{ background: '#f9fafb' }}>
+                                <th style={{ padding: '11px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.8px', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>Description</th>
+                                <th style={{ padding: '11px 14px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.8px', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>Payment Method</th>
+                                <th style={{ padding: '11px 14px', textAlign: 'right', fontSize: '11px', fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.8px', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827' }}>
-                                    <strong>Subscription Payment</strong><br />
-                                    <span style={{ fontSize: '13px', color: '#6b7280' }}>Scheme: {resolvedSchemeName}</span>
+                                <td style={{ padding: '18px 14px', borderBottom: '1px solid #f3f4f6' }}>
+                                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>Subscription Payment</div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '3px' }}>Scheme: {resolvedSchemeName}</div>
                                 </td>
-                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827' }}>{tx.method || 'Razorpay / Standard'}</td>
-                                <td style={{ padding: '16px 12px', borderBottom: '1px solid #f3f4f6', fontSize: '15px', color: '#111827', textAlign: 'right' }}>{formatCurrency(tx.amount)}</td>
+                                <td style={{ padding: '18px 14px', textAlign: 'center', fontSize: '13px', color: '#374151', borderBottom: '1px solid #f3f4f6' }}>{tx.method || 'Razorpay / Standard'}</td>
+                                <td style={{ padding: '18px 14px', textAlign: 'right', fontSize: '14px', fontWeight: 700, color: '#111827', borderBottom: '1px solid #f3f4f6' }}>{formatCurrency(tx.amount)}</td>
                             </tr>
                         </tbody>
                     </table>
 
-                    {/* Totals */}
-                    <table style={{ width: '100%', marginBottom: '32px' }}>
-                        <tbody>
-                            <tr>
-                                <td style={{ width: '60%' }}></td>
-                                <td style={{ width: '40%' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                        <tbody>
-                                            <tr>
-                                                <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', color: '#4b5563' }}>Subtotal:</td>
-                                                <td style={{ padding: '8px 12px', fontSize: '15px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(tx.amount)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>Total Paid:</td>
-                                                <td style={{ padding: '12px 12px 8px', fontSize: '18px', textAlign: 'right', fontWeight: 700, color: '#000', borderTop: '2px solid #e5e7eb' }}>{formatCurrency(tx.amount)}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {/* ── Totals ── */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0', marginBottom: '24px' }}>
+                        <div style={{ width: '260px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', fontSize: '13px', color: '#4b5563', borderBottom: '1px solid #f3f4f6' }}>
+                                <span>Subtotal</span>
+                                <span style={{ fontWeight: 600 }}>{formatCurrency(tx.amount)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', fontSize: '16px', fontWeight: 800, color: '#111827', background: '#f9fafb', borderTop: '2px solid #e5e7eb' }}>
+                                <span>Total Paid</span>
+                                <span style={{ color: '#166534' }}>{formatCurrency(tx.amount)}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    {/* Footer */}
-                    <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
-                        <p><strong>Thank you for choosing Vastra.</strong></p>
-                        <p>This is a computer-generated document and does not require a physical signature.</p>
+                    {/* ── Spacer pushes footer to bottom ── */}
+                    <div style={{ flex: 1 }} />
+
+                    {/* ── Footer ── */}
+                    <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '18px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f', marginBottom: '4px' }}>Thank you for choosing Vastra.</div>
+                        <div style={{ fontSize: '11px', color: '#9ca3af' }}>This is a computer-generated document and does not require a physical signature.</div>
                     </div>
                 </div>
             </div>

@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 
 const A4_WIDTH_PT = 595.28;
 const A4_HEIGHT_PT = 841.89;
-const MARGIN_PT = 36; // ~12.7 mm margins on each side
+const MARGIN_PT = 36;
 
 /**
  * Scan canvas pixel rows near `targetY` to find the row with the most
@@ -37,6 +37,35 @@ function findSafeCutY(
     }
 
     return bestY;
+}
+
+/**
+ * Renders an element as a single A4 page PDF.
+ * The element must already be sized to A4 (794×1123px at 96dpi).
+ */
+export async function downloadAsSinglePagePDF(
+    element: HTMLElement,
+    filename: string
+): Promise<void> {
+    const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+    });
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const imgData = canvas.toDataURL('image/jpeg', 0.97);
+    const contentW = A4_WIDTH_PT - MARGIN_PT * 2;
+    const contentH = A4_HEIGHT_PT - MARGIN_PT * 2;
+    pdf.addImage(imgData, 'JPEG', MARGIN_PT, MARGIN_PT, contentW, contentH);
+
+    const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const base64Data = pdf.output('datauristring').split(',')[1];
+    const { downloadFile } = await import('./download');
+    await downloadFile(base64Data, finalFilename, 'application/pdf', true);
 }
 
 /**
