@@ -17,7 +17,7 @@ import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { NumericKeypad } from '../components/UI/NumericKeypad';
 import { CreateCustomerAccount } from '../components/CreateCustomerAccount';
 import { EnrollCustomer } from '../components/EnrollCustomer';
-import { formatCurrency, cn } from '../utils';
+import { formatCurrency, cn, formatDate, safeDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import {
     getSchemesFromDB,
@@ -1105,7 +1105,7 @@ const AdminDashboard = () => {
                 `"${customerName}"`,
                 phone,
                 tx.amount || 0,
-                tx.date || getTxDate(tx.timestamp).toLocaleDateString(),
+                tx.date || formatDate(getTxDate(tx.timestamp)),
                 (tx.type || 'unknown').toUpperCase(),
                 (tx.method || 'Razorpay').toUpperCase(),
                 `"${recorderName}"`,
@@ -1134,25 +1134,18 @@ const AdminDashboard = () => {
 
         const formatDateToText = (dateString) => {
             if (!dateString) return '';
-            
+            // Handle DD/MM/YYYY or DD-MM-YYYY: last segment is 4-digit year, first is day
             const parts = dateString.split(/[-/]/);
-            if (parts.length === 3) {
-                if (parts[2].length === 4) {
-                    const testD = new Date(dateString);
-                    if (!isNaN(testD.getTime()) && dateString.indexOf('-') === -1) {
-                        // pass
-                    } else {
-                        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
-                    }
-                }
+            if (parts.length === 3 && parts[2].length === 4) {
+                return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
             }
-
-            const d = new Date(dateString);
-            if (isNaN(d.getTime())) return dateString; 
+            // ISO or other formats: use safeDate which handles Firestore timestamps and ISO strings
+            const d = safeDate(dateString);
+            if (isNaN(d.getTime())) return dateString;
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const yyyy = d.getFullYear();
-            return `${dd}/${mm}/${yyyy}`; 
+            return `${dd}/${mm}/${yyyy}`;
         };
 
         const headers = [
@@ -1247,7 +1240,7 @@ const AdminDashboard = () => {
             const userPlans = allPlans.filter(p => userAllIds.has(p.userId));
             const amt = Number(plan.amount || plan.monthlyAmount || 0);
             const sameAmtPlans = userPlans.filter(p => Number(p.amount || p.monthlyAmount || 0) === amt);
-            sameAmtPlans.sort((a, b) => new Date(a.enrollmentDate || a.createdAt || 0).getTime() - new Date(b.enrollmentDate || b.createdAt || 0).getTime());
+            sameAmtPlans.sort((a, b) => safeDate(a.enrollmentDate || a.createdAt || 0).getTime() - safeDate(b.enrollmentDate || b.createdAt || 0).getTime());
             const planIndex = sameAmtPlans.findIndex(p => p.accountId === plan.accountId);
             const nth = String((planIndex >= 0 ? planIndex : 0) + 1).padStart(2, '0');
 
@@ -1358,12 +1351,12 @@ const AdminDashboard = () => {
         
         const formatDateToText = (dateString: any) => {
             if (!dateString) return 'N/A';
-            const d = new Date(dateString);
+            const d = safeDate(dateString);
             if (isNaN(d.getTime())) return 'N/A';
             const day = String(d.getDate()).padStart(2, '0');
             const month = d.toLocaleString('en-US', { month: 'short' });
             const year = d.getFullYear();
-            return `${day}-${month}-${year}`; 
+            return `${day}-${month}-${year}`;
         };
 
         const headers = ["Account ID", "Customer Name", "Customer Phone", "Scheme Name", "Status", "Duration (Months)", "Months Paid", "Total Paid (₹)", "Join Date"];
@@ -1444,8 +1437,12 @@ const AdminDashboard = () => {
 
                 if (enrollDate && enrollDate >= start && enrollDate <= end) {
                     const enrollee = userMap[data.userId] || userMap[data.phone] || null;
-                    const referrer = userMap[refCode] || 
+                    const referrer = userMap[refCode] ||
                                      allUsers.find((u: any) => u.empId === refCode) || null;
+                    const masterScheme = ProgramsList.find((s: any) =>
+                        s.id === data.planId || s.name === data.name || s.name === data.schemeName
+                    );
+                    const incentiveAmt = Number(masterScheme?.referralIncentive || data.referralIncentive || 0);
                     results.push({
                         schemeId: d.id,
                         schemeName: data.name || data.schemeName || 'N/A',
@@ -1458,8 +1455,9 @@ const AdminDashboard = () => {
                             ? `${referrer.firstName || ''} ${referrer.lastName || ''}`.trim()
                             : refCode,
                         referrerEmpId: referrer?.empId || refCode,
-                        enrolledAt: enrollDate ? enrollDate.toLocaleDateString() : 'N/A',
+                        enrolledAt: enrollDate ? formatDate(enrollDate) : 'N/A',
                         amount: data.amount || data.monthlyAmount || 0,
+                        incentiveAmt,
                     });
                 }
             });
@@ -1479,7 +1477,7 @@ const AdminDashboard = () => {
         if (!referralReportData.length) return;
         const headers = [
             'Enrollee Name', 'Enrollee Phone', 'Scheme Name', 'Monthly Amount (₹)',
-            'Enrolled On', 'Referrer Name', 'Referrer Emp ID'
+            'Enrolled On', 'Referrer Name', 'Referrer Emp ID', 'Incentive Earned (₹)'
         ];
         const rows = referralReportData.map(r => [
             r.enrolleeName,
@@ -1489,22 +1487,24 @@ const AdminDashboard = () => {
             r.enrolledAt,
             r.referrerName,
             r.referrerEmpId,
+            r.incentiveAmt || 0,
         ]);
 
-        // Group summary: referrals per employee
-        const summaryMap: Record<string, { name: string; count: number }> = {};
+        // Group summary: referrals per employee with incentive totals
+        const summaryMap: Record<string, { name: string; count: number; incentiveTotal: number }> = {};
         referralReportData.forEach(r => {
             if (!summaryMap[r.referrerEmpId]) {
-                summaryMap[r.referrerEmpId] = { name: r.referrerName, count: 0 };
+                summaryMap[r.referrerEmpId] = { name: r.referrerName, count: 0, incentiveTotal: 0 };
             }
             summaryMap[r.referrerEmpId].count++;
+            summaryMap[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt || 0);
         });
-        const summaryRows = Object.entries(summaryMap).map(([empId, { name, count }]) => [
-            empId, name, count
+        const summaryRows = Object.entries(summaryMap).map(([empId, { name, count, incentiveTotal }]) => [
+            empId, name, count, incentiveTotal
         ]);
 
         const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-        const ws2 = XLSX.utils.aoa_to_sheet([['Emp ID', 'Referrer Name', 'Total Referrals'], ...summaryRows]);
+        const ws2 = XLSX.utils.aoa_to_sheet([['Emp ID', 'Referrer Name', 'Total Referrals', 'Total Incentive Earned (₹)'], ...summaryRows]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws1, 'Referral Details');
         XLSX.utils.book_append_sheet(wb, ws2, 'Summary by Employee');
@@ -1614,7 +1614,7 @@ const AdminDashboard = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {creditNoteData.transactions.map((tx: any) => (
                                                     <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.timestamp)}</td>
                                                         <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
                                                         <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
                                                     </tr>
@@ -1877,7 +1877,7 @@ const AdminDashboard = () => {
                                         <Smartphone size={14} /> {foundCustomer.phone}
                                     </p>
                                     <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-2">Join Date</p>
-                                    <p className="text-sm font-bold text-primary">{foundCustomer.createdAt ? new Date(foundCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                    <p className="text-sm font-bold text-primary">{foundCustomer.createdAt ? formatDate(foundCustomer.createdAt) : 'N/A'}</p>
 
                                     <div className="mt-6 pt-4 border-t border-border space-y-4">
                                         {!showCustomerReport ? (
@@ -1939,7 +1939,7 @@ const AdminDashboard = () => {
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <p className="text-[10px] font-bold text-success uppercase">{tx.status}</p>
-                                                                        <p className="text-[10px] text-text-muted">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</p>
+                                                                        <p className="text-[10px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -2059,7 +2059,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Account Created</p>
-                                            <p className="font-bold text-gray-900 text-sm">{reportCustomer.createdAt ? new Date(reportCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                            <p className="font-bold text-gray-900 text-sm">{reportCustomer.createdAt ? formatDate(reportCustomer.createdAt) : 'N/A'}</p>
                                         </div>
                                     </div>
 
@@ -2137,7 +2137,7 @@ const AdminDashboard = () => {
                                                                 {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
                                                                     reportTransactions[scheme.accountId].map((tx: any) => (
                                                                         <tr key={tx.id} className="border-b border-gray-200 text-gray-800">
-                                                                            <td className="py-2 pr-1 font-medium">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                                            <td className="py-2 pr-1 font-medium">{tx.date || formatDate(tx.timestamp)}</td>
                                                                             <td className="py-2 px-1 text-center">{tx.type || 'Cash'}</td>
                                                                             <td className="py-2 px-1 font-bold text-green-700 uppercase text-[10px] text-center">{tx.status}</td>
                                                                             <td className="py-2 pl-1 font-black text-right">₹{tx.amount}</td>
@@ -3334,20 +3334,31 @@ const AdminDashboard = () => {
                                 <div className="space-y-2">
                                     <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Summary by Employee</h3>
                                     {(() => {
-                                        const summaryMap: Record<string, { name: string; count: number }> = {};
+                                        const summaryMap: Record<string, { name: string; count: number; incentiveTotal: number }> = {};
                                         referralReportData.forEach(r => {
-                                            if (!summaryMap[r.referrerEmpId]) summaryMap[r.referrerEmpId] = { name: r.referrerName, count: 0 };
+                                            if (!summaryMap[r.referrerEmpId]) summaryMap[r.referrerEmpId] = { name: r.referrerName, count: 0, incentiveTotal: 0 };
                                             summaryMap[r.referrerEmpId].count++;
+                                            summaryMap[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt || 0);
                                         });
-                                        return Object.entries(summaryMap).map(([empId, { name, count }]) => (
-                                            <Card key={empId} className="p-4 border-none shadow-subtle bg-white flex justify-between items-center">
+                                        return Object.entries(summaryMap).map(([empId, { name, count, incentiveTotal }]) => (
+                                            <Card key={empId} className="p-4 border-none shadow-subtle bg-white flex justify-between items-start">
                                                 <div>
                                                     <p className="font-bold text-primary text-sm">{name}</p>
                                                     <p className="text-[10px] text-text-muted uppercase tracking-widest">EMP ID: {empId}</p>
+                                                    <p className="text-[10px] text-text-muted mt-0.5">{count} referral{count !== 1 ? 's' : ''}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-2xl font-black text-accent">{count}</p>
-                                                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Referrals</p>
+                                                    {incentiveTotal > 0 ? (
+                                                        <>
+                                                            <p className="text-xl font-black text-success">₹{incentiveTotal.toLocaleString()}</p>
+                                                            <p className="text-[10px] text-text-muted uppercase tracking-widest">Incentive Earned</p>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-2xl font-black text-accent">{count}</p>
+                                                            <p className="text-[10px] text-text-muted uppercase tracking-widest">Referrals</p>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </Card>
                                         ));
@@ -3369,6 +3380,9 @@ const AdminDashboard = () => {
                                                     <p className="text-xs font-bold text-accent">Ref: {r.referrerName}</p>
                                                     <p className="text-[10px] text-text-muted">EMP: {r.referrerEmpId}</p>
                                                     <p className="text-sm font-bold text-success">₹{r.amount}/mo</p>
+                                                    {r.incentiveAmt > 0 && (
+                                                        <p className="text-[10px] font-bold text-success mt-0.5">+₹{r.incentiveAmt} incentive</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Card>

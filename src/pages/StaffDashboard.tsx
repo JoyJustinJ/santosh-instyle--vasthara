@@ -10,7 +10,7 @@ import { Input } from '../components/UI/Input';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { CreateCustomerAccount } from '../components/CreateCustomerAccount';
 import { EnrollCustomer } from '../components/EnrollCustomer';
-import { formatCurrency, cn, validatePhone, safeDate } from '../utils';
+import { formatCurrency, cn, validatePhone, safeDate, formatDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -88,6 +88,9 @@ const StaffDashboard = () => {
     });
     const [referralMonthEnd, setReferralMonthEnd] = useState(() => new Date().toISOString().split('T')[0]);
     const [loadingReferrals, setLoadingReferrals] = useState(false);
+
+    // Redemptions search
+    const [redemptionsSearch, setRedemptionsSearch] = useState('');
 
     const downloadPDF = async (elementId: string, filename: string) => {
         showNotification('Generating PDF, please wait...', 'info');
@@ -720,7 +723,7 @@ const StaffDashboard = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {creditNoteData.transactions.map((tx: any) => (
                                                     <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.timestamp)}</td>
                                                         <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
                                                         <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
                                                     </tr>
@@ -953,6 +956,25 @@ const StaffDashboard = () => {
 
 
         if (activeView === 'redemptions') {
+            const filteredPendingSchemes = completedSchemes.filter((scheme: any) => {
+                if (!redemptionsSearch) return true;
+                const q = redemptionsSearch.toLowerCase();
+                return (
+                    (scheme.customerId || '').toLowerCase().includes(q) ||
+                    (scheme.userId || '').toLowerCase().includes(q) ||
+                    (scheme.schemeName || scheme.name || '').toLowerCase().includes(q)
+                );
+            });
+            const filteredClosedSchemes = closedSchemes.filter((scheme: any) => {
+                if (!redemptionsSearch) return true;
+                const q = redemptionsSearch.toLowerCase();
+                return (
+                    (scheme.customerId || '').toLowerCase().includes(q) ||
+                    (scheme.userId || '').toLowerCase().includes(q) ||
+                    (scheme.schemeName || scheme.name || '').toLowerCase().includes(q)
+                );
+            });
+
             return (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                     <div className="flex items-center gap-4 border-b border-border/50 pb-4">
@@ -962,15 +984,23 @@ const StaffDashboard = () => {
                         <h2 className="text-xl font-display font-bold text-primary">Scheme Redemptions</h2>
                     </div>
                     <div className="space-y-4">
+                        <div className="mb-4">
+                            <Input
+                                icon={Search}
+                                placeholder="Search by Customer ID, Phone or Scheme..."
+                                value={redemptionsSearch}
+                                onChange={e => setRedemptionsSearch(e.target.value)}
+                            />
+                        </div>
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-bold text-primary uppercase tracking-wider text-xs">Pending Redemptions</h3>
                         </div>
-                        {completedSchemes.length === 0 ? (
+                        {filteredPendingSchemes.length === 0 ? (
                             <Card className="p-6 text-center border-dashed border-2">
-                                <p className="text-sm text-text-muted">No pending redemptions found.</p>
+                                <p className="text-sm text-text-muted">{redemptionsSearch ? 'No pending redemptions matching your search.' : 'No pending redemptions found.'}</p>
                             </Card>
                         ) : (
-                            completedSchemes.map((scheme: any) => (
+                            filteredPendingSchemes.map((scheme: any) => (
                                 <Card key={scheme.accountId} className="p-4 border-2 border-warning/30 shadow-subtle relative overflow-hidden">
                                     <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black tracking-widest uppercase px-3 py-1 rounded-bl-lg">Pending</div>
                                     <div className="flex justify-between items-start mt-2">
@@ -1035,18 +1065,18 @@ const StaffDashboard = () => {
                         <div className="flex justify-between items-center mt-8 mb-2">
                             <h3 className="font-bold text-primary uppercase tracking-wider text-xs">Closed / Fulfilled Schemes</h3>
                         </div>
-                        {closedSchemes.length === 0 ? (
+                        {filteredClosedSchemes.length === 0 ? (
                             <Card className="p-6 text-center border-dashed border-2">
-                                <p className="text-sm text-text-muted">No closed schemes found.</p>
+                                <p className="text-sm text-text-muted">{redemptionsSearch ? 'No closed schemes matching your search.' : 'No closed schemes found.'}</p>
                             </Card>
                         ) : (
-                            closedSchemes.map((scheme: any) => (
+                            filteredClosedSchemes.map((scheme: any) => (
                                 <Card key={scheme.accountId} className="p-4 border-2 border-border shadow-subtle opacity-75 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 bg-text-muted text-white text-[9px] font-black tracking-widest uppercase px-3 py-1 rounded-bl-lg">Closed</div>
                                     <div className="flex justify-between items-start mt-2">
                                         <div>
                                             <h3 className="font-bold text-primary text-sm">{scheme.schemeName || scheme.name}</h3>
-                                            <p className="text-xs text-text-muted mt-1">Closed on: {scheme.closedAt ? new Date(scheme.closedAt).toLocaleDateString() : (scheme.redeemedAt ? new Date(scheme.redeemedAt).toLocaleDateString() : 'N/A')}</p>
+                                            <p className="text-xs text-text-muted mt-1">Closed on: {scheme.closedAt ? formatDate(scheme.closedAt) : (scheme.redeemedAt ? formatDate(scheme.redeemedAt) : 'N/A')}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-text-secondary">₹{scheme.totalPaid}</p>
@@ -1120,7 +1150,7 @@ const StaffDashboard = () => {
                                     <Smartphone size={14} /> {foundCustomer.phone}
                                 </p>
                                 <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-2">Join Date</p>
-                                <p className="text-sm font-bold text-primary">{foundCustomer.createdAt ? new Date(foundCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                <p className="text-sm font-bold text-primary">{foundCustomer.createdAt ? formatDate(foundCustomer.createdAt) : 'N/A'}</p>
 
                                 <div className="mt-6 pt-4 border-t border-border space-y-4">
                                     <h4 className="text-xs font-black text-primary uppercase tracking-[0.2em]">Active Subscriptions</h4>
@@ -1153,7 +1183,7 @@ const StaffDashboard = () => {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-[10px] font-bold text-success uppercase">{tx.status}</p>
-                                                        <p className="text-[10px] text-text-muted">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1268,7 +1298,7 @@ const StaffDashboard = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Joined Date</p>
-                                        <p className="font-bold text-text-secondary text-xs">{reportCustomer.createdAt ? new Date(reportCustomer.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                        <p className="font-bold text-text-secondary text-xs">{reportCustomer.createdAt ? formatDate(reportCustomer.createdAt) : 'N/A'}</p>
                                     </div>
                                 </div>
 
@@ -1324,7 +1354,7 @@ const StaffDashboard = () => {
                                                                 <div key={tx.id} className="flex justify-between items-center p-2 bg-surface rounded-lg border border-border/50 text-xs">
                                                                     <div>
                                                                         <p className="font-bold text-primary">₹{tx.amount}</p>
-                                                                        <p className="text-[9px] text-text-muted">{tx.date || new Date(tx.timestamp).toLocaleDateString()}</p>
+                                                                        <p className="text-[9px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <p className="font-bold text-success uppercase text-[9px]">{tx.status}</p>
@@ -1575,18 +1605,23 @@ const StaffDashboard = () => {
                         const refCode = data.referralCode || data.referralEmpId;
                         if (!refCode) return;
                         const dateStr = data.enrollmentDate || data.joinedAt || data.enrolledAt || data.createdAt;
-                        const joinedAt = dateStr ? new Date(dateStr) : null;
-                        if (!joinedAt || joinedAt < start || joinedAt > end) return;
+                        const joinedAt = dateStr ? safeDate(dateStr) : null;
+                        if (!joinedAt || isNaN(joinedAt.getTime()) || joinedAt < start || joinedAt > end) return;
                         const enrollee = userMap[data.userId] || {};
                         const referrer = staffMap[refCode] || {};
+                        const masterScheme = ProgramsList.find((s: any) =>
+                            s.id === data.planId || s.name === data.name || s.name === data.schemeName
+                        );
+                        const incentiveAmt = Number(masterScheme?.referralIncentive || data.referralIncentive || 0);
                         results.push({
                             schemeId: doc.id, schemeName: data.schemeName || data.name || '',
                             enrolleeName: `${enrollee.firstName || ''} ${enrollee.lastName || ''}`.trim() || data.userId,
                             enrolleePhone: enrollee.phone || data.userId,
-                            enrolledAt: joinedAt.toLocaleDateString(),
+                            enrolledAt: formatDate(joinedAt),
                             referrerEmpId: refCode,
                             referrerName: referrer.firstName ? `${referrer.firstName} ${referrer.lastName || ''}`.trim() : refCode,
                             amount: data.amount || data.monthlyAmount || 0,
+                            incentiveAmt,
                         });
                     });
                     setReferralReportData(results);
@@ -1601,27 +1636,29 @@ const StaffDashboard = () => {
             const handleExportExcel = async () => {
                 if (!referralReportData.length) return;
                 const XLSX = await import('xlsx');
-                const headers = ['Scheme ID', 'Scheme Name', 'Enrollee Name', 'Enrollee Phone', 'Enrolled Date', 'Referrer EMP ID', 'Referrer Name', 'Monthly Amount'];
-                const rows = referralReportData.map(r => [r.schemeId, r.schemeName, r.enrolleeName, r.enrolleePhone, r.enrolledAt, r.referrerEmpId, r.referrerName, r.amount]);
+                const headers = ['Scheme ID', 'Scheme Name', 'Enrollee Name', 'Enrollee Phone', 'Enrolled Date', 'Referrer EMP ID', 'Referrer Name', 'Monthly Amount (₹)', 'Incentive Earned (₹)'];
+                const rows = referralReportData.map(r => [r.schemeId, r.schemeName, r.enrolleeName, r.enrolleePhone, r.enrolledAt, r.referrerEmpId, r.referrerName, r.amount, r.incentiveAmt]);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Referral Details');
-                const summary: Record<string, { name: string; count: number; total: number }> = {};
+                const summary: Record<string, { name: string; count: number; total: number; incentiveTotal: number }> = {};
                 referralReportData.forEach(r => {
-                    if (!summary[r.referrerEmpId]) summary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0 };
+                    if (!summary[r.referrerEmpId]) summary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0, incentiveTotal: 0 };
                     summary[r.referrerEmpId].count++;
                     summary[r.referrerEmpId].total += Number(r.amount);
+                    summary[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt);
                 });
-                const sumRows = Object.entries(summary).map(([id, v]) => [id, v.name, v.count, v.total]);
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Name', 'Total Referrals', 'Total Monthly Value'], ...sumRows]), 'Summary');
+                const sumRows = Object.entries(summary).map(([id, v]) => [id, v.name, v.count, v.total, v.incentiveTotal]);
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Name', 'Total Referrals', 'Total Monthly Value (₹)', 'Total Incentive Earned (₹)'], ...sumRows]), 'Summary');
                 const base64Data = workbookToBase64(wb, XLSX);
                 await downloadFile(base64Data, `Incentive_Report_${referralMonthStart}_to_${referralMonthEnd}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true);
             };
 
-            const empSummary: Record<string, { name: string; count: number; total: number }> = {};
+            const empSummary: Record<string, { name: string; count: number; total: number; incentiveTotal: number }> = {};
             referralReportData.forEach(r => {
-                if (!empSummary[r.referrerEmpId]) empSummary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0 };
+                if (!empSummary[r.referrerEmpId]) empSummary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0, incentiveTotal: 0 };
                 empSummary[r.referrerEmpId].count++;
                 empSummary[r.referrerEmpId].total += Number(r.amount);
+                empSummary[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt);
             });
 
             return (
@@ -1665,14 +1702,24 @@ const StaffDashboard = () => {
                                 <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em]">Summary by Employee ({Object.keys(empSummary).length} staff)</h3>
                                 {Object.entries(empSummary).map(([empId, s]) => (
                                     <Card key={empId} className="p-4 border-none shadow-subtle bg-white">
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="font-bold text-primary text-sm">{s.name}</p>
                                                 <p className="text-[10px] text-text-muted mt-0.5">EMP ID: {empId}</p>
+                                                <p className="text-[10px] text-text-muted mt-0.5">{s.count} referral{s.count !== 1 ? 's' : ''} • ₹{s.total.toLocaleString()}/mo value</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-lg font-bold text-accent">{s.count} referral{s.count !== 1 ? 's' : ''}</p>
-                                                <p className="text-xs text-text-muted">₹{s.total.toLocaleString()}/mo total</p>
+                                                {s.incentiveTotal > 0 ? (
+                                                    <>
+                                                        <p className="text-lg font-black text-success">₹{s.incentiveTotal.toLocaleString()}</p>
+                                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">Incentive Earned</p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-lg font-bold text-accent">{s.count}</p>
+                                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">Referrals</p>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </Card>
@@ -1692,6 +1739,9 @@ const StaffDashboard = () => {
                                                 <p className="text-xs font-bold text-accent">Ref: {r.referrerName}</p>
                                                 <p className="text-[10px] text-text-muted">EMP: {r.referrerEmpId}</p>
                                                 <p className="text-sm font-bold text-success">₹{r.amount}/mo</p>
+                                                {r.incentiveAmt > 0 && (
+                                                    <p className="text-[10px] font-bold text-success mt-0.5">+₹{r.incentiveAmt} incentive</p>
+                                                )}
                                             </div>
                                         </div>
                                     </Card>

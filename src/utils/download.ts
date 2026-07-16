@@ -20,7 +20,7 @@ export async function downloadFile(
     if (Capacitor.isNativePlatform()) {
         try {
             // Dynamically import to avoid bundling on web
-            const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+            const { Filesystem, Directory } = await import('@capacitor/filesystem');
             const { Share } = await import('@capacitor/share');
 
             let base64Data: string;
@@ -28,18 +28,25 @@ export async function downloadFile(
                 base64Data = data;
             } else {
                 // Encode text (CSV) to base64
-                base64Data = btoa(unescape(encodeURIComponent(data)));
+                base64Data = btoa(
+                    Array.from(new TextEncoder().encode(data), b => String.fromCharCode(b)).join('')
+                );
             }
 
-            // Write to the app's stable data directory (persists across OS cache clears,
-            // ensuring the Share Sheet can reliably open the file after writing)
+            // Write to the cache directory — it is registered in file_paths.xml so
+            // the FileProvider can produce a content:// URI that the Share sheet accepts.
+            // (Directory.Data is private storage and cannot be shared via FileProvider.)
             const result = await Filesystem.writeFile({
                 path: fileName,
                 data: base64Data,
-                directory: Directory.Data,
+                directory: Directory.Cache,
             });
 
-            // Share the file via the native OS share sheet
+            // Share the file via the native OS share sheet.
+            // Do NOT delete the file after share() returns — the target app reads it
+            // asynchronously after the share intent is dispatched, so deleting here
+            // corrupts the file before the receiving app finishes. The OS evicts cache
+            // files automatically when storage is needed.
             await Share.share({
                 title: `Download: ${fileName}`,
                 text: `Your report is ready: ${fileName}`,
