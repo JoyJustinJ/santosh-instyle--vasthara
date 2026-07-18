@@ -18,6 +18,7 @@ const Transactions = () => {
     const [loading, setLoading] = useState(true);
     const [planMap, setPlanMap] = useState<Record<string, string>>({});
     const [selectedInvoiceTx, setSelectedInvoiceTx] = useState<any>(null);
+    const [invoiceScale, setInvoiceScale] = useState(1);
 
     const fetchTransactions = async () => {
         setLoading(true);
@@ -55,6 +56,24 @@ const Transactions = () => {
     useEffect(() => {
         fetchTransactions();
     }, [user]);
+
+    useEffect(() => {
+        if (!selectedInvoiceTx) return;
+
+        const updateScale = () => {
+            const screenWidth = window.innerWidth;
+            if (screenWidth < 820) {
+                // leave some margin
+                setInvoiceScale((screenWidth - 24) / 794);
+            } else {
+                setInvoiceScale(1);
+            }
+        };
+
+        updateScale();
+        window.addEventListener('resize', updateScale);
+        return () => window.removeEventListener('resize', updateScale);
+    }, [selectedInvoiceTx]);
 
     const renderInvoiceOverlay = () => {
         if (!selectedInvoiceTx) return null;
@@ -97,15 +116,29 @@ const Transactions = () => {
                   All content must fit inside this box — no scrolling inside the PDF element.
                   padding: 48px sides, 40px top/bottom keeps content in the printable area.
                 */}
-                <div
-                    id="invoice-pdf-content"
-                    style={{
+                <div style={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    paddingTop: '16px',
+                    paddingBottom: `${Math.max(24, 1123 * invoiceScale * 0.05)}px` // safe padding
+                }}>
+                    <div style={{
+                        transform: `scale(${invoiceScale})`,
+                        transformOrigin: 'top center',
                         width: '794px',
-                        minWidth: '794px',
-                        maxWidth: '794px',
                         height: '1123px',
-                        minHeight: '1123px',
-                        maxHeight: '1123px',
+                        marginBottom: `-${1123 * (1 - invoiceScale)}px`
+                    }}>
+                        <div
+                            id="invoice-pdf-content"
+                            style={{
+                                width: '794px',
+                                minWidth: '794px',
+                                maxWidth: '794px',
+                                height: '1123px',
+                                minHeight: '1123px',
+                                maxHeight: '1123px',
                         overflow: 'hidden',
                         boxSizing: 'border-box',
                         padding: '40px 48px',
@@ -226,6 +259,8 @@ const Transactions = () => {
                     <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '18px', textAlign: 'center' }}>
                         <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f', marginBottom: '4px' }}>Thank you for choosing Vastra.</div>
                         <div style={{ fontSize: '11px', color: '#9ca3af' }}>This is a computer-generated document and does not require a physical signature.</div>
+                    </div>
+                        </div>
                     </div>
                 </div>
             </div>
