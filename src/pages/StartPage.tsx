@@ -221,7 +221,7 @@ const StartPage = () => {
       {/* ── Top Floating Actions ── */}
       {!Capacitor.isNativePlatform() && (
         <a 
-          href="/vastra.apk" 
+          href="https://github.com/JoyJustinJ/santosh-instyle--vasthara/raw/main/public/vastra.apk" 
           download 
           className="absolute top-6 right-6 z-50 flex items-center gap-1.5 font-semibold text-accent hover:text-accent/80 transition-colors bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm text-sm"
         >
