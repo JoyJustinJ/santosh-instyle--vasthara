@@ -9,20 +9,37 @@ service cloud.firestore {
     
     // Function to check if user is accessing their own data
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth.uid == userId || 
+             (request.auth.token.phone_number != null && (
+               request.auth.token.phone_number == userId || 
+               getRawPhone() == userId
+             ));
     }
     
+    // Helper to get phone number without +91 if possible
+    function getRawPhone() {
+      return request.auth.token.phone_number.replace('\\+91', '');
+    }
+
     // Function to check if user has admin role
     function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'admin') ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'admin')
+      );
     }
     
     // Function to check if user has staff or manager role
     function isStaffOrManager() {
-      return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'staff') ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'manager') ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'staff') ||
+        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'manager')
+      );
     }
 
     // User profiles
