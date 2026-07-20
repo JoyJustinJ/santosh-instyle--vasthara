@@ -66,6 +66,7 @@ export const sendOTP = async (phone: string): Promise<{ success: boolean; error?
 
 export const verifyOTP = async (phone: string, otp: string): Promise<{ success: boolean; error?: string }> => {
   try {
+    const normalizedPhone = normalizePhone(phone);
     let data;
     let ok = false;
     let status = 0;
@@ -74,7 +75,7 @@ export const verifyOTP = async (phone: string, otp: string): Promise<{ success: 
       const response = await CapacitorHttp.post({
         url: `${API_BASE}/api/verify-otp`,
         headers: { 'Content-Type': 'application/json' },
-        data: { phone, otp }
+        data: { phone: normalizedPhone, otp }
       });
       data = response.data;
       status = response.status;
@@ -83,7 +84,7 @@ export const verifyOTP = async (phone: string, otp: string): Promise<{ success: 
       const response = await fetch(`${API_BASE}/api/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp }),
+        body: JSON.stringify({ phone: normalizedPhone, otp }),
       });
       status = response.status;
       ok = response.ok;
