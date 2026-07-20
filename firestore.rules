@@ -17,10 +17,17 @@ service cloud.firestore {
       return isAuthenticated() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+    
+    // Function to check if user has staff or manager role
+    function isStaffOrManager() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager');
+    }
 
     // User profiles
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isStaffOrManager());
       allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
@@ -32,14 +39,14 @@ service cloud.firestore {
     
     // User schemes (Active plans)
     match /user_schemes/{planId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow write: if isAdmin(); // Only admins can record payments/update status
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin() || isStaffOrManager());
+      allow write: if isAdmin() || isStaffOrManager(); // Admins and staff can record payments
     }
     
     // Transactions
     match /transactions/{txId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow write: if isAdmin(); // Only admins can record transactions
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin() || isStaffOrManager());
+      allow write: if isAdmin() || isStaffOrManager(); // Admins and staff can record transactions
     }
     
     // Admin Settings and Sensitive data
@@ -52,9 +59,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Default deny
+    // Default deny (allow admin or staff for audit logs etc)
     match /{document=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || isStaffOrManager();
     }
   }
 }
