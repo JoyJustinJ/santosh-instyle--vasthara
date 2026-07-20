@@ -131,8 +131,45 @@ export const EnrollCustomer: React.FC<EnrollCustomerProps> = ({ onBack }) => {
                 )}
 
                 {!customerProfile && customerPhone.length >= 10 && !searching && (
-                    <div className="bg-danger-light/20 border border-danger/30 rounded-xl p-3 text-center text-sm text-danger">
-                        Customer not found. Please create an account first.
+                    <div className="bg-danger-light/20 border border-danger/30 rounded-xl p-4 space-y-4">
+                        <p className="text-center text-sm text-danger font-bold">
+                            Customer not found.
+                        </p>
+                        <Button 
+                            fullWidth 
+                            variant="outline" 
+                            className="border-danger text-danger hover:bg-danger/10"
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                setLoading(true);
+                                try {
+                                    const { doc, setDoc } = await import('firebase/firestore');
+                                    const { db } = await import('../firebase');
+                                    await setDoc(doc(db, "users", customerPhone), {
+                                        id: customerPhone,
+                                        firstName: "New",
+                                        lastName: "Customer",
+                                        phone: customerPhone,
+                                        role: "customer",
+                                        createdAt: new Date().toISOString(),
+                                        status: "active"
+                                    });
+                                    const { getUserByPhone } = await import('../services/db');
+                                    const profile = await getUserByPhone(customerPhone);
+                                    setCustomerProfile(profile);
+                                    showNotification("Customer account created successfully! You can now enroll them.", 'success');
+                                } catch (error) {
+                                    console.error(error);
+                                    showNotification("Failed to create customer account.", 'error');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            loading={loading}
+                        >
+                            <UserCheck size={18} className="mr-2" />
+                            Create Basic Account
+                        </Button>
                     </div>
                 )}
 
