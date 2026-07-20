@@ -863,15 +863,23 @@ const StaffDashboard = () => {
                         <div className="space-y-3">
                             <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Schemes</label>
                             {(() => {
-                                if (customerActiveSchemes.length > 0) {
-                                    return customerActiveSchemes.map((s: any) => {
+                                const visibleSchemes = customerActiveSchemes.filter((s: any) => {
+                                    const now = new Date();
+                                    const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
+                                    const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
+                                    const totalInstallmentsDue = monthsElapsed + 1;
+                                    const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
+                                    return dueMonths > 0;
+                                });
+
+                                if (visibleSchemes.length > 0) {
+                                    return visibleSchemes.map((s: any) => {
                                         const now = new Date();
                                         const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
                                         const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
                                         const totalInstallmentsDue = monthsElapsed + 1;
                                         const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
                                         const isLate = dueMonths > 1;
-                                        const isPaidUp = dueMonths <= 0;
 
                                         return (
                                             <div key={s.accountId} className="space-y-2">
@@ -887,11 +895,6 @@ const StaffDashboard = () => {
                                                             LATE ({dueMonths} MO DUE)
                                                         </div>
                                                     )}
-                                                    {isPaidUp && (
-                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
-                                                            PAID UP (ADVANCE)
-                                                        </div>
-                                                    )}
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn(
@@ -901,12 +904,12 @@ const StaffDashboard = () => {
                                                                 {selectedPlans.includes(s.accountId) && <CheckCircle2 size={14} className="text-white" />}
                                                             </div>
                                                             <div>
-                                                                <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : (isPaidUp ? "text-success" : "text-primary"))}>{s.name || 'Scheme'}</h4>
+                                                                <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : "text-primary")}>{s.name || 'Scheme'}</h4>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
-                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">{isPaidUp ? "Advance" : "Due"}</p>
+                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
                                                         </div>
                                                     </div>
                                                 </Card>
@@ -916,7 +919,7 @@ const StaffDashboard = () => {
                                 } else if (depositCustomer.length >= 4) {
                                     return (
                                         <div className="p-6 border rounded-xl border-dashed flex flex-col items-center justify-center text-center">
-                                            <p className="text-sm text-text-muted">No active schemes found for this customer.</p>
+                                            <p className="text-sm text-text-muted">{customerActiveSchemes.length > 0 ? "All active schemes are fully paid up for this month." : "No active schemes found for this customer."}</p>
                                         </div>
                                     );
                                 }
