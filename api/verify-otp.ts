@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'OTP expired' });
     }
 
-    if (data?.otp !== otp) {
+    if (data?.otp !== String(otp)) {
       return res.status(400).json({ error: 'Invalid OTP' });
     }
 

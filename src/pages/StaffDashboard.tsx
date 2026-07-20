@@ -245,7 +245,7 @@ const StaffDashboard = () => {
                 const { verifyOTP } = await import('../services/sms');
                 const res = await verifyOTP(phone, depositOTP);
                 if (!res.success) {
-                    return showNotification('Invalid OTP', 'error');
+                    return showNotification(res.error || 'Invalid or expired OTP', 'error');
                 }
             } catch (err) {
                 return showNotification('Error verifying OTP', 'error');
