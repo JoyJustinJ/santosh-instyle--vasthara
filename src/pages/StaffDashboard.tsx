@@ -79,6 +79,9 @@ const StaffDashboard = () => {
     const [fulfillmentOTPModalOpen, setFulfillmentOTPModalOpen] = useState(false);
     const [fulfillmentOTP, setFulfillmentOTP] = useState('');
     const [fulfillmentTarget, setFulfillmentTarget] = useState<any>(null);
+    
+    // Add loading states for OTP actions
+    const [isVerifying, setIsVerifying] = useState(false);
     const [reportSourceView, setReportSourceView] = useState<ViewState | null>(null);
 
     // Referral Report State (managers only)
@@ -241,15 +244,19 @@ const StaffDashboard = () => {
 
         const phone = depositCustomerProfile?.phone || depositCustomer;
         if (!skipOTP && phone) {
+            setIsVerifying(true);
             try {
                 const { verifyOTP } = await import('../services/sms');
                 const res = await verifyOTP(phone, depositOTP);
                 if (!res.success) {
+                    setIsVerifying(false);
                     return showNotification(res.error || 'Invalid or expired OTP', 'error');
                 }
             } catch (err) {
+                setIsVerifying(false);
                 return showNotification('Error verifying OTP', 'error');
             }
+            setIsVerifying(false);
         }
 
         setDepositOTPModalOpen(false);
@@ -940,7 +947,6 @@ const StaffDashboard = () => {
                             setDepositOTPModalOpen(false);
                             setDepositOTP('');
                         }}
-                        confirmText="Verify & Submit"
                     >
                         <div className="mt-4">
                             <Input
