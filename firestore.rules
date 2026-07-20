@@ -16,29 +16,35 @@ service cloud.firestore {
              ));
     }
     
-    // Helper to get phone number without +91 if possible
+    // Helper to get raw phone string (without +91) if it exists, otherwise empty string
     function getRawPhone() {
-      return request.auth.token.phone_number.replace('\\+91', '');
+      return request.auth.token.phone_number != null ? request.auth.token.phone_number.replace('\\+91', '') : '';
+    }
+
+    // Safely check if a document exists and has a specific role
+    function hasRole(docId, roleToCheck) {
+      return exists(/databases/$(database)/documents/users/$(docId)) &&
+             get(/databases/$(database)/documents/users/$(docId)).data.role == roleToCheck;
     }
 
     // Function to check if user has admin role
     function isAdmin() {
       return isAuthenticated() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'admin') ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'admin')
+        hasRole(request.auth.uid, 'admin') ||
+        (request.auth.token.phone_number != null && hasRole(getRawPhone(), 'admin')) ||
+        (request.auth.token.phone_number != null && hasRole(request.auth.token.phone_number, 'admin'))
       );
     }
     
     // Function to check if user has staff or manager role
     function isStaffOrManager() {
       return isAuthenticated() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'staff') ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(getRawPhone())).data.role == 'manager') ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'staff') ||
-        (request.auth.token.phone_number != null && get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'manager')
+        hasRole(request.auth.uid, 'staff') ||
+        hasRole(request.auth.uid, 'manager') ||
+        (request.auth.token.phone_number != null && hasRole(getRawPhone(), 'staff')) ||
+        (request.auth.token.phone_number != null && hasRole(getRawPhone(), 'manager')) ||
+        (request.auth.token.phone_number != null && hasRole(request.auth.token.phone_number, 'staff')) ||
+        (request.auth.token.phone_number != null && hasRole(request.auth.token.phone_number, 'manager'))
       );
     }
 
