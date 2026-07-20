@@ -205,7 +205,7 @@ const StaffDashboard = () => {
         const amt = parseFloat(depositAmount);
         const expectedTotal = customerActiveSchemes
             .filter(s => selectedPlans.includes(s.accountId))
-            .reduce((acc, s) => acc + s.monthlyAmount, 0);
+            .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
 
         if (amt !== expectedTotal) {
             showNotification(`Amount must exactly match the selected schemes total: ₹${expectedTotal}`, "error");
@@ -261,7 +261,7 @@ const StaffDashboard = () => {
                 const s = customerActiveSchemes.find(p => p.accountId === accountId);
                 if (!s) continue;
 
-                const paid = s.monthlyAmount;
+                const paid = Number(s.monthlyAmount || s.amount || 0);
                 const schemeRef = doc(db, "user_schemes", accountId);
                 const nextMonthsPaid = (s.monthsPaid || 0) + 1;
                 const isCompleted = nextMonthsPaid >= (s.duration || 0);
@@ -357,10 +357,10 @@ const StaffDashboard = () => {
         }
         setSelectedPlans(newSelection);
 
-        const sum = customerActiveSchemes
+        const total = customerActiveSchemes
             .filter(s => newSelection.includes(s.accountId))
-            .reduce((acc, s) => acc + s.monthlyAmount, 0);
-        setDepositAmount(sum > 0 ? sum.toString() : '');
+            .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
+        setDepositAmount(total > 0 ? total.toString() : '');
     };
 
     const handleCustomerSearch = async () => {
@@ -908,7 +908,7 @@ const StaffDashboard = () => {
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="text-sm font-bold text-primary">{formatCurrency(s.monthlyAmount)}</p>
+                                                            <p className="text-sm font-bold text-primary">{formatCurrency(Number(s.monthlyAmount || s.amount || 0))}</p>
                                                             <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
                                                         </div>
                                                     </div>

@@ -499,7 +499,7 @@ const AdminDashboard = () => {
             .filter(s => selectedPlans.includes(s.accountId))
             .reduce((acc, s) => {
                 const months = depositMonthsConfig[s.accountId] || 1;
-                return acc + (s.monthlyAmount * months);
+                return acc + (Number(s.monthlyAmount || s.amount || 0) * months);
             }, 0);
 
         if (amt < expectedTotal) {
@@ -553,7 +553,7 @@ const AdminDashboard = () => {
                 if (!s) continue;
 
                 const monthsToPay = depositMonthsConfig[accountId] || 1;
-                const paid = s.monthlyAmount * monthsToPay;
+                const paid = Number(s.monthlyAmount || s.amount || 0) * monthsToPay;
                 const schemeRef = doc(db, "user_schemes", accountId);
                 const nextMonthsPaid = (s.monthsPaid || 0) + monthsToPay;
                 const isCompleted = nextMonthsPaid >= (s.duration || 0);
@@ -607,7 +607,7 @@ const AdminDashboard = () => {
             .filter(s => selected.includes(s.accountId))
             .reduce((acc, s) => {
                 const months = monthsConfig[s.accountId] || 1;
-                return acc + (s.monthlyAmount * months);
+                return acc + (Number(s.monthlyAmount || s.amount || 0) * months);
             }, 0);
         setDepositAmount(sum > 0 ? sum.toString() : '');
     };
@@ -1820,7 +1820,7 @@ const AdminDashboard = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm font-bold text-primary">
-                                                        {formatCurrency(s.monthlyAmount * (depositMonthsConfig[s.accountId] || 1))}
+                                                        {formatCurrency(Number(s.monthlyAmount || s.amount || 0) * (depositMonthsConfig[s.accountId] || 1))}
                                                     </p>
                                                     <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
                                                 </div>
