@@ -272,10 +272,12 @@ export const getUserByPhone = async (phoneOrId: string) => {
             phoneOrId,
             phoneOrId.startsWith('+91') ? phoneOrId.substring(3) : `+91${phoneOrId}`,
             phoneOrId.startsWith('+91') ? phoneOrId.substring(3).trim() : `+91${phoneOrId.trim()}`,
-            phoneOrId.trim()
+            phoneOrId.trim(),
+            Number(phoneOrId.replace(/\D/g, '')) // Allow Number matching for backend imported users
         ];
 
         for (const phoneVariant of phoneVariants) {
+            if (!phoneVariant) continue;
             const qPhone = query(collection(db, "users"), where("phone", "==", phoneVariant));
             const querySnapPhone = await getDocsFromServer(qPhone);
             if (!querySnapPhone.empty) {
@@ -285,11 +287,20 @@ export const getUserByPhone = async (phoneOrId: string) => {
         }
 
         // Try Customer ID field
-        const qCustId = query(collection(db, "users"), where("customerId", "==", phoneOrId));
-        const querySnapCustId = await getDocsFromServer(qCustId);
-        if (!querySnapCustId.empty) {
-            const docData = querySnapCustId.docs[0];
-            return { ...docData.data(), id: docData.id };
+        const customerIdVariants = [
+            phoneOrId,
+            phoneOrId.trim(),
+            Number(phoneOrId.replace(/\D/g, ''))
+        ];
+
+        for (const custIdVariant of customerIdVariants) {
+            if (!custIdVariant) continue;
+            const qCustId = query(collection(db, "users"), where("customerId", "==", custIdVariant));
+            const querySnapCustId = await getDocsFromServer(qCustId);
+            if (!querySnapCustId.empty) {
+                const docData = querySnapCustId.docs[0];
+                return { ...docData.data(), id: docData.id };
+            }
         }
 
         return null;
