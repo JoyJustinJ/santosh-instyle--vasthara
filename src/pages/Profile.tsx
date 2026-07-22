@@ -21,6 +21,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import { cn } from '../utils';
 import { ThemeToggle } from '../components/UI/ThemeToggle';
 import { Card } from '../components/UI/Card';
@@ -32,6 +33,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, setUser: updateUserContext, logout } = useAuth()!;
+  const { showNotification } = useNotification();
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,7 +72,7 @@ const Profile = () => {
       setIsEditing(false);
     } catch (e) {
       console.error(e);
-      alert('Failed to save profile. Please try again.');
+      showNotification('Failed to save profile. Please try again.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -119,14 +121,15 @@ const Profile = () => {
   const handlePasswordChangeSub = async () => {
     if (!otpSent) {
       if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
-        alert("Please enter a new password (minimum 6 characters).");
+        showNotification("Please enter a new password (minimum 6 characters).", 'warning');
         return;
       }
       const result = await sendOTP(user?.phone || '');
       if (result.success) {
         setOtpSent(true);
+        showNotification("OTP sent successfully to your mobile number.", 'success');
       } else {
-        alert(result.error || "Failed to send OTP.");
+        showNotification(result.error || "Failed to send OTP.", 'error');
       }
     } else {
       const result = await verifyOTP(user?.phone || '', passwordForm.otp);
@@ -157,16 +160,16 @@ const Profile = () => {
             console.warn('Firebase Auth password update skipped:', authErr.code);
           }
 
-          alert("Password updated successfully!");
+          showNotification("Password updated successfully!", 'success');
           setChangingPassword(false);
           setOtpSent(false);
           setPasswordForm({ newPassword: '', otp: '' });
         } catch (err) {
           console.error('Password update failed:', err);
-          alert("Failed to update password. Please try again.");
+          showNotification("Failed to update password. Please try again.", 'error');
         }
       } else {
-        alert(result.error || "Invalid OTP.");
+        showNotification(result.error || "Invalid OTP.", 'error');
       }
     }
   };
@@ -175,7 +178,7 @@ const Profile = () => {
     { label: t('profile.security_pin'), icon: Shield, path: '/profile/security' },
     { label: t('profile.notifications'), icon: Bell, path: '/notifications' },
     { label: t('profile.transactions'), icon: CreditCard, path: '/transactions' },
-    ...(user?.role === 'staff' ? [{ label: t('profile.staff_authority'), icon: UserCheck, path: '/staff', isSpecial: true }] : []),
+    ...((user?.role === 'staff' || user?.role === 'manager' || user?.accessLevel === 'manager') ? [{ label: t('profile.staff_authority'), icon: UserCheck, path: '/staff', isSpecial: true }] : []),
     ...(user?.role === 'admin' ? [{ label: t('profile.admin_access'), icon: Shield, path: '/admin?view=management', isSpecial: true }] : []),
   ];
 

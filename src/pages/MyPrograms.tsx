@@ -143,8 +143,11 @@ const MyPrograms = () => {
                       </>
                     )}
                   </div>
-                  {!isCompleted && (
-                    <button className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">
+                   {!isCompleted && (
+                    <button
+                      className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
+                      onClick={(e) => { e.stopPropagation(); navigate('/pay-emi'); }}
+                    >
                       Pay Now
                     </button>
                   )}

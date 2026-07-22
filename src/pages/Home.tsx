@@ -10,22 +10,8 @@ import { useNotification } from '../context/NotificationContext';
 import { getSchemesFromDB, getAllUsersFromDB, getTransactionsFromDB, getNotificationsFromDB, markNotificationAsRead } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, safeDate } from '../utils';
 
-// Helper to safely parse Firestore Timestamp or ISO string
-const getTxDate = (timestamp: any): Date => {
-    if (!timestamp) return new Date(0);
-    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-    if (timestamp._seconds) {
-        return new Date(timestamp._seconds * 1000);
-    }
-    if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000);
-    }
-    return new Date(timestamp);
-};
 
 const Home = () => {
   const { t } = useTranslation();
@@ -50,10 +36,13 @@ const Home = () => {
     }
   }, [user]);
 
+  // Stabilize dependency: only re-run when the list of account IDs actually changes
+  const schemeAccountIds = userSchemes?.map((s: any) => s.accountId).join(',') || '';
+
   useEffect(() => {
     getSchemesFromDB().then(data => setSchemes(data.filter((s: any) => s.status === 'active')));
 
-    // Payment Reminders
+    // Payment Reminders — only run once per session when schemes actually change
     if (userSchemes && userSchemes.length > 0) {
       const checkDues = async () => {
         const now = new Date();
@@ -64,7 +53,7 @@ const Home = () => {
         for (const scheme of userSchemes) {
           const txs = await getTransactionsFromDB(undefined, scheme.accountId);
           const hasPaidThisMonth = txs.some((tx: any) => {
-            const date = getTxDate(tx.timestamp);
+            const date = safeDate(tx.timestamp);
             return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
           });
 
@@ -79,7 +68,8 @@ const Home = () => {
       };
       checkDues();
     }
-  }, [navigate, userSchemes, showNotification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schemeAccountIds]);
 
   // Removed random promo effect
 

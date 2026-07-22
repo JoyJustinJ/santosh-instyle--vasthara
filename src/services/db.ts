@@ -88,7 +88,7 @@ export const recordTransactionInDB = async (transaction: any): Promise<string | 
             id: docRef.id,
             referenceId,
             invoicePrimaryKey: docRef.id,
-            date: new Date().toLocaleDateString('en-GB'), // 10-04-2024 format
+            date: new Date().toISOString().split('T')[0], // YYYY-MM-DD for consistent safeDate parsing
             timestamp: new Date().toISOString()
         });
         return docRef.id; // Return the real Firestore document ID
@@ -100,24 +100,34 @@ export const recordTransactionInDB = async (transaction: any): Promise<string | 
 
 export const getTransactionsFromDB = async (userId?: string, accountId?: string) => {
     try {
-        if (userId === "" || accountId === "") return [];
+        if (userId === '' || accountId === '') return [];
 
-        let q = query(collection(db, "transactions"));
+        let q;
 
-        if (userId) {
-            q = query(q, where("userId", "==", userId));
-        }
-
+        // Use the most specific single-field query to avoid composite index requirement.
+        // If both are provided, query by accountId (more unique) and filter userId client-side.
         if (accountId) {
-            q = query(q, where("accountId", "==", accountId));
+            q = query(collection(db, 'transactions'), where('accountId', '==', accountId));
+        } else if (userId) {
+            q = query(collection(db, 'transactions'), where('userId', '==', userId));
+        } else {
+            // No filter — fetch all (admin/staff tally view)
+            q = query(collection(db, 'transactions'));
         }
 
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-            .sort((a: any, b: any) => safeDate(a.timestamp || a.date).getTime() - safeDate(b.timestamp || b.date).getTime());
-        return results;
+        let results = querySnapshot.docs.map(d => ({ ...(d.data() as Record<string, any>), id: d.id })) as any[];
+
+        // Apply userId filter client-side if both params were given
+        if (accountId && userId) {
+            results = results.filter((tx: any) => tx.userId === userId);
+        }
+
+        return results.sort((a: any, b: any) =>
+            safeDate(a.timestamp || a.date).getTime() - safeDate(b.timestamp || b.date).getTime()
+        );
     } catch (e) {
-        console.error("Error fetching transactions:", e);
+        console.error('Error fetching transactions:', e);
         return [];
     }
 };
@@ -270,8 +280,11 @@ export const getUserFromDB = async (uidOrPhoneOrId: string) => {
         }
 
         return null;
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error getting user:", e);
+        if (e.code === 'permission-denied' || e.message?.includes('Missing or insufficient permissions')) {
+            throw new Error('Permission denied. Please check rules or role access.');
+        }
         return null;
     }
 };
@@ -315,8 +328,11 @@ export const getUserByPhone = async (phoneOrId: string) => {
         }
 
         return null;
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error getting user by phone or customerId:", e);
+        if (e.code === 'permission-denied' || e.message?.includes('Missing or insufficient permissions')) {
+            throw new Error('Permission denied. Please check rules or role access.');
+        }
         return null;
     }
 };
@@ -358,9 +374,12 @@ export const getAllUsersFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "users"));
         return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error fetching all users:", e);
-        return [];
+        if (e.code === 'permission-denied' || e.message?.includes('Missing or insufficient permissions')) {
+            throw new Error('Permission denied. Please check rules or role access.');
+        }
+        throw e;
     }
 };
 
@@ -403,7 +422,10 @@ export const getUserPlansFromDB = async (userId: string) => {
     try {
         const q = query(collection(db, "user_schemes"), where("userId", "==", userId));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { ...data, id: doc.id, accountId: data.accountId || doc.id };
+        });
     } catch (e) {
         console.error("Error fetching user plans:", e);
         return [];
@@ -413,7 +435,10 @@ export const getUserPlansFromDB = async (userId: string) => {
 export const getAllUserPlansFromDB = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "user_schemes"));
-        return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { ...data, id: doc.id, accountId: data.accountId || doc.id };
+        });
     } catch (e) {
         console.error("Error fetching all user plans:", e);
         return [];
@@ -552,6 +577,42 @@ export const addNotificationToDB = async (userId: string, title: string, message
         });
     } catch (e) {
         console.error("Error adding notification:", e);
+    }
+};
+
+export const broadcastNotificationsToDB = async (userIds: string[], title: string, message: string, type: 'info' | 'success' | 'warning' | 'broadcast' = 'info') => {
+    try {
+        let batch = writeBatch(db);
+        let batchCount = 0;
+        let totalSent = 0;
+        
+        for (const userId of userIds) {
+            const notifRef = doc(collection(db, "notifications"));
+            batch.set(notifRef, {
+                userId,
+                title,
+                message,
+                type,
+                read: false,
+                timestamp: new Date().toISOString()
+            });
+            batchCount++;
+            
+            if (batchCount === 500) {
+                await batch.commit();
+                batch = writeBatch(db);
+                batchCount = 0;
+            }
+            totalSent++;
+        }
+        
+        if (batchCount > 0) {
+            await batch.commit();
+        }
+        return totalSent;
+    } catch (e) {
+        console.error("Error broadcasting notifications:", e);
+        return 0;
     }
 };
 

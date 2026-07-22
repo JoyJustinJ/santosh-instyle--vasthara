@@ -168,14 +168,38 @@ const Login = () => {
 
           // --- BEGIN ADMIN FIREBASE AUTH FIX ---
           let adminEmail = adminData.authEmail || `admin_${sanitizedPhone}@vastra.com`;
+          let adminUid = '';
           try {
-            await signInWithEmailAndPassword(auth, adminEmail, formData.password);
+            const userCredential = await signInWithEmailAndPassword(auth, adminEmail, formData.password);
+            adminUid = userCredential.user.uid;
           } catch (e: any) {
             if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials' || e.code === 'auth/wrong-password') {
               try {
                 const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, formData.password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                  id: userCredential.user.uid,
+                adminUid = userCredential.user.uid;
+                if (!adminData.authEmail) {
+                    await setDoc(doc(db, "admins", adminData.docId || (isPrimary ? "main_admin" : `admin_${sanitizedPhone}`)), { authEmail: adminEmail }, { merge: true });
+                }
+              } catch (createError: any) {
+                if (createError.code === 'auth/email-already-in-use') {
+                  const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(7);
+                  adminEmail = `admin_${sanitizedPhone}_${uniqueId}@vastra.com`;
+                  const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, formData.password);
+                  adminUid = userCredential.user.uid;
+                  await setDoc(doc(db, "admins", adminData.docId || (isPrimary ? "main_admin" : `admin_${sanitizedPhone}`)), { authEmail: adminEmail }, { merge: true });
+                } else {
+                  throw createError;
+                }
+              }
+            } else {
+              throw e;
+            }
+          }
+          
+          // ALWAYS ensure the admin user document exists in the users collection
+          if (adminUid) {
+              await setDoc(doc(db, "users", adminUid), {
+                  id: adminUid,
                   phone: sanitizedPhone,
                   role: 'admin',
                   firstName: adminFirstName,
@@ -185,35 +209,7 @@ const Login = () => {
                   branch: adminData.branch || 'Hosur',
                   accountCreatedVia: 'admin',
                   createdAt: adminData.createdAt || new Date().toISOString(),
-                }, { merge: true });
-                if (!adminData.authEmail) {
-                    await setDoc(doc(db, "admins", adminData.docId || (isPrimary ? "main_admin" : `admin_${sanitizedPhone}`)), { authEmail: adminEmail }, { merge: true });
-                }
-              } catch (createError: any) {
-                if (createError.code === 'auth/email-already-in-use') {
-                  const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(7);
-                  adminEmail = `admin_${sanitizedPhone}_${uniqueId}@vastra.com`;
-                  const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, formData.password);
-                  await setDoc(doc(db, "users", userCredential.user.uid), {
-                    id: userCredential.user.uid,
-                    phone: sanitizedPhone,
-                    role: 'admin',
-                    firstName: adminFirstName,
-                    lastName: adminLastName,
-                    name: adminData.name || 'Admin',
-                    email: adminData.email || '',
-                    branch: adminData.branch || 'Hosur',
-                    accountCreatedVia: 'admin',
-                    createdAt: adminData.createdAt || new Date().toISOString(),
-                  }, { merge: true });
-                  await setDoc(doc(db, "admins", adminData.docId || (isPrimary ? "main_admin" : `admin_${sanitizedPhone}`)), { authEmail: adminEmail }, { merge: true });
-                } else {
-                  throw createError;
-                }
-              }
-            } else {
-              throw e;
-            }
+              }, { merge: true });
           }
           // --- END ADMIN FIREBASE AUTH FIX ---
 

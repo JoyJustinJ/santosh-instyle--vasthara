@@ -37,26 +37,13 @@ import {
     deleteAdminFromDB,
     getAllUserPlansFromDB,
     addNotificationToDB,
+    broadcastNotificationsToDB,
     getAuditLogsFromDB,
     resetApplicationData
 } from '../services/db';
 import { useNotification } from '../context/NotificationContext';
 import { db } from '../firebase';
 
-// Helper to safely parse Firestore Timestamp or ISO string
-const getTxDate = (timestamp: any): Date => {
-    if (!timestamp) return new Date(0);
-    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-    if (timestamp._seconds) {
-        return new Date(timestamp._seconds * 1000);
-    }
-    if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000);
-    }
-    return new Date(timestamp);
-};
 import { doc, updateDoc } from 'firebase/firestore';
 
 type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'transactions' | 'staff' | 'staff_mgmt' | 'customer_update' | 'customer_report' | 'settings' | 'analytics' | 'defaulters' | 'broadcast' | 'audit_logs' | 'redemptions' | 'create_customer' | 'enroll_customer' | 'tally' | 'referral_report';
@@ -309,7 +296,7 @@ const AdminDashboard = () => {
 
                 txs.forEach((tx: any) => {
                     if (tx.status === 'Success' && tx.amount) {
-                        let date = getTxDate(tx.timestamp);
+                        let date = safeDate(tx.timestamp);
                         if (tx.date && typeof tx.date === 'string') {
                             const parts = tx.date.split(/[-/]/);
                             if (parts.length === 3) {
@@ -835,7 +822,6 @@ const AdminDashboard = () => {
             const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => t.accountId === v.accountId) === i);
             setCustomerPlans(uniquePlans);
 
-            // Fetch Transactions
             const txById = await getTransactionsFromDB(userId);
             let txByPhone: any[] = [];
             if (res.phone && res.phone !== userId) {
@@ -843,7 +829,7 @@ const AdminDashboard = () => {
             }
             const combinedTx = [...txById, ...txByPhone];
             const uniqueTx = combinedTx.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-            setCustomerTransactions(uniqueTx.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            setCustomerTransactions(uniqueTx.sort((a, b) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime()));
         } else {
             showNotif("Customer not found", 'error');
         }
@@ -1021,7 +1007,7 @@ const AdminDashboard = () => {
             const end = endDateObj.getTime();
 
             const filtered = allTx.filter((tx: any) => {
-                const txTime = getTxDate(tx.timestamp).getTime();
+                const txTime = safeDate(tx.timestamp).getTime();
                 return txTime >= start && txTime <= end;
             });
 
@@ -1105,7 +1091,7 @@ const AdminDashboard = () => {
                 `"${customerName}"`,
                 phone,
                 tx.amount || 0,
-                tx.date || formatDate(getTxDate(tx.timestamp)),
+                tx.date || formatDate(safeDate(tx.timestamp)),
                 (tx.type || 'unknown').toUpperCase(),
                 (tx.method || 'Razorpay').toUpperCase(),
                 `"${recorderName}"`,
@@ -1233,7 +1219,7 @@ const AdminDashboard = () => {
             }
 
             const txs = allTransactions.filter(tx => tx.accountId === plan.accountId && tx.status === 'Success');
-            txs.sort((a, b) => getTxDate(a.timestamp).getTime() - getTxDate(b.timestamp).getTime());
+            txs.sort((a, b) => safeDate(a.timestamp).getTime() - safeDate(b.timestamp).getTime());
 
             // Calculate Nth scheme of this amount for this user (using ALL ids/phones for legacy dedup)
             const userAllIds = allIds || new Set([plan.userId].filter(Boolean));
@@ -1244,7 +1230,7 @@ const AdminDashboard = () => {
             const planIndex = sameAmtPlans.findIndex(p => p.accountId === plan.accountId);
             const nth = String((planIndex >= 0 ? planIndex : 0) + 1).padStart(2, '0');
 
-            // Get DoJ: use getTxDate to safely handle Firestore Timestamps, ISO strings and DD-MM-YYYY
+            // Get DoJ: use safeDate to safely handle Firestore Timestamps, ISO strings and DD-MM-YYYY
             let d: Date;
             const rawDate = plan.enrollmentDate || plan.createdAt || plan.joinedAt;
             if (rawDate && typeof rawDate === 'string') {
@@ -1252,12 +1238,12 @@ const AdminDashboard = () => {
                 const parts = rawDate.split(/[-/]/);
                 if (parts.length === 3 && parts[2].length === 4) {
                     d = new Date(`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}T00:00:00Z`);
-                    if (isNaN(d.getTime())) d = getTxDate(rawDate);
+                    if (isNaN(d.getTime())) d = safeDate(rawDate);
                 } else {
-                    d = getTxDate(rawDate);
+                    d = safeDate(rawDate);
                 }
             } else {
-                d = getTxDate(rawDate);
+                d = safeDate(rawDate);
             }
             if (isNaN(d.getTime())) d = new Date();
 
@@ -1287,7 +1273,7 @@ const AdminDashboard = () => {
                     if (tx.date && typeof tx.date === 'string') {
                         row.push(tx.date.replace(/"/g, ''));
                     } else {
-                        const txD = getTxDate(tx.timestamp);
+                        const txD = safeDate(tx.timestamp);
                         const tdd = String(txD.getDate()).padStart(2, '0');
                         const tmm = String(txD.getMonth() + 1).padStart(2, '0');
                         const tyyyy = txD.getFullYear();
@@ -1432,7 +1418,7 @@ const AdminDashboard = () => {
                 let enrollDate: Date | null = null;
                 const dateStr = data.enrollmentDate || data.enrolledAt || data.joinedAt || data.createdAt;
                 if (dateStr) {
-                    enrollDate = getTxDate(dateStr);
+                    enrollDate = safeDate(dateStr);
                 }
 
                 if (enrollDate && enrollDate >= start && enrollDate <= end) {
@@ -2851,8 +2837,8 @@ const AdminDashboard = () => {
                 end.setHours(23, 59, 59, 999);
                 
                 const rangeTx = allTransactions.filter(t => {
-                    // Use getTxDate to properly handle Firestore Timestamp objects
-                    const txDate = getTxDate(t.timestamp);
+                    // Use safeDate to properly handle Firestore Timestamp objects
+                    const txDate = safeDate(t.timestamp);
                     const inRange = txDate >= start && txDate <= end;
                     // Only include CASH transactions in the tally
                     const isCash = !t.method || t.method.toUpperCase() === 'CASH';
@@ -3177,7 +3163,7 @@ const AdminDashboard = () => {
                                     return showNotif('Please select at least one customer', 'error');
                                 }
 
-                                await Promise.all(targets.map(u => addNotificationToDB(u.id, broadcastData.title, broadcastData.message, 'broadcast')));
+                                await broadcastNotificationsToDB(targets.map(u => u.id), broadcastData.title, broadcastData.message, 'broadcast');
                                 showNotif(`Broadcast sent to ${targets.length} customers!`, 'success');
                                 setBroadcastData({ title: '', message: '' });
                                 setSelectedUsersForBroadcast([]);

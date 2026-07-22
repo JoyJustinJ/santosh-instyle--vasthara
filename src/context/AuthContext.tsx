@@ -24,7 +24,7 @@ export interface User {
   lastName?: string;
   email?: string;
   phone?: string;
-  role: 'customer' | 'admin' | 'staff';
+  role: 'customer' | 'admin' | 'staff' | 'manager';
   pin?: string;
   password?: string;
   status?: string;

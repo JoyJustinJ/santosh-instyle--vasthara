@@ -192,10 +192,10 @@ const PayEMI = () => {
         <div className="space-y-4">
           <h3 className="text-xs font-black text-text-muted uppercase tracking-[0.2em] ml-2">{t('pay_emi.select_subscriptions')}</h3>
           <div className="space-y-3">
-            {userSchemes.filter((s: any) => s.status !== 'completed' && (s.monthsPaid || 0) < (s.duration || 0)).length === 0 ? (
+            {userSchemes.filter((s: any) => s.status !== 'completed' && s.status !== 'closed' && s.status !== 'redeemed' && (s.monthsPaid || 0) < (s.duration || 0)).length === 0 ? (
               <p className="text-sm text-text-muted px-2">{t('pay_emi.no_active_plans')}</p>
             ) : userSchemes
-              .filter((s: any) => s.status !== 'completed' && (s.monthsPaid || 0) < (s.duration || 0))
+              .filter((s: any) => s.status !== 'completed' && s.status !== 'closed' && s.status !== 'redeemed' && (s.monthsPaid || 0) < (s.duration || 0))
               .map((s: any) => {
               const isPaid = paidPlanIds.includes(s.accountId);
               return (

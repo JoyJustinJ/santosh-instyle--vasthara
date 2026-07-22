@@ -58,6 +58,10 @@ const PlanDetail = () => {
   const isCompleted = plan.status === 'completed' || plan.status === 'closed' || (duration > 0 && paidMonths >= duration);
 
   const handleSendPreCloseOTP = async () => {
+    if (!user?.phone) {
+      showNotification('Please add a phone number to your profile before pre-closing a scheme.', 'error');
+      return;
+    }
     setProcessing(true);
     try {
       const result = await sendOTP(user.phone);
@@ -78,6 +82,10 @@ const PlanDetail = () => {
   const handleVerifyPreClose = async () => {
     if (!otp || otp.length < 6) {
       showNotification('Please enter a valid 6-digit OTP', 'error');
+      return;
+    }
+    if (!user?.phone) {
+      showNotification('Phone number not found. Cannot verify OTP.', 'error');
       return;
     }
     setProcessing(true);

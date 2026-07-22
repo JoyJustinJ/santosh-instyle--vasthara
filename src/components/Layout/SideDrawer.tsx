@@ -19,7 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export const SideDrawer = ({ isOpen, onClose }) => {
+export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -86,7 +86,7 @@ export const SideDrawer = ({ isOpen, onClose }) => {
                     {user?.firstName} {user?.lastName}
                   </h3>
                   <p className="text-xs font-medium text-text-muted">
-                    +91 {user?.phone}
+                    {user?.phone ? `+91 ${user.phone}` : user?.email || 'No contact info'}
                   </p>
                 </div>
               </div>

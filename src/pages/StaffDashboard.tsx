@@ -22,7 +22,8 @@ import {
     createUserProfile,
     getStaffRequestsFromDB,
     deleteStaffRequestFromDB,
-    getTransactionsFromDB
+    getTransactionsFromDB,
+    addAuditLog
 } from '../services/db';
 import { useNotification } from '../context/NotificationContext';
 
@@ -31,9 +32,9 @@ const StaffDashboard = () => {
     const { user } = useAuth()!;
     const { showNotification } = useNotification();
 
-    // Protection: Only staff can access
+    // Protection: Only staff/managers can access
     useEffect(() => {
-        if (!user || user.role !== 'staff') {
+        if (!user || (user.role !== 'staff' && user.role !== 'manager' && user.accessLevel !== 'manager')) {
             navigate('/home');
         }
     }, [user, navigate]);
@@ -83,6 +84,7 @@ const StaffDashboard = () => {
     // Add loading states for OTP actions
     const [isVerifying, setIsVerifying] = useState(false);
     const [reportSourceView, setReportSourceView] = useState<ViewState | null>(null);
+
 
     // Referral Report State (managers only)
     const [referralReportData, setReferralReportData] = useState<any[]>([]);
@@ -190,13 +192,21 @@ const StaffDashboard = () => {
                 relevantTx = allTx.filter((tx: any) => tx.recordedBy === user?.id);
             }
 
-            setStaffTransactions(relevantTx.sort((a: any, b: any) => b.timestamp - a.timestamp));
+            setStaffTransactions(relevantTx.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
         } catch (err) {
             console.error(err);
         } finally {
             setLoadingData(false);
         }
     };
+
+    // Auto-load tally data when switching to tally view
+    useEffect(() => {
+        if (activeView === 'tally') {
+            loadStaffTransactions();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeView]);
 
     const handleReceipt = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -207,7 +217,7 @@ const StaffDashboard = () => {
 
         const amt = parseFloat(depositAmount);
         const expectedTotal = customerActiveSchemes
-            .filter(s => selectedPlans.includes(s.accountId))
+            .filter(s => selectedPlans.includes(s.accountId || s.id))
             .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
 
         if (amt !== expectedTotal) {
@@ -265,25 +275,26 @@ const StaffDashboard = () => {
         try {
             const userId = depositCustomerProfile?.id || depositCustomer;
             for (const accountId of selectedPlans) {
-                const s = customerActiveSchemes.find(p => p.accountId === accountId);
+                const s = customerActiveSchemes.find(p => (p.accountId || p.id) === accountId);
                 if (!s) continue;
 
                 const paid = Number(s.monthlyAmount || s.amount || 0);
-                const schemeRef = doc(db, "user_schemes", accountId);
-                const nextMonthsPaid = (s.monthsPaid || 0) + 1;
-                const isCompleted = nextMonthsPaid >= (s.duration || 0);
+                const targetDocId = s.accountId || s.id || accountId;
+                const schemeRef = doc(db, "user_schemes", targetDocId);
+                const nextMonthsPaid = Number(s.monthsPaid || 0) + 1;
+                const isCompleted = nextMonthsPaid >= Number(s.duration || 0);
                 await updateDoc(schemeRef, {
                     monthsPaid: nextMonthsPaid,
                     totalPaid: (s.totalPaid || 0) + paid,
                     status: isCompleted ? 'completed' : (s.status || 'active'),
-                    completedAt: isCompleted ? new Date().toISOString() : s.completedAt,
+                    completedAt: isCompleted ? new Date().toISOString() : (s.completedAt || null),
                 });
 
                 const transactionId = await recordTransactionInDB({
                     userId: userId,
                     userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
-                    accountId: accountId,
+                    accountId: targetDocId,
                     amount: paid,
                     type: 'deposit',
                     status: 'Success',
@@ -291,12 +302,11 @@ const StaffDashboard = () => {
                     recordedBy: user?.id || 'staff'
                 });
 
-                const { addAuditLog } = await import('../services/db');
                 if (transactionId) {
                     await addAuditLog('MANUAL_DEPOSIT', user?.id || 'staff', {
                         phone: userId,
                         amount: paid,
-                        schemeId: s.name || s.schemeName || accountId,
+                        schemeId: s.name || s.schemeName || targetDocId,
                         transactionId
                     });
                 }
@@ -310,14 +320,16 @@ const StaffDashboard = () => {
                 customerId: depositCustomerProfile?.customerId || depositCustomerProfile?.id,
                 phone: depositCustomerProfile?.phone,
                 amount: amt,
-                schemes: customerActiveSchemes.filter(s => selectedPlans.includes(s.accountId)).map(s => s.name || s.schemeName),
+                schemes: customerActiveSchemes.filter(s => selectedPlans.includes(s.accountId || s.id)).map(s => s.name || s.schemeName),
                 date: new Date().toLocaleString(),
                 recordedBy: user?.firstName || 'Staff',
                 transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`
             });
-        } catch (error) {
-            console.error(error);
-            showNotification("Failed to record receipt.", "error");
+            setSelectedPlans([]);
+            setDepositAmount('');
+        } catch (error: any) {
+            console.error('Error recording receipt:', error);
+            showNotification(`Failed to record receipt: ${error?.message || 'Unknown error'}`, "error");
         }
     };
 
@@ -334,7 +346,7 @@ const StaffDashboard = () => {
                         plansByPhone = await getUserPlansFromDB(userProfile.phone);
                     }
                     const combinedPlans = [...plansById, ...plansByPhone];
-                    const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => t.accountId === v.accountId) === i);
+                    const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => (t.accountId || t.id) === (v.accountId || v.id)) === i);
 
                     setCustomerActiveSchemes(uniquePlans.filter((p: any) => p.status === 'active'));
                 } else {
@@ -365,7 +377,7 @@ const StaffDashboard = () => {
         setSelectedPlans(newSelection);
 
         const total = customerActiveSchemes
-            .filter(s => newSelection.includes(s.accountId))
+            .filter(s => newSelection.includes(s.accountId || s.id))
             .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
         setDepositAmount(total > 0 ? total.toString() : '');
     };
@@ -397,7 +409,7 @@ const StaffDashboard = () => {
             const uniqueTx = combinedTx.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
             setCustomerTransactions(uniqueTx.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
         } else {
-            alert("Customer not found");
+            showNotification('Customer not found', 'error');
         }
         setLoadingData(false);
     };
@@ -887,14 +899,15 @@ const StaffDashboard = () => {
                                         const totalInstallmentsDue = monthsElapsed + 1;
                                         const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
                                         const isLate = dueMonths > 1;
+                                        const targetAccId = s.accountId || s.id;
 
                                         return (
-                                            <div key={s.accountId} className="space-y-2">
+                                            <div key={targetAccId} className="space-y-2">
                                                 <Card
-                                                    onClick={() => togglePlan(s.accountId)}
+                                                    onClick={() => togglePlan(targetAccId)}
                                                     className={cn(
                                                         "p-4 border-2 transition-all cursor-pointer relative overflow-hidden",
-                                                        selectedPlans.includes(s.accountId) ? "border-accent bg-accent-light/30" : "border-border/50"
+                                                        selectedPlans.includes(targetAccId) ? "border-accent bg-accent-light/30" : "border-border/50"
                                                     )}
                                                 >
                                                     {isLate && (
@@ -906,9 +919,9 @@ const StaffDashboard = () => {
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn(
                                                                 "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
-                                                                selectedPlans.includes(s.accountId) ? "border-accent bg-accent" : "border-border"
+                                                                selectedPlans.includes(targetAccId) ? "border-accent bg-accent" : "border-border"
                                                             )}>
-                                                                {selectedPlans.includes(s.accountId) && <CheckCircle2 size={14} className="text-white" />}
+                                                                {selectedPlans.includes(targetAccId) && <CheckCircle2 size={14} className="text-white" />}
                                                             </div>
                                                             <div>
                                                                 <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : "text-primary")}>{s.name || 'Scheme'}</h4>

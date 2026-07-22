@@ -13,12 +13,14 @@ import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '../context/NotificationContext';
 
 const WHATSAPP_NUMBER = '919751500007'; // +91 97515 00007
 
 const ContactUs = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
 
@@ -28,7 +30,7 @@ const ContactUs = () => {
 
   const handleSendWhatsApp = () => {
     if (!message.trim()) {
-      alert(t('contact.alert_empty_message'));
+      showNotification(t('contact.alert_empty_message'), 'error');
       return;
     }
     const text = subject.trim()
