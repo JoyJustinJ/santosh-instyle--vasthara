@@ -57,6 +57,9 @@ const MyPrograms = () => {
             const paidMonths = duration > 0 ? Math.min(plan.monthsPaid || 0, duration) : (plan.monthsPaid || 0);
             const progressPercent = duration > 0 ? Math.round((paidMonths / duration) * 100) : 0;
             const isCompleted = plan.status === 'completed' || (duration > 0 && paidMonths >= duration);
+            const remainingMonths = Math.max(0, duration - paidMonths);
+            const monthlyDue = Number(plan.monthlyAmount || plan.amount || 0);
+            const isPaymentDueThisMonth = !isCompleted && monthlyDue > 0;
 
             return (
               <motion.div
@@ -100,14 +103,23 @@ const MyPrograms = () => {
                     )}
 
                   <div className="space-y-4">
+                    {isPaymentDueThisMonth && (
+                      <div className="rounded-xl bg-warning/10 border border-warning/30 px-4 py-2 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black text-warning uppercase tracking-widest">Monthly Due</p>
+                          <p className="text-xl font-bold text-warning">{formatCurrency(monthlyDue)}</p>
+                        </div>
+                        <span className="text-[9px] font-black text-warning/70 uppercase tracking-widest">{remainingMonths} mo remaining</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-end">
                       <div className="space-y-1">
                         <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t('my_schemes.total_paid')}</p>
                         <p className="text-2xl font-bold text-primary">{formatCurrency(plan.totalPaid)}</p>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t('my_schemes.payments_due')}</p>
-                        <p className="text-lg font-bold text-accent">{paidMonths}/{duration}</p>
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Progress</p>
+                        <p className="text-lg font-bold text-accent">{paidMonths}/{duration} paid</p>
                       </div>
                     </div>
 

@@ -5,11 +5,12 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  loading?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', onClick, ...props }) => {
+export const Card: React.FC<CardProps> = ({ children, className = '', onClick, loading = false, ...props }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+    if (onClick && !loading && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       onClick();
     }
@@ -17,17 +18,24 @@ export const Card: React.FC<CardProps> = ({ children, className = '', onClick, .
 
   return (
     <div
-      onClick={onClick}
+      onClick={loading ? undefined : onClick}
       onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      tabIndex={onClick && !loading ? 0 : undefined}
       className={cn(
-        'bg-surface border border-border rounded-2xl p-4 shadow-subtle transition-all',
-        onClick && 'cursor-pointer active:scale-[0.98] hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        'bg-surface border border-border rounded-2xl p-4 shadow-subtle transition-all relative overflow-hidden',
+        onClick && !loading && 'cursor-pointer active:scale-[0.98] hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        loading && 'opacity-80 pointer-events-none cursor-wait',
         className
       )}
       {...props}
     >
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-[1px] z-20 flex items-center justify-center gap-2">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-bold text-primary">Loading...</span>
+        </div>
+      )}
       {children}
     </div>
   );

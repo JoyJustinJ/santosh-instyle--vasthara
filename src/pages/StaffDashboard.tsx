@@ -84,6 +84,15 @@ const StaffDashboard = () => {
     // Add loading states for OTP actions
     const [isVerifying, setIsVerifying] = useState(false);
     const [reportSourceView, setReportSourceView] = useState<ViewState | null>(null);
+    const [activeCardKey, setActiveCardKey] = useState<string | null>(null);
+
+    const handleCardNav = (key: string, action: () => void) => {
+        setActiveCardKey(key);
+        setTimeout(() => {
+            action();
+            setActiveCardKey(null);
+        }, 200);
+    };
 
 
     // Referral Report State (managers only)
@@ -882,24 +891,19 @@ const StaffDashboard = () => {
                         <div className="space-y-3">
                             <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Target Schemes</label>
                             {(() => {
-                                const visibleSchemes = customerActiveSchemes.filter((s: any) => {
-                                    const now = new Date();
-                                    const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
-                                    const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
-                                    const totalInstallmentsDue = monthsElapsed + 1;
-                                    const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
-                                    return dueMonths > 0;
-                                });
-
-                                if (visibleSchemes.length > 0) {
-                                    return visibleSchemes.map((s: any) => {
+                                if (customerActiveSchemes.length > 0) {
+                                    return customerActiveSchemes.map((s: any) => {
                                         const now = new Date();
                                         const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
                                         const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
                                         const totalInstallmentsDue = monthsElapsed + 1;
                                         const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
                                         const isLate = dueMonths > 1;
+                                        const isDue = dueMonths === 1;
                                         const targetAccId = s.accountId || s.id;
+                                        const totalDuration = Number(s.duration) || 11;
+                                        const paidCount = Number(s.monthsPaid) || 0;
+                                        const remainingMonths = totalDuration - paidCount;
 
                                         return (
                                             <div key={targetAccId} className="space-y-2">
@@ -910,12 +914,20 @@ const StaffDashboard = () => {
                                                         selectedPlans.includes(targetAccId) ? "border-accent bg-accent-light/30" : "border-border/50"
                                                     )}
                                                 >
-                                                    {isLate && (
+                                                    {isLate ? (
                                                         <div className="absolute top-0 right-0 bg-danger text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
                                                             LATE ({dueMonths} MO DUE)
                                                         </div>
+                                                    ) : isDue ? (
+                                                        <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
+                                                            DUE THIS MONTH
+                                                        </div>
+                                                    ) : (
+                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
+                                                            ACTIVE ({paidCount}/{totalDuration} PAID)
+                                                        </div>
                                                     )}
-                                                    <div className="flex justify-between items-center">
+                                                    <div className="flex justify-between items-center mt-1">
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn(
                                                                 "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
@@ -924,12 +936,13 @@ const StaffDashboard = () => {
                                                                 {selectedPlans.includes(targetAccId) && <CheckCircle2 size={14} className="text-white" />}
                                                             </div>
                                                             <div>
-                                                                <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : "text-primary")}>{s.name || 'Scheme'}</h4>
+                                                                <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : "text-primary")}>{s.name || s.schemeName || 'Scheme'}</h4>
+                                                                <p className="text-[10px] text-text-muted mt-0.5">{paidCount} Paid • {remainingMonths > 0 ? `${remainingMonths} Mo Remaining` : 'Completed'}</p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-sm font-bold text-primary">{formatCurrency(Number(s.monthlyAmount || s.amount || 0))}</p>
-                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">Due</p>
+                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">Per Month</p>
                                                         </div>
                                                     </div>
                                                 </Card>
@@ -939,7 +952,7 @@ const StaffDashboard = () => {
                                 } else if (depositCustomer.length >= 4) {
                                     return (
                                         <div className="p-6 border rounded-xl border-dashed flex flex-col items-center justify-center text-center">
-                                            <p className="text-sm text-text-muted">{customerActiveSchemes.length > 0 ? "All active schemes are fully paid up for this month." : "No active schemes found for this customer."}</p>
+                                            <p className="text-sm text-text-muted">No active schemes found for this customer.</p>
                                         </div>
                                     );
                                 }
@@ -1456,151 +1469,8 @@ const StaffDashboard = () => {
             );
         }
 
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                <div className="flex items-start gap-4 border-b border-border/50 pb-4">
-                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary mt-1">
-                        <ChevronLeft size={24} />
-                    </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <UserCheck className="text-accent" size={24} />
-                            <div>
-                                <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Staff Console</h1>
-                                <p className="text-[10px] font-black text-accent uppercase tracking-widest mt-0.5">
-                                    {user?.accessLevel === 'manager' ? 'Branch Manager' : user?.accessLevel === 'super' ? 'Super Staff' : 'Standard Staff'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Staff Stats */}
-                <div className="bg-primary rounded-2xl p-6 text-white relative overflow-hidden shadow-card">
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <Award size={20} className="text-[#D4AF37]" />
-                                <div>
-                                    <h4 className="font-display font-bold text-lg">Hello, {user?.firstName || 'Staff'}</h4>
-                                    <p className="text-xs text-white/90 mt-1.5 tracking-wide flex items-center">
-                                        Emp ID (Referral Code):
-                                        <span className="font-mono font-bold bg-white/20 px-2 py-0.5 rounded ml-2 text-white border border-white/30 shadow-sm">
-                                            {user?.empId || user?.phone || 'NOT ASSIGNED'}
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                    <Card onClick={() => setActiveView('deposit')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                        <div className="w-12 h-12 rounded-xl bg-success-light text-success flex items-center justify-center">
-                            <HandCoins size={24} />
-                        </div>
-                        <p className="text-xs font-bold text-primary">Manual Cash Receipt</p>
-                    </Card>
-
-                    <Card onClick={() => setActiveView('create_customer')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                        <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-                            <UserCheck size={24} />
-                        </div>
-                        <p className="text-xs font-bold text-primary">Create Customer</p>
-                    </Card>
-
-                    <Card onClick={() => setActiveView('enroll_customer')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                        <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-                            <PlusCircle size={24} />
-                        </div>
-                        <p className="text-xs font-bold text-primary">Enroll Customer</p>
-                    </Card>
-
-                    {user?.accessLevel === 'manager' && (
-                        <Card onClick={() => setActiveView('redemptions')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-                                <Users size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Redemptions</p>
-                        </Card>
-                    )}
-
-                    {user?.accessLevel === 'manager' && (
-                        <Card onClick={() => setActiveView('customer_lookup')} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
-                            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                                <Search size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Customer Lookup</p>
-                        </Card>
-                    )}
-
-                    {(user?.accessLevel === 'manager' || user?.accessLevel === 'super') && (
-                        <Card onClick={() => setActiveView('customer_report')} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
-                            <div className="w-12 h-12 rounded-xl bg-success/10 text-success flex items-center justify-center">
-                                <FileText size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Customer Report</p>
-                        </Card>
-                    )}
-
-                    {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
-                        <Card onClick={() => { loadStaffTransactions(); setActiveView('tally'); }} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
-                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-                                <FileText size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Daily Cash Tally</p>
-                        </Card>
-                    )}
-
-                    {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
-                        <Card onClick={() => { setReferralReportData([]); setActiveView('referrals'); }} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface col-span-2")}>
-                            <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
-                                <Users size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Incentive Referral Report</p>
-                        </Card>
-                    )}
-
-
-
-                    {user?.accessLevel === 'manager' && (
-                        <Card onClick={() => setActiveView('staff_approvals')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
-                                <Shield size={24} />
-                            </div>
-                            <p className="text-xs font-bold text-primary">Staff Approvals</p>
-                        </Card>
-                    )}
-
-                    {user?.accessLevel === 'manager' && (
-                        <>
-                            <Card onClick={() => navigate('/admin?view=management&activeView=transactions')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                                    <List size={24} />
-                                </div>
-                                <p className="text-xs font-bold text-primary">Transactions</p>
-                            </Card>
-                            <Card onClick={() => navigate('/admin?view=management&activeView=analytics')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                                <div className="w-12 h-12 rounded-xl bg-success/10 text-success flex items-center justify-center">
-                                    <BarChart3 size={24} />
-                                </div>
-                                <p className="text-xs font-bold text-primary">Analytics</p>
-                            </Card>
-                            <Card onClick={() => navigate('/admin?view=management&activeView=defaulters')} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
-                                <div className="w-12 h-12 rounded-xl bg-danger/10 text-danger flex items-center justify-center">
-                                    <AlertTriangle size={24} />
-                                </div>
-                                <p className="text-xs font-bold text-primary">Defaulters</p>
-                            </Card>
-                        </>
-                    )}
-                </div>
-            </motion.div>
-        );
-        // ====== REFERRAL REPORT VIEW (managers only) ======
-        if (activeView === 'referrals' && (user?.accessLevel === 'super' || user?.accessLevel === 'manager')) {
+        // ====== REFERRAL REPORT VIEW ======
+        if (activeView === 'referrals') {
             const handleFetchReferralReport = async () => {
                 if (!referralMonthStart || !referralMonthEnd) return;
                 setLoadingReferrals(true);
@@ -1781,7 +1651,141 @@ const StaffDashboard = () => {
         // ====== DEFAULT: OVERVIEW ======
         return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                <div>Overview placeholder - this branch is never reached if all views are handled above.</div>
+                <div className="flex items-start gap-4 border-b border-border/50 pb-4">
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-primary mt-1">
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <UserCheck className="text-accent" size={24} />
+                            <div>
+                                <h1 className="text-2xl font-display font-bold text-primary tracking-tight">Staff Console</h1>
+                                <p className="text-[10px] font-black text-accent uppercase tracking-widest mt-0.5">
+                                    {user?.accessLevel === 'manager' ? 'Branch Manager' : user?.accessLevel === 'super' ? 'Super Staff' : 'Standard Staff'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Staff Stats */}
+                <div className="bg-primary rounded-2xl p-6 text-white relative overflow-hidden shadow-card">
+                    <div className="flex justify-between items-start">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <Award size={20} className="text-[#D4AF37]" />
+                                <div>
+                                    <h4 className="font-display font-bold text-lg">Hello, {user?.firstName || 'Staff'}</h4>
+                                    <p className="text-xs text-white/90 mt-1.5 tracking-wide flex items-center">
+                                        Emp ID (Referral Code):
+                                        <span className="font-mono font-bold bg-white/20 px-2 py-0.5 rounded ml-2 text-white border border-white/30 shadow-sm">
+                                            {user?.empId || user?.phone || 'NOT ASSIGNED'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                    <Card loading={activeCardKey === 'deposit'} onClick={() => handleCardNav('deposit', () => setActiveView('deposit'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                        <div className="w-12 h-12 rounded-xl bg-success-light text-success flex items-center justify-center">
+                            <HandCoins size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-primary">Manual Cash Receipt</p>
+                    </Card>
+
+                    <Card loading={activeCardKey === 'create_customer'} onClick={() => handleCardNav('create_customer', () => setActiveView('create_customer'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                        <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                            <UserCheck size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-primary">Create Customer</p>
+                    </Card>
+
+                    <Card loading={activeCardKey === 'enroll_customer'} onClick={() => handleCardNav('enroll_customer', () => setActiveView('enroll_customer'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                        <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                            <PlusCircle size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-primary">Enroll Customer</p>
+                    </Card>
+
+                    {user?.accessLevel === 'manager' && (
+                        <Card loading={activeCardKey === 'redemptions'} onClick={() => handleCardNav('redemptions', () => setActiveView('redemptions'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                                <Users size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Redemptions</p>
+                        </Card>
+                    )}
+
+                    {user?.accessLevel === 'manager' && (
+                        <Card loading={activeCardKey === 'customer_lookup'} onClick={() => handleCardNav('customer_lookup', () => setActiveView('customer_lookup'))} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                <Search size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Customer Lookup</p>
+                        </Card>
+                    )}
+
+                    {(user?.accessLevel === 'manager' || user?.accessLevel === 'super') && (
+                        <Card loading={activeCardKey === 'customer_report'} onClick={() => handleCardNav('customer_report', () => setActiveView('customer_report'))} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
+                            <div className="w-12 h-12 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                                <FileText size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Customer Report</p>
+                        </Card>
+                    )}
+
+                    {(user?.accessLevel === 'super' || user?.accessLevel === 'manager') && (
+                        <Card loading={activeCardKey === 'tally'} onClick={() => handleCardNav('tally', () => { loadStaffTransactions(); setActiveView('tally'); })} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface")}>
+                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                                <FileText size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Daily Cash Tally</p>
+                        </Card>
+                    )}
+
+                    <Card loading={activeCardKey === 'referrals'} onClick={() => handleCardNav('referrals', () => { setReferralReportData([]); setActiveView('referrals'); })} className={cn("p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface col-span-2")}>
+                        <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                            <Users size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-primary">Incentive Referral Report</p>
+                    </Card>
+
+                    {user?.accessLevel === 'manager' && (
+                        <Card loading={activeCardKey === 'staff_approvals'} onClick={() => handleCardNav('staff_approvals', () => setActiveView('staff_approvals'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                            <div className="w-12 h-12 rounded-xl bg-accent-light text-accent flex items-center justify-center">
+                                <Shield size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-primary">Staff Approvals</p>
+                        </Card>
+                    )}
+
+                    {user?.accessLevel === 'manager' && (
+                        <>
+                            <Card loading={activeCardKey === 'admin_tx'} onClick={() => handleCardNav('admin_tx', () => navigate('/admin?view=management&activeView=transactions'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <List size={24} />
+                                </div>
+                                <p className="text-xs font-bold text-primary">Transactions</p>
+                            </Card>
+                            <Card loading={activeCardKey === 'admin_analytics'} onClick={() => handleCardNav('admin_analytics', () => navigate('/admin?view=management&activeView=analytics'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                                <div className="w-12 h-12 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                                    <BarChart3 size={24} />
+                                </div>
+                                <p className="text-xs font-bold text-primary">Analytics</p>
+                            </Card>
+                            <Card loading={activeCardKey === 'admin_defaulters'} onClick={() => handleCardNav('admin_defaulters', () => navigate('/admin?view=management&activeView=defaulters'))} className="p-4 flex flex-col items-center text-center space-y-2 border-none shadow-subtle cursor-pointer hover:bg-surface">
+                                <div className="w-12 h-12 rounded-xl bg-danger/10 text-danger flex items-center justify-center">
+                                    <AlertTriangle size={24} />
+                                </div>
+                                <p className="text-xs font-bold text-primary">Defaulters</p>
+                            </Card>
+                        </>
+                    )}
+                </div>
             </motion.div>
         );
     };
