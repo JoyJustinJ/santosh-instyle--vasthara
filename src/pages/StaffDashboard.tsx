@@ -373,11 +373,23 @@ const StaffDashboard = () => {
                     const targetAccId = p.accountId || p.id;
                     // Fetch transactions for this specific accountId
                     const schemeTxs = await getTransactionsFromDB(undefined, targetAccId);
+                    
+                    // DEBUG: log all transactions to console so we can see why paidThisMonth might be true
+                    console.group(`[SCHEME DEBUG] accountId=${targetAccId}`);
+                    console.log('Total transactions found:', schemeTxs.length);
+                    console.log('Current Month/Year:', currentMonth, currentYear);
+                    schemeTxs.forEach((t: any, i: number) => {
+                        const d = safeDate(t.timestamp || t.date);
+                        console.log(`TX[${i}]: status=${t.status}, rawTimestamp=${t.timestamp || t.date}, parsedMonth=${d.getMonth()}, parsedYear=${d.getFullYear()}, isThisMonth=${d.getMonth() === currentMonth && d.getFullYear() === currentYear}`);
+                    });
+                    
                     const paidThisMonth = schemeTxs.some(t => {
                         if (t.status === 'Failed') return false;
                         const d = safeDate(t.timestamp || t.date);
                         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
                     });
+                    console.log('paidThisMonth result:', paidThisMonth);
+                    console.groupEnd();
                     return { ...p, paidThisMonth };
                 }));
 
