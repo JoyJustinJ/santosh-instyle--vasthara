@@ -347,7 +347,6 @@ const StaffDashboard = () => {
         if (id.length >= 10) {
             try {
                 const userProfile: any = await getUserFromDB(id);
-                let allTxs: any[] = [];
                 let schemesToSet: any[] = [];
                 if (userProfile) {
                     setDepositCustomerProfile(userProfile);
@@ -359,30 +358,29 @@ const StaffDashboard = () => {
                     const combinedPlans = [...plansById, ...plansByPhone];
                     const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => (t.accountId || t.id) === (v.accountId || v.id)) === i);
                     schemesToSet = uniquePlans.filter((p: any) => p.status === 'active');
-                    
-                    const txById = await getTransactionsFromDB(userProfile.id);
-                    let txByPhone: any[] = [];
-                    if (userProfile.phone && userProfile.phone !== userProfile.id) {
-                        txByPhone = await getTransactionsFromDB(userProfile.phone);
-                    }
-                    allTxs = [...txById, ...txByPhone];
                 } else {
                     setDepositCustomerProfile(null);
                     const plans = await getUserPlansFromDB(id);
                     schemesToSet = plans.filter((p: any) => p.status === 'active');
-                    allTxs = await getTransactionsFromDB(id);
                 }
 
+                // For each scheme, query transactions by accountId directly (most reliable)
                 const now = new Date();
-                const enrichedSchemes = schemesToSet.map(p => {
-                    const planTxs = allTxs.filter(t => (t.accountId || t.schemeId) === (p.accountId || p.id) && t.status !== 'Failed');
-                    const thisMonthTxs = planTxs.filter(t => {
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                const enrichedSchemes = await Promise.all(schemesToSet.map(async (p) => {
+                    const targetAccId = p.accountId || p.id;
+                    // Fetch transactions for this specific accountId
+                    const schemeTxs = await getTransactionsFromDB(undefined, targetAccId);
+                    const paidThisMonth = schemeTxs.some(t => {
+                        if (t.status === 'Failed') return false;
                         const d = safeDate(t.timestamp || t.date);
-                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
                     });
-                    return { ...p, paidThisMonth: thisMonthTxs.length > 0 };
-                });
-                
+                    return { ...p, paidThisMonth };
+                }));
+
                 setCustomerActiveSchemes(enrichedSchemes);
             } catch (err) {
                 console.error("Error fetching customer info:", err);
