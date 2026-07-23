@@ -536,7 +536,7 @@ const AdminDashboard = () => {
             const { addAuditLog } = await import('../services/db');
 
             for (const accountId of selectedPlans) {
-                const s = customerActiveSchemes.find(p => p.accountId === accountId);
+                const s = customerActiveSchemes.find(p => (p.accountId || p.id) === accountId);
                 if (!s) continue;
 
                 const monthsToPay = depositMonthsConfig[accountId] || 1;
