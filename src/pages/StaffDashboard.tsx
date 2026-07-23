@@ -387,13 +387,13 @@ const StaffDashboard = () => {
                     console.log('Total transactions found:', schemeTxs.length);
                     console.log('Current Month/Year:', currentMonth, currentYear);
                     schemeTxs.forEach((t: any, i: number) => {
-                        const d = safeDate(t.timestamp || t.date);
-                        console.log(`TX[${i}]: status=${t.status}, rawTimestamp=${t.timestamp || t.date}, parsedMonth=${d.getMonth()}, parsedYear=${d.getFullYear()}, isThisMonth=${d.getMonth() === currentMonth && d.getFullYear() === currentYear}`);
+                        const d = safeDate(t.date || t.timestamp);
+                        console.log(`TX[${i}]: status=${t.status}, rawDate=${t.date || t.timestamp}, parsedMonth=${d.getMonth()}, parsedYear=${d.getFullYear()}, isThisMonth=${d.getMonth() === currentMonth && d.getFullYear() === currentYear}`);
                     });
                     
                     const paidThisMonth = schemeTxs.some((t: any) => {
                         if (t.status === 'Failed') return false;
-                        const d = safeDate(t.timestamp || t.date);
+                        const d = safeDate(t.date || t.timestamp);
                         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
                     });
                     console.log('paidThisMonth result:', paidThisMonth);

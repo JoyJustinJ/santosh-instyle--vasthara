@@ -124,7 +124,7 @@ export const getTransactionsFromDB = async (userId?: string, accountId?: string)
         }
 
         return results.sort((a: any, b: any) =>
-            safeDate(a.timestamp || a.date).getTime() - safeDate(b.timestamp || b.date).getTime()
+            safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime()
         );
     } catch (e) {
         console.error('Error fetching transactions:', e);
