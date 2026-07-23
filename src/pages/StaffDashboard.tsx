@@ -372,7 +372,15 @@ const StaffDashboard = () => {
                 const enrichedSchemes = await Promise.all(schemesToSet.map(async (p) => {
                     const targetAccId = p.accountId || p.id;
                     // Fetch transactions for this specific accountId
-                    const schemeTxs = await getTransactionsFromDB(undefined, targetAccId);
+                    const schemeTxsRaw = await getTransactionsFromDB(undefined, targetAccId);
+                    
+                    // Filter out transactions belonging to other users (accountId is not globally unique)
+                    const schemeTxs = schemeTxsRaw.filter((tx: any) => 
+                        tx.userId === userProfile.id || 
+                        tx.userId === userProfile.phone || 
+                        tx.userId === userProfile.customerId ||
+                        tx.userPhone === userProfile.phone
+                    );
                     
                     // DEBUG: log all transactions to console so we can see why paidThisMonth might be true
                     console.group(`[SCHEME DEBUG] accountId=${targetAccId}`);
@@ -383,7 +391,7 @@ const StaffDashboard = () => {
                         console.log(`TX[${i}]: status=${t.status}, rawTimestamp=${t.timestamp || t.date}, parsedMonth=${d.getMonth()}, parsedYear=${d.getFullYear()}, isThisMonth=${d.getMonth() === currentMonth && d.getFullYear() === currentYear}`);
                     });
                     
-                    const paidThisMonth = schemeTxs.some(t => {
+                    const paidThisMonth = schemeTxs.some((t: any) => {
                         if (t.status === 'Failed') return false;
                         const d = safeDate(t.timestamp || t.date);
                         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
