@@ -24,5 +24,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "fetch_txs.ts", "fetch_txs_m.js"]
+  "include": ["src", "fetch_txs.ts", "fetch_txs_m.js", "check_schemes.ts"]
 }
