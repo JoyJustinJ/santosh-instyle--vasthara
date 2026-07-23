@@ -21,7 +21,8 @@
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "fetch_txs.ts", "fetch_txs_m.js"]
 }

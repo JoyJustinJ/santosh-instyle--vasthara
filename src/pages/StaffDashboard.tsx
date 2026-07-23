@@ -288,7 +288,7 @@ const StaffDashboard = () => {
                 if (!s) continue;
 
                 const paid = Number(s.monthlyAmount || s.amount || 0);
-                const targetDocId = s.accountId || s.id || accountId;
+                const targetDocId = s.id;
                 const schemeRef = doc(db, "user_schemes", targetDocId);
                 const nextMonthsPaid = Number(s.monthsPaid || 0) + 1;
                 const isCompleted = nextMonthsPaid >= Number(s.duration || 0);
@@ -303,7 +303,7 @@ const StaffDashboard = () => {
                     userId: userId,
                     userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
-                    accountId: targetDocId,
+                    accountId: s.accountId || targetDocId,
                     amount: paid,
                     type: 'deposit',
                     status: 'Success',
@@ -2126,7 +2126,7 @@ const StaffDashboard = () => {
                             return;
                         }
 
-                        const success = await markSchemeAsRedeemed(fulfillmentTarget.accountId, user!.id);
+                        const success = await markSchemeAsRedeemed(fulfillmentTarget.id, user!.id);
                         if (success) {
                             const txs = await getTransactionsFromDB(fulfillmentTarget.userId, fulfillmentTarget.accountId);
                             showNotification('Scheme marked as closed and fulfilled!', 'success');

@@ -673,14 +673,14 @@ export const getAuditLogsFromDB = async () => {
 };
 
 // ================= REDEMPTIONS & INCENTIVES =================
-export const markSchemeAsRedeemed = async (accountId: string, staffId: string) => {
+export const markSchemeAsRedeemed = async (docId: string, staffId: string) => {
     try {
-        await updateDoc(doc(db, "user_schemes", accountId), {
+        await updateDoc(doc(db, "user_schemes", docId), {
             status: 'closed',
             closedAt: new Date().toISOString(),
             redeemedBy: staffId
         });
-        await addAuditLog('SCHEME_REDEEMED', staffId, { accountId });
+        await addAuditLog('SCHEME_REDEEMED', staffId, { accountId: docId });
         return true;
     } catch (e) {
         console.error("Error redeeming scheme:", e);
@@ -688,14 +688,14 @@ export const markSchemeAsRedeemed = async (accountId: string, staffId: string) =
     }
 };
 
-export const preCloseScheme = async (accountId: string) => {
+export const preCloseScheme = async (docId: string) => {
     try {
-        await updateDoc(doc(db, "user_schemes", accountId), {
+        await updateDoc(doc(db, "user_schemes", docId), {
             status: 'closed',
             closedAt: new Date().toISOString(),
             isPreClosed: true
         });
-        await addAuditLog('SCHEME_PRE_CLOSED', '', { accountId });
+        await addAuditLog('SCHEME_PRE_CLOSED', '', { accountId: docId });
         return true;
     } catch (e) {
         console.error("Error pre-closing scheme:", e);

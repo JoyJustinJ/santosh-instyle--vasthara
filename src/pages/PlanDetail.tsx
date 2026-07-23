@@ -92,7 +92,7 @@ const PlanDetail = () => {
     try {
       const result = await verifyOTP(user.phone, otp);
       if (result.success) {
-        const success = await preCloseScheme(plan.accountId);
+        const success = await preCloseScheme(plan.id);
         if (success) {
            showNotification(`Scheme ${plan.name} pre-closed successfully.`, 'success');
            setOtpModalOpen(false);

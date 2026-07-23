@@ -541,7 +541,7 @@ const AdminDashboard = () => {
 
                 const monthsToPay = depositMonthsConfig[accountId] || 1;
                 const paid = Number(s.monthlyAmount || s.amount || 0) * monthsToPay;
-                const schemeRef = doc(db, "user_schemes", accountId);
+                const schemeRef = doc(db, "user_schemes", s.id);
                 const nextMonthsPaid = (s.monthsPaid || 0) + monthsToPay;
                 const isCompleted = nextMonthsPaid >= (s.duration || 0);
                 await updateDoc(schemeRef, {
@@ -959,7 +959,7 @@ const AdminDashboard = () => {
                 return;
             }
             
-            await preCloseScheme(adminPreCloseTarget.accountId);
+            await preCloseScheme(adminPreCloseTarget.id);
             showNotif(`Scheme ${adminPreCloseTarget.schemeName || adminPreCloseTarget.name} pre-closed successfully.`, 'success');
             
             setAdminPreCloseModalOpen(false);
@@ -3664,7 +3664,7 @@ const AdminDashboard = () => {
                                 return;
                             }
                             
-                            const success = await markSchemeAsRedeemed(fulfillmentTarget.accountId, user!.id);
+                            const success = await markSchemeAsRedeemed(fulfillmentTarget.id, user!.id);
                             if (success) {
                                 const txs = await getTransactionsFromDB(fulfillmentTarget.userId, fulfillmentTarget.accountId);
                                 showNotif('Scheme marked as closed and fulfilled!', 'success');
