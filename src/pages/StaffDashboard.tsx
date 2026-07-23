@@ -538,18 +538,294 @@ const StaffDashboard = () => {
     };
 
     const downloadReportPDF = async () => {
-        showNotification('Generating PDF, please wait...', 'info');
-        const element = document.getElementById('customer-report-content');
-        if (!element) {
-            showNotification('Error: Report element not found', 'error');
-            return;
-        }
+        if (!reportCustomer) return;
+        showNotification('Generating invoice PDF...', 'info');
 
         try {
-            await downloadAsPDF(element, `${reportCustomer?.firstName || 'customer'}_report`);
-            showNotification('PDF downloaded successfully!', 'success');
+            const { jsPDF } = await import('jspdf');
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+            const W = 595.28;
+            const MARGIN = 40;
+            const contentW = W - MARGIN * 2;
+            let y = 0;
+
+            const colors = {
+                primary: [30, 90, 60] as [number, number, number],
+                accent: [16, 160, 100] as [number, number, number],
+                success: [22, 163, 74] as [number, number, number],
+                danger: [220, 38, 38] as [number, number, number],
+                muted: [100, 100, 100] as [number, number, number],
+                border: [220, 220, 220] as [number, number, number],
+                lightBg: [245, 250, 247] as [number, number, number],
+                white: [255, 255, 255] as [number, number, number],
+            };
+
+            const addPage = () => {
+                pdf.addPage();
+                y = MARGIN;
+            };
+
+            const checkPageBreak = (neededHeight: number) => {
+                if (y + neededHeight > 820) addPage();
+            };
+
+            // ── HEADER BAND ──────────────────────────────────────────
+            pdf.setFillColor(...colors.primary);
+            pdf.rect(0, 0, W, 90, 'F');
+
+            // Brand name
+            pdf.setTextColor(...colors.white);
+            pdf.setFontSize(26);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('SANTHOSH SILKS', MARGIN, 38);
+
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('VASTHARA', MARGIN, 52);
+
+            // Report label (right aligned)
+            pdf.setFontSize(18);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('CUSTOMER STATEMENT', W - MARGIN, 35, { align: 'right' });
+
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            const genDate = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
+            pdf.text(`Generated: ${genDate}`, W - MARGIN, 50, { align: 'right' });
+
+            y = 110;
+
+            // ── CUSTOMER INFO CARD ────────────────────────────────────
+            pdf.setFillColor(...colors.lightBg);
+            pdf.roundedRect(MARGIN, y, contentW, 80, 6, 6, 'F');
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.5);
+            pdf.roundedRect(MARGIN, y, contentW, 80, 6, 6, 'S');
+
+            const halfW = contentW / 2;
+
+            // Left col
+            pdf.setTextColor(...colors.muted);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('CUSTOMER NAME', MARGIN + 12, y + 18);
+            pdf.setTextColor(...colors.primary);
+            pdf.setFontSize(13);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`${reportCustomer.firstName || ''} ${reportCustomer.lastName || ''}`.trim(), MARGIN + 12, y + 32);
+
+            pdf.setTextColor(...colors.muted);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('CUSTOMER ID', MARGIN + 12, y + 52);
+            pdf.setTextColor(60, 60, 60);
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(reportCustomer.customerId || reportCustomer.id || 'N/A', MARGIN + 12, y + 65);
+
+            // Right col
+            pdf.setTextColor(...colors.muted);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('PHONE NUMBER', MARGIN + halfW + 12, y + 18);
+            pdf.setTextColor(...colors.primary);
+            pdf.setFontSize(13);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(reportCustomer.phone || 'N/A', MARGIN + halfW + 12, y + 32);
+
+            pdf.setTextColor(...colors.muted);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('JOINED DATE', MARGIN + halfW + 12, y + 52);
+            pdf.setTextColor(60, 60, 60);
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const joinedDate = reportCustomer.createdAt
+                ? new Date(reportCustomer.createdAt).toLocaleDateString('en-IN')
+                : 'N/A';
+            pdf.text(joinedDate, MARGIN + halfW + 12, y + 65);
+
+            y += 98;
+
+            // ── SCHEMES SECTION ───────────────────────────────────────
+            const filteredSchemes = reportSchemeTab === 'all'
+                ? reportSchemes
+                : reportSchemes.filter(s => (s.status || 'active') === reportSchemeTab);
+
+            filteredSchemes.forEach((scheme: any, idx: number) => {
+                const schemeTxs: any[] = reportTransactions[scheme.accountId] || [];
+
+                checkPageBreak(110);
+
+                // Scheme header bar
+                pdf.setFillColor(...colors.primary);
+                pdf.roundedRect(MARGIN, y, contentW, 34, 5, 5, 'F');
+
+                pdf.setTextColor(...colors.white);
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`SCHEME ${idx + 1}`, MARGIN + 10, y + 13);
+
+                pdf.setFontSize(12);
+                pdf.text(scheme.schemeName || scheme.name || 'Scheme', MARGIN + 10, y + 27);
+
+                // Status badge
+                const status = (scheme.status || 'active').toUpperCase();
+                pdf.setFillColor(...(status === 'ACTIVE' ? colors.accent : status === 'COMPLETED' ? colors.success : colors.danger));
+                pdf.roundedRect(W - MARGIN - 70, y + 8, 60, 18, 4, 4, 'F');
+                pdf.setTextColor(...colors.white);
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(status, W - MARGIN - 40, y + 21, { align: 'center' });
+
+                y += 44;
+
+                // Scheme details row
+                pdf.setFillColor(240, 248, 244);
+                pdf.rect(MARGIN, y, contentW, 36, 'F');
+                pdf.setDrawColor(...colors.border);
+                pdf.rect(MARGIN, y, contentW, 36, 'S');
+
+                const cols = contentW / 4;
+                const schemeDetails = [
+                    { label: 'MONTHLY AMOUNT', value: `Rs.${Number(scheme.monthlyAmount || scheme.amount || 0).toLocaleString('en-IN')}` },
+                    { label: 'MONTHS PAID', value: `${scheme.monthsPaid || 0} / ${scheme.duration || 'N/A'}` },
+                    { label: 'TOTAL PAID', value: `Rs.${Number(scheme.totalPaid || 0).toLocaleString('en-IN')}` },
+                    { label: 'ENROLLED ON', value: scheme.enrollmentDate ? new Date(scheme.enrollmentDate).toLocaleDateString('en-IN') : 'N/A' },
+                ];
+
+                schemeDetails.forEach((detail, i) => {
+                    const cx = MARGIN + cols * i + cols / 2;
+                    pdf.setTextColor(...colors.muted);
+                    pdf.setFontSize(6.5);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(detail.label, cx, y + 13, { align: 'center' });
+                    pdf.setTextColor(...colors.primary);
+                    pdf.setFontSize(10);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(detail.value, cx, y + 27, { align: 'center' });
+                });
+
+                y += 46;
+
+                // Transactions table header
+                checkPageBreak(30);
+                pdf.setFillColor(30, 90, 60);
+                pdf.rect(MARGIN, y, contentW, 20, 'F');
+
+                pdf.setTextColor(...colors.white);
+                pdf.setFontSize(7.5);
+                pdf.setFont('helvetica', 'bold');
+                const txColW = [contentW * 0.08, contentW * 0.25, contentW * 0.25, contentW * 0.22, contentW * 0.20];
+                const txHeaders = ['#', 'DATE', 'TYPE', 'METHOD', 'AMOUNT'];
+                let cx = MARGIN;
+                txHeaders.forEach((h, i) => {
+                    pdf.text(h, cx + (i === 0 ? 4 : 6), y + 14);
+                    cx += txColW[i];
+                });
+                y += 20;
+
+                if (schemeTxs.length === 0) {
+                    checkPageBreak(22);
+                    pdf.setFillColor(252, 252, 252);
+                    pdf.rect(MARGIN, y, contentW, 22, 'F');
+                    pdf.setDrawColor(...colors.border);
+                    pdf.rect(MARGIN, y, contentW, 22, 'S');
+                    pdf.setTextColor(...colors.muted);
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.text('No transactions recorded for this scheme.', MARGIN + contentW / 2, y + 14, { align: 'center' });
+                    y += 22;
+                } else {
+                    schemeTxs.forEach((tx: any, txIdx: number) => {
+                        checkPageBreak(22);
+                        const rowBg = txIdx % 2 === 0 ? [252, 252, 252] : [242, 248, 245];
+                        pdf.setFillColor(rowBg[0], rowBg[1], rowBg[2]);
+                        pdf.rect(MARGIN, y, contentW, 22, 'F');
+                        pdf.setDrawColor(...colors.border);
+                        pdf.rect(MARGIN, y, contentW, 22, 'S');
+
+                        const txDate = tx.date
+                            ? tx.date
+                            : tx.timestamp
+                            ? new Date(tx.timestamp).toLocaleDateString('en-IN')
+                            : 'N/A';
+                        const txType = (tx.type || 'Cash Receipt').replace(/_/g, ' ');
+                        const txMethod = tx.method || 'CASH';
+                        const txAmt = `Rs.${Number(tx.amount || 0).toLocaleString('en-IN')}`;
+
+                        const rowData = [`${txIdx + 1}`, txDate, txType, txMethod, txAmt];
+                        let rxc = MARGIN;
+                        rowData.forEach((val, i) => {
+                            pdf.setTextColor(i === 4 ? colors.success[0] : 50, i === 4 ? colors.success[1] : 50, i === 4 ? colors.success[2] : 50);
+                            pdf.setFontSize(8);
+                            pdf.setFont('helvetica', i === 4 ? 'bold' : 'normal');
+                            pdf.text(String(val), rxc + (i === 0 ? 4 : 6), y + 15);
+                            rxc += txColW[i];
+                        });
+
+                        y += 22;
+                    });
+
+                    // Scheme total row
+                    const schemeTotal = schemeTxs.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+                    checkPageBreak(26);
+                    pdf.setFillColor(...colors.accent);
+                    pdf.rect(MARGIN, y, contentW, 24, 'F');
+                    pdf.setTextColor(...colors.white);
+                    pdf.setFontSize(9);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text('SCHEME TOTAL', MARGIN + 8, y + 16);
+                    pdf.text(`Rs.${schemeTotal.toLocaleString('en-IN')}`, W - MARGIN - 6, y + 16, { align: 'right' });
+                    y += 24;
+                }
+
+                y += 18; // spacing between schemes
+            });
+
+            // ── GRAND TOTAL ───────────────────────────────────────────
+            checkPageBreak(50);
+            const grandTotal = Object.values(reportTransactions).flat().reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+            pdf.setFillColor(...colors.primary);
+            pdf.roundedRect(MARGIN, y, contentW, 40, 6, 6, 'F');
+            pdf.setTextColor(...colors.white);
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('GRAND TOTAL PAID', MARGIN + 14, y + 26);
+            pdf.setFontSize(16);
+            pdf.text(`Rs.${grandTotal.toLocaleString('en-IN')}`, W - MARGIN - 14, y + 26, { align: 'right' });
+            y += 56;
+
+            // ── FOOTER ────────────────────────────────────────────────
+            checkPageBreak(40);
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.5);
+            pdf.line(MARGIN, y, W - MARGIN, y);
+            y += 12;
+            pdf.setTextColor(...colors.muted);
+            pdf.setFontSize(7.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('This is a computer-generated statement. No signature required.', W / 2, y, { align: 'center' });
+            pdf.text('Santhosh Silks — VASTHARA Customer Report', W / 2, y + 12, { align: 'center' });
+
+            // Page numbers
+            const pageCount = pdf.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(7);
+                pdf.setTextColor(...colors.muted);
+                pdf.text(`Page ${i} of ${pageCount}`, W - MARGIN, 841.89 - 20, { align: 'right' });
+            }
+
+            const filename = `${reportCustomer.firstName || 'customer'}_statement_${new Date().toISOString().split('T')[0]}.pdf`;
+            const { downloadFile } = await import('../utils/download');
+            const base64Data = pdf.output('datauristring').split(',')[1];
+            await downloadFile(base64Data, filename, 'application/pdf', true);
+
+            showNotification('Invoice PDF downloaded!', 'success');
         } catch (error: any) {
-            console.error("Error generating PDF:", error);
+            console.error('Error generating PDF:', error);
             showNotification(`Failed to generate PDF: ${error.message}`, 'error');
         }
     };
