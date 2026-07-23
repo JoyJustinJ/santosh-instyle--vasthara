@@ -372,12 +372,12 @@ const StaffDashboard = () => {
                     schemesToSet = plans.filter((p: any) => p.status === 'active');
                     allTxs = await getTransactionsFromDB(id);
                 }
-                
+
                 const now = new Date();
                 const enrichedSchemes = schemesToSet.map(p => {
                     const planTxs = allTxs.filter(t => (t.accountId || t.schemeId) === (p.accountId || p.id) && t.status !== 'Failed');
                     const thisMonthTxs = planTxs.filter(t => {
-                        const d = safeDate(t.timestamp);
+                        const d = safeDate(t.timestamp || t.date);
                         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                     });
                     return { ...p, paidThisMonth: thisMonthTxs.length > 0 };
