@@ -347,6 +347,8 @@ const StaffDashboard = () => {
         if (id.length >= 10) {
             try {
                 const userProfile: any = await getUserFromDB(id);
+                let allTxs: any[] = [];
+                let schemesToSet: any[] = [];
                 if (userProfile) {
                     setDepositCustomerProfile(userProfile);
                     const plansById = await getUserPlansFromDB(userProfile.id);
@@ -356,13 +358,32 @@ const StaffDashboard = () => {
                     }
                     const combinedPlans = [...plansById, ...plansByPhone];
                     const uniquePlans = combinedPlans.filter((v, i, a) => a.findIndex(t => (t.accountId || t.id) === (v.accountId || v.id)) === i);
-
-                    setCustomerActiveSchemes(uniquePlans.filter((p: any) => p.status === 'active'));
+                    schemesToSet = uniquePlans.filter((p: any) => p.status === 'active');
+                    
+                    const txById = await getTransactionsFromDB(userProfile.id);
+                    let txByPhone: any[] = [];
+                    if (userProfile.phone && userProfile.phone !== userProfile.id) {
+                        txByPhone = await getTransactionsFromDB(userProfile.phone);
+                    }
+                    allTxs = [...txById, ...txByPhone];
                 } else {
                     setDepositCustomerProfile(null);
                     const plans = await getUserPlansFromDB(id);
-                    setCustomerActiveSchemes(plans.filter((p: any) => p.status === 'active'));
+                    schemesToSet = plans.filter((p: any) => p.status === 'active');
+                    allTxs = await getTransactionsFromDB(id);
                 }
+                
+                const now = new Date();
+                const enrichedSchemes = schemesToSet.map(p => {
+                    const planTxs = allTxs.filter(t => (t.accountId || t.schemeId) === (p.accountId || p.id) && t.status !== 'Failed');
+                    const thisMonthTxs = planTxs.filter(t => {
+                        const d = safeDate(t.timestamp);
+                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    });
+                    return { ...p, paidThisMonth: thisMonthTxs.length > 0 };
+                });
+                
+                setCustomerActiveSchemes(enrichedSchemes);
             } catch (err) {
                 console.error("Error fetching customer info:", err);
             }
@@ -893,13 +914,6 @@ const StaffDashboard = () => {
                             {(() => {
                                 if (customerActiveSchemes.length > 0) {
                                     return customerActiveSchemes.map((s: any) => {
-                                        const now = new Date();
-                                        const joinDate = safeDate(s.joinedAt || s.enrollmentDate || s.createdAt || now);
-                                        const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
-                                        const totalInstallmentsDue = monthsElapsed + 1;
-                                        const dueMonths = totalInstallmentsDue - (s.monthsPaid || 0);
-                                        const isLate = dueMonths > 1;
-                                        const isDue = dueMonths === 1;
                                         const targetAccId = s.accountId || s.id;
                                         const totalDuration = Number(s.duration) || 11;
                                         const paidCount = Number(s.monthsPaid) || 0;
@@ -908,23 +922,23 @@ const StaffDashboard = () => {
                                         return (
                                             <div key={targetAccId} className="space-y-2">
                                                 <Card
-                                                    onClick={() => togglePlan(targetAccId)}
+                                                    onClick={() => {
+                                                        if (!s.paidThisMonth) togglePlan(targetAccId);
+                                                        else showNotification("Payment for this month already recorded. Missed dues are extended.", "warning");
+                                                    }}
                                                     className={cn(
-                                                        "p-4 border-2 transition-all cursor-pointer relative overflow-hidden",
+                                                        "p-4 border-2 transition-all relative overflow-hidden",
+                                                        !s.paidThisMonth ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                                                         selectedPlans.includes(targetAccId) ? "border-accent bg-accent-light/30" : "border-border/50"
                                                     )}
                                                 >
-                                                    {isLate ? (
-                                                        <div className="absolute top-0 right-0 bg-danger text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
-                                                            LATE ({dueMonths} MO DUE)
-                                                        </div>
-                                                    ) : isDue ? (
-                                                        <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
-                                                            DUE THIS MONTH
+                                                    {s.paidThisMonth ? (
+                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
+                                                            PAID THIS MONTH
                                                         </div>
                                                     ) : (
-                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
-                                                            ACTIVE ({paidCount}/{totalDuration} PAID)
+                                                        <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
+                                                            DUE THIS MONTH
                                                         </div>
                                                     )}
                                                     <div className="flex justify-between items-center mt-1">
@@ -936,7 +950,7 @@ const StaffDashboard = () => {
                                                                 {selectedPlans.includes(targetAccId) && <CheckCircle2 size={14} className="text-white" />}
                                                             </div>
                                                             <div>
-                                                                <h4 className={cn("font-bold text-sm", isLate ? "text-danger" : "text-primary")}>{s.name || s.schemeName || 'Scheme'}</h4>
+                                                                <h4 className={cn("font-bold text-sm", !s.paidThisMonth ? "text-primary" : "text-success")}>{s.name || s.schemeName || 'Scheme'}</h4>
                                                                 <p className="text-[10px] text-text-muted mt-0.5">{paidCount} Paid • {remainingMonths > 0 ? `${remainingMonths} Mo Remaining` : 'Completed'}</p>
                                                             </div>
                                                         </div>
