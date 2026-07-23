@@ -1352,9 +1352,9 @@ const StaffDashboard = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="flex justify-between items-center border-b border-border pb-2">
+                                    <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-3 border-b border-border pb-3">
                                         <h3 className="text-lg font-black text-primary uppercase tracking-wider">Schemes & Transactions</h3>
-                                        <div className="flex gap-1">
+                                        <div className="flex flex-wrap gap-2">
                                             {(['all', 'active', 'completed', 'closed'] as const).map(tab => (
                                                 <button
                                                     key={tab}
