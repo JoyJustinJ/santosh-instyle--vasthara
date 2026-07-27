@@ -1808,7 +1808,6 @@ const StaffDashboard = () => {
                         const joinedAt = dateStr ? safeDate(dateStr) : null;
                         if (!joinedAt || isNaN(joinedAt.getTime()) || joinedAt < start || joinedAt > end) return;
                         const enrollee = userMap[data.userId] || {};
-                        const referrer = staffMap[refCode] || {};
                         const masterScheme = ProgramsList.find((s: any) =>
                             s.id === data.planId || s.name === data.name || s.name === data.schemeName
                         );
@@ -1819,7 +1818,6 @@ const StaffDashboard = () => {
                             enrolleePhone: enrollee.phone || data.userId,
                             enrolledAt: formatDate(joinedAt),
                             referrerEmpId: refCode,
-                            referrerName: referrer.firstName ? `${referrer.firstName} ${referrer.lastName || ''}`.trim() : refCode,
                             amount: data.amount || data.monthlyAmount || 0,
                             incentiveAmt,
                         });
@@ -1836,26 +1834,26 @@ const StaffDashboard = () => {
             const handleExportExcel = async () => {
                 if (!referralReportData.length) return;
                 const XLSX = await import('xlsx');
-                const headers = ['Scheme ID', 'Scheme Name', 'Enrollee Name', 'Enrollee Phone', 'Enrolled Date', 'Referrer EMP ID', 'Referrer Name', 'Monthly Amount (₹)', 'Incentive Earned (₹)'];
-                const rows = referralReportData.map(r => [r.schemeId, r.schemeName, r.enrolleeName, r.enrolleePhone, r.enrolledAt, r.referrerEmpId, r.referrerName, r.amount, r.incentiveAmt]);
+                const headers = ['Scheme ID', 'Scheme Name', 'Enrollee Name', 'Enrollee Phone', 'Enrolled Date', 'Referrer EMP ID', 'Monthly Amount (₹)', 'Incentive Earned (₹)'];
+                const rows = referralReportData.map(r => [r.schemeId, r.schemeName, r.enrolleeName, r.enrolleePhone, r.enrolledAt, r.referrerEmpId, r.amount, r.incentiveAmt]);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Referral Details');
-                const summary: Record<string, { name: string; count: number; total: number; incentiveTotal: number }> = {};
+                const summary: Record<string, { count: number; total: number; incentiveTotal: number }> = {};
                 referralReportData.forEach(r => {
-                    if (!summary[r.referrerEmpId]) summary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0, incentiveTotal: 0 };
+                    if (!summary[r.referrerEmpId]) summary[r.referrerEmpId] = { count: 0, total: 0, incentiveTotal: 0 };
                     summary[r.referrerEmpId].count++;
                     summary[r.referrerEmpId].total += Number(r.amount);
                     summary[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt);
                 });
-                const sumRows = Object.entries(summary).map(([id, v]) => [id, v.name, v.count, v.total, v.incentiveTotal]);
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Name', 'Total Referrals', 'Total Monthly Value (₹)', 'Total Incentive Earned (₹)'], ...sumRows]), 'Summary');
+                const sumRows = Object.entries(summary).map(([id, v]) => [id, v.count, v.total, v.incentiveTotal]);
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Emp ID', 'Total Referrals', 'Total Monthly Value (₹)', 'Total Incentive Earned (₹)'], ...sumRows]), 'Summary');
                 const base64Data = workbookToBase64(wb, XLSX);
                 await downloadFile(base64Data, `Incentive_Report_${referralMonthStart}_to_${referralMonthEnd}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true);
             };
 
-            const empSummary: Record<string, { name: string; count: number; total: number; incentiveTotal: number }> = {};
+            const empSummary: Record<string, { count: number; total: number; incentiveTotal: number }> = {};
             referralReportData.forEach(r => {
-                if (!empSummary[r.referrerEmpId]) empSummary[r.referrerEmpId] = { name: r.referrerName, count: 0, total: 0, incentiveTotal: 0 };
+                if (!empSummary[r.referrerEmpId]) empSummary[r.referrerEmpId] = { count: 0, total: 0, incentiveTotal: 0 };
                 empSummary[r.referrerEmpId].count++;
                 empSummary[r.referrerEmpId].total += Number(r.amount);
                 empSummary[r.referrerEmpId].incentiveTotal += Number(r.incentiveAmt);
@@ -1904,8 +1902,7 @@ const StaffDashboard = () => {
                                     <Card key={empId} className="p-4 border-none shadow-subtle bg-white">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-bold text-primary text-sm">{s.name}</p>
-                                                <p className="text-[10px] text-text-muted mt-0.5">EMP ID: {empId}</p>
+                                                <p className="font-bold text-primary text-sm">EMP ID: {empId}</p>
                                                 <p className="text-[10px] text-text-muted mt-0.5">{s.count} referral{s.count !== 1 ? 's' : ''} • ₹{s.total.toLocaleString()}/mo value</p>
                                             </div>
                                             <div className="text-right">
@@ -1936,8 +1933,7 @@ const StaffDashboard = () => {
                                                 <p className="text-[10px] text-text-muted">Enrolled: {r.enrolledAt}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xs font-bold text-accent">Ref: {r.referrerName}</p>
-                                                <p className="text-[10px] text-text-muted">EMP: {r.referrerEmpId}</p>
+                                                <p className="text-xs font-bold text-accent">EMP ID: {r.referrerEmpId}</p>
                                                 <p className="text-sm font-bold text-success">₹{r.amount}/mo</p>
                                                 {r.incentiveAmt > 0 && (
                                                     <p className="text-[10px] font-bold text-success mt-0.5">+₹{r.incentiveAmt} incentive</p>
