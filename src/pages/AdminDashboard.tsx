@@ -893,7 +893,7 @@ const AdminDashboard = () => {
         setLoadingReport(true);
         try {
             const { getUserFromDB, getUserPlansFromDB, getTransactionsFromDB } = await import('../services/db');
-            const customerData = await getUserFromDB(phoneToSearch);
+            const customerData: any = await getUserFromDB(phoneToSearch);
             
             if (!customerData) {
                 showNotif("Customer not found", 'error');

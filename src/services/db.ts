@@ -234,7 +234,7 @@ export const createUserProfile = async (uidOrData: any, userData?: any) => {
     }
 };
 
-export const getUserFromDB = async (uidOrPhoneOrId: string) => {
+export const getUserFromDB = async (uidOrPhoneOrId: string): Promise<{ id: string; [key: string]: any } | null> => {
     try {
         // 1. Try UID (Doc ID)
         const docRef = doc(db, "users", uidOrPhoneOrId);
