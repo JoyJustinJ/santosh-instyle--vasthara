@@ -1577,8 +1577,8 @@ const AdminDashboard = () => {
             }
 
             const calculatedTxTotal = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-            const totalPaid = Math.max(Number(plan.totalPaid || 0), calculatedTxTotal);
-            const count = Math.max(txs.length, Number(plan.monthsPaid || 0));
+            const totalPaid = txs.length > 0 ? calculatedTxTotal : Number(plan.totalPaid || 0);
+            const count = txs.length > 0 ? txs.length : Number(plan.monthsPaid || 0);
             
             grandTotalPaid += totalPaid;
 

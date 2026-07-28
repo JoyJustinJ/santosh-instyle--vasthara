@@ -54,7 +54,10 @@ const PlanDetail = () => {
   if (!plan) return <div className="p-8 text-center text-primary font-bold">{t('plan_detail.not_found')}</div>;
 
   const duration = plan.duration || 0;
-  const paidMonths = duration > 0 ? Math.min(plan.monthsPaid || 0, duration) : (plan.monthsPaid || 0);
+  // Calculate totalPaid dynamically from actual loaded transactions (not stale DB value)
+  const actualTotalPaid = transactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  const actualMonthsPaid = transactions.length;
+  const paidMonths = duration > 0 ? Math.min(actualMonthsPaid || plan.monthsPaid || 0, duration) : (actualMonthsPaid || plan.monthsPaid || 0);
   const isCompleted = plan.status === 'completed' || plan.status === 'closed' || (duration > 0 && paidMonths >= duration);
 
   const handleSendPreCloseOTP = async () => {
@@ -147,7 +150,7 @@ const PlanDetail = () => {
             </div>
             <div className="text-right">
               <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t('plan_detail.total_paid')}</p>
-              <p className="text-2xl font-bold text-accent">{formatCurrency(plan.totalPaid)}</p>
+              <p className="text-2xl font-bold text-accent">{loading ? '...' : formatCurrency(actualTotalPaid)}</p>
             </div>
           </div>
 

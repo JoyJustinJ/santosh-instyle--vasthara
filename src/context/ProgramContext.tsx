@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { recordTransactionInDB } from '../services/db';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
@@ -22,13 +22,37 @@ export const ProgramProvider = ({ children }: { children: React.ReactNode }) => 
       return;
     }
     const q = query(collection(db, "user_schemes"), where("userId", "==", currentUserId));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setUserSchemes(data);
+    const unsub = onSnapshot(q, async (snapshot) => {
+      const schemes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Fetch all transactions for this user to compute real totals
+      try {
+        const { getDocs, query: fq, collection: fcol, where: fwhere } = await import('firebase/firestore');
+        const txSnap = await getDocs(fq(fcol(db, "transactions"), fwhere("userId", "==", currentUserId)));
+        const allTxs: any[] = txSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Enrich each scheme with computed totalPaid & monthsPaid from real transactions
+        const enriched = schemes.map((s: any) => {
+          const schemeTxs = allTxs.filter(tx => tx.accountId === s.accountId);
+          const computedTotalPaid = schemeTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+          const computedMonthsPaid = schemeTxs.length;
+          return {
+            ...s,
+            totalPaid: computedTotalPaid > 0 ? computedTotalPaid : (s.totalPaid || 0),
+            monthsPaid: computedMonthsPaid > 0 ? computedMonthsPaid : (s.monthsPaid || 0),
+          };
+        });
+
+        setUserSchemes(enriched);
+      } catch {
+        // Fallback to raw DB values if transaction fetch fails
+        setUserSchemes(schemes);
+      }
       setLoading(false);
     });
     return () => unsub();
   }, [currentUserId]);
+
 
   const JoinProgram = async (scheme: any, planId: string, userId: string, accountId: string, paymentMeta: any = {}) => {
     // The backend `api/verify-payment.ts` now securely creates the scheme and transaction
