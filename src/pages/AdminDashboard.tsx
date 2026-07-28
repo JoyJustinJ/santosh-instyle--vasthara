@@ -1510,8 +1510,8 @@ const AdminDashboard = () => {
                 return row;
             }
 
-            const txs = allTransactions.filter(tx => tx.accountId === plan.accountId && tx.status === 'Success');
-            txs.sort((a, b) => safeDate(a.timestamp).getTime() - safeDate(b.timestamp).getTime());
+            const txs = allTransactions.filter(tx => tx.accountId === plan.accountId && ['Success', 'success', 'paid', 'completed'].includes(tx.status));
+            txs.sort((a, b) => safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime());
 
             // Calculate Nth scheme of this amount for this user (using ALL ids/phones for legacy dedup)
             const userAllIds = allIds || new Set([plan.userId].filter(Boolean));

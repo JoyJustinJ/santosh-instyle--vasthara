@@ -56,7 +56,7 @@ async function main() {
         date: '02-12-2025',
         timestamp: '2025-12-02T10:00:00.000Z',
         amount: 500,
-        status: 'paid',
+        status: 'Success',
         accountId: 'ACC-7AARHOHT',
         installmentNumber: 1
     });

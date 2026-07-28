@@ -201,7 +201,7 @@ const StaffDashboard = () => {
                 relevantTx = allTx.filter((tx: any) => tx.recordedBy === user?.id);
             }
 
-            setStaffTransactions(relevantTx.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            setStaffTransactions(relevantTx.sort((a: any, b: any) => safeDate(b.date || b.timestamp).getTime() - safeDate(a.date || a.timestamp).getTime()));
         } catch (err) {
             console.error(err);
         } finally {
@@ -455,7 +455,7 @@ const StaffDashboard = () => {
             }
             const combinedTx = [...txById, ...txByPhone];
             const uniqueTx = combinedTx.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-            setCustomerTransactions(uniqueTx.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            setCustomerTransactions(uniqueTx.sort((a: any, b: any) => safeDate(b.date || b.timestamp).getTime() - safeDate(a.date || a.timestamp).getTime()));
         } else {
             showNotification('Customer not found', 'error');
         }
@@ -545,7 +545,7 @@ const StaffDashboard = () => {
             const txsMap: Record<string, any[]> = {};
             for (const plan of plans as any[]) {
                 const txs = await getTransactionsFromDB(customerData.id, plan.accountId);
-                txsMap[plan.accountId] = txs;
+                txsMap[plan.accountId] = txs.sort((a: any, b: any) => safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime());
             }
             setReportTransactions(txsMap);
 
@@ -852,7 +852,7 @@ const StaffDashboard = () => {
 
     const handleDownloadTallyCSV = async () => {
         const today = new Date().toDateString();
-        const todayTx = staffTransactions.filter(t => new Date(t.timestamp).toDateString() === today);
+        const todayTx = staffTransactions.filter(t => safeDate(t.date || t.timestamp).toDateString() === today);
         if (todayTx.length === 0) return showNotification("No transactions today", "error");
 
         const headers = ["Transaction ID", "Customer Name", "Customer Phone", "Amount", "Scheme Name", "Date"];
@@ -862,7 +862,7 @@ const StaffDashboard = () => {
             tx.userPhone || 'N/A',
             tx.amount,
             `"${tx.schemeName}"`,
-            new Date(tx.timestamp).toLocaleString()
+            safeDate(tx.date || tx.timestamp).toLocaleString()
         ]);
 
         const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -1066,7 +1066,7 @@ const StaffDashboard = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {creditNoteData.transactions.map((tx: any) => (
                                                     <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.timestamp)}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{tx.date || formatDate(tx.timestamp)}</td>
                                                         <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
                                                         <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
                                                     </tr>
@@ -1093,7 +1093,7 @@ const StaffDashboard = () => {
             end.setHours(23, 59, 59, 999);
 
             const rangeTx = staffTransactions.filter(t => {
-                const txDate = new Date(t.timestamp);
+                const txDate = safeDate(t.date || t.timestamp);
                 return txDate >= start && txDate <= end;
             });
             const total = rangeTx.reduce((acc, t) => acc + (t.amount || 0), 0);
@@ -1430,7 +1430,7 @@ const StaffDashboard = () => {
                                         <button
                                             onClick={async () => {
                                                 const { getTransactionsFromDB, getUserFromDB } = await import('../services/db');
-                                                const txs = await getTransactionsFromDB(scheme.userId, scheme.accountId);
+                                                const txs = (await getTransactionsFromDB(scheme.userId, scheme.accountId)).sort((a: any, b: any) => safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime());
                                                 const userProfile: any = await getUserFromDB(scheme.userId);
                                                 setCreditNoteData({
                                                     ...scheme,
@@ -2124,7 +2124,7 @@ const StaffDashboard = () => {
 
                         const success = await markSchemeAsRedeemed(fulfillmentTarget.id, user!.id);
                         if (success) {
-                            const txs = await getTransactionsFromDB(fulfillmentTarget.userId, fulfillmentTarget.accountId);
+                            const txs = (await getTransactionsFromDB(fulfillmentTarget.userId, fulfillmentTarget.accountId)).sort((a: any, b: any) => safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime());
                             showNotification('Scheme marked as closed and fulfilled!', 'success');
                             setCompletedSchemes(prev => prev.filter(p => p.accountId !== fulfillmentTarget.accountId));
                             setClosedSchemes(prev => [{ ...fulfillmentTarget, status: 'closed', closedAt: new Date().toISOString() }, ...prev]);
