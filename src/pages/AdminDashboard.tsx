@@ -905,13 +905,28 @@ const AdminDashboard = () => {
             
             setReportCustomer(customerData);
 
-            const plans = await getUserPlansFromDB(customerData.id);
+            // Fetch plans by BOTH id and phone to handle legacy customers where userId = phone
+            const plansById = await getUserPlansFromDB(customerData.id);
+            let plansByPhone: any[] = [];
+            if (customerData.phone && customerData.phone !== customerData.id) {
+                plansByPhone = await getUserPlansFromDB(customerData.phone);
+            }
+            const combinedPlans = [...plansById, ...plansByPhone];
+            // Remove duplicates by accountId
+            const plans = combinedPlans.filter((v, i, a) => a.findIndex(t => t.accountId === v.accountId) === i);
             setReportSchemes(plans);
 
             const txsMap: Record<string, any[]> = {};
             for (const plan of plans as any[]) {
+                // Fetch transactions by both userId variants
                 const txs = await getTransactionsFromDB(customerData.id, plan.accountId);
-                txsMap[plan.accountId] = txs;
+                let txsByPhone: any[] = [];
+                if (customerData.phone && customerData.phone !== customerData.id) {
+                    txsByPhone = await getTransactionsFromDB(customerData.phone, plan.accountId);
+                }
+                const allTxs = [...txs, ...txsByPhone];
+                const uniqueTxs = allTxs.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                txsMap[plan.accountId] = uniqueTxs;
             }
             setReportTransactions(txsMap);
             
