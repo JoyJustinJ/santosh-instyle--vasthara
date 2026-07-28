@@ -1,6 +1,6 @@
 /**
  * Fix ARAVINDH (8637651579):
- *   - 1st installment TX tZd5VfvfNJ3n2748qrtH: 03-06-2026 → 06-03-2026
+ *   - 1st installment TX r7D8ByNiAc59ajdhaGWN: 03-06-2026 → 06-03-2026
  *   - user_schemes enrollmentDate: 03-06-2026 → 06-03-2026
  *
  * Correct installment dates from image:
@@ -20,9 +20,9 @@ async function main() {
     const batch = db.batch();
 
     // Fix 1st installment transaction
-    const txRef = db.collection('transactions').doc('tZd5VfvfNJ3n2748qrtH');
+    const txRef = db.collection('transactions').doc('r7D8ByNiAc59ajdhaGWN');
     const txSnap = await txRef.get();
-    console.log(`TX tZd5VfvfNJ3n2748qrtH: date=${txSnap.data().date} → 06-03-2026`);
+    console.log(`TX r7D8ByNiAc59ajdhaGWN: date=${txSnap.data().date} → 06-03-2026`);
     batch.update(txRef, {
         date: '06-03-2026',
         timestamp: '2026-03-06T10:00:00.000Z'
