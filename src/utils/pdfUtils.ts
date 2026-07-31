@@ -54,6 +54,13 @@ export async function downloadAsSinglePagePDF(
         logging: false,
         width: element.offsetWidth,
         height: element.offsetHeight,
+        windowWidth: Math.max(element.offsetWidth, window.innerWidth),
+        windowHeight: Math.max(element.offsetHeight, window.innerHeight),
+        onclone: (doc) => {
+            // Un-scale the wrapper inside the clone if needed
+            const el = doc.getElementById(element.id);
+            if (el && el.parentElement) el.parentElement.style.transform = 'none';
+        }
     });
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
@@ -83,6 +90,14 @@ export async function downloadAsPDF(
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        windowWidth: Math.max(element.offsetWidth, window.innerWidth),
+        windowHeight: Math.max(element.offsetHeight, window.innerHeight),
+        onclone: (doc) => {
+            const el = doc.getElementById(element.id);
+            if (el && el.parentElement) el.parentElement.style.transform = 'none';
+        }
     });
 
     const ctx = canvas.getContext('2d');

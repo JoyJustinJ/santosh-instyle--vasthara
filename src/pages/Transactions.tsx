@@ -100,8 +100,14 @@ const Transactions = () => {
                             if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
                             const el = document.getElementById('invoice-pdf-content');
                             if (el) {
+                                const parent = el.parentElement;
+                                const originalTransform = parent?.style.transform;
+                                if (parent) parent.style.transform = 'scale(1)';
+
                                 try { await downloadAsSinglePagePDF(el, 'Invoice_' + invoicePrimaryKey); }
                                 catch (e) { console.error(e); }
+
+                                if (parent && originalTransform !== undefined) parent.style.transform = originalTransform;
                             }
                             if (btn) { btn.innerHTML = '⬇ Download PDF'; btn.disabled = false; }
                         }}
