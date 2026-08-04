@@ -926,6 +926,8 @@ const AdminDashboard = () => {
                 }
                 const allTxs = [...txs, ...txsByPhone];
                 const uniqueTxs = allTxs.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                // Sort ascending by date so oldest installment appears first
+                uniqueTxs.sort((a: any, b: any) => safeDate(a.date || a.timestamp).getTime() - safeDate(b.date || b.timestamp).getTime());
                 txsMap[plan.accountId] = uniqueTxs;
             }
             setReportTransactions(txsMap);
@@ -2317,22 +2319,22 @@ const AdminDashboard = () => {
                                             <p className="text-sm font-bold text-gray-900">{new Date().toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8">
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Customer Name</p>
-                                            <p className="font-bold text-gray-900 text-lg uppercase">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
+
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-8 p-4 bg-gray-50 border border-gray-200 rounded">
+                                        <div className="min-w-0">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Customer Name</p>
+                                            <p className="font-bold text-gray-900 text-sm break-words leading-tight uppercase">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Customer ID</p>
-                                            <p className="font-bold text-gray-900 text-sm">{reportCustomer.customerId || reportCustomer.id}</p>
+                                        <div className="min-w-0">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Phone Number</p>
+                                            <p className="font-bold text-gray-900 text-sm break-all">{reportCustomer.phone}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Phone Number</p>
-                                            <p className="font-bold text-gray-900 text-lg">{reportCustomer.phone}</p>
+                                        <div className="min-w-0">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Customer ID</p>
+                                            <p className="font-bold text-gray-900 text-sm break-all">{reportCustomer.customerId || reportCustomer.id}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Account Created</p>
+                                        <div className="min-w-0">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Joined Date</p>
                                             <p className="font-bold text-gray-900 text-sm">{reportCustomer.createdAt ? formatDate(reportCustomer.createdAt) : 'N/A'}</p>
                                         </div>
                                     </div>

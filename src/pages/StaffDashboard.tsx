@@ -1627,19 +1627,19 @@ const StaffDashboard = () => {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 bg-surface p-4 rounded-xl border border-border">
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Customer Name</p>
-                                        <p className="font-bold text-primary text-lg">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
+                                        <p className="font-bold text-primary text-sm break-words leading-tight">{reportCustomer.firstName} {reportCustomer.lastName || ''}</p>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Phone Number</p>
-                                        <p className="font-bold text-primary text-lg">{reportCustomer.phone}</p>
+                                        <p className="font-bold text-primary text-sm break-all">{reportCustomer.phone}</p>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Customer ID</p>
                                         <p className="font-bold text-text-secondary text-xs break-all">{reportCustomer.customerId || reportCustomer.id}</p>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Joined Date</p>
                                         <p className="font-bold text-text-secondary text-xs">{reportCustomer.createdAt ? formatDate(reportCustomer.createdAt) : 'N/A'}</p>
                                     </div>
