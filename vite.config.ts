@@ -33,7 +33,7 @@ export default defineConfig(() => {
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 10485760, // 10 MB
-          navigateFallbackDenylist: [/^\/vastra\.apk/]
+          navigateFallbackDenylist: [/^\/vastra\.apk/, /^\/MySanthoshapp\.apk/]
         }
       })
     ],
