@@ -1,16 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
-// Initialize Firebase Admin
+const firebaseConfig = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyCYrpQj3QfEw9n7H5dzAyIeAY-SFbj4qiE",
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || "vasthara-8f0cf",
+};
+
+// Initialize Firebase
 if (!getApps().length) {
-  // Service account should be stored in VERCEL_FIREBASE_SERVICE_ACCOUNT env var
-  const serviceAccount = JSON.parse(process.env.VERCEL_FIREBASE_SERVICE_ACCOUNT || '{}');
-  if (serviceAccount.project_id) {
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
-  }
+  initializeApp(firebaseConfig);
 }
 
 const getDb = () => getFirestore();
@@ -50,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // 2. Save OTP to Firestore
     const db = getDb();
-    await db.collection('otps').doc(phone).set({
+    await setDoc(doc(db, 'otps', phone), {
       otp,
       expiresAt,
       used: false
@@ -76,8 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to send SMS' });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('OTP Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message, stack: error.stack });
   }
 }

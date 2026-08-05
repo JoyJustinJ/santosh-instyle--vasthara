@@ -1,15 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 
-// Initialize Firebase Admin
+const firebaseConfig = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyCYrpQj3QfEw9n7H5dzAyIeAY-SFbj4qiE",
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || "vasthara-8f0cf",
+};
+
+// Initialize Firebase
 if (!getApps().length) {
-  const serviceAccount = JSON.parse(process.env.VERCEL_FIREBASE_SERVICE_ACCOUNT || '{}');
-  if (serviceAccount.project_id) {
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
-  }
+  initializeApp(firebaseConfig);
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -42,9 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const phone = digits.length === 10 ? `91${digits}` : digits;
 
   try {
-    const otpDoc = await db.collection('otps').doc(phone).get();
+    const otpRef = doc(db, 'otps', phone);
+    const otpDoc = await getDoc(otpRef);
 
-    if (!otpDoc.exists) {
+    if (!otpDoc.exists()) {
       return res.status(400).json({ error: 'Invalid OTP' });
     }
 
@@ -63,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Mark as used
-    await db.collection('otps').doc(phone).update({ used: true });
+    await updateDoc(otpRef, { used: true });
 
     return res.status(200).json({ message: 'OTP verified successfully' });
 
