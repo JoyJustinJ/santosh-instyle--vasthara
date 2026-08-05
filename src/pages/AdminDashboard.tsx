@@ -553,6 +553,7 @@ const AdminDashboard = () => {
 
                 const transactionId = await recordTransactionInDB({
                     userId: userId,
+                    userName: foundCustomer ? `${foundCustomer.firstName || ''} ${foundCustomer.lastName || ''}`.trim() : 'Unknown Customer',
                     customerAccount: userId,
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
                     accountId: accountId,

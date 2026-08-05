@@ -59,7 +59,27 @@ export async function downloadAsSinglePagePDF(
         onclone: (doc) => {
             // Un-scale the wrapper inside the clone if needed
             const el = doc.getElementById(element.id);
-            if (el && el.parentElement) el.parentElement.style.transform = 'none';
+            if (el) {
+                // Prevent mobile viewport from squishing the layout in the clone
+                doc.body.style.width = '1200px';
+                doc.documentElement.style.width = '1200px';
+                doc.body.style.maxWidth = 'none';
+                doc.documentElement.style.maxWidth = 'none';
+
+                if (el.parentElement) {
+                    el.parentElement.style.transform = 'none';
+                    el.parentElement.style.maxWidth = 'none';
+                    el.parentElement.style.width = 'auto';
+                }
+                
+                // Remove letter-spacing to fix html2canvas text overlap bug on mobile
+                const allElems = el.querySelectorAll('*');
+                allElems.forEach((e: any) => {
+                    if (e.style && e.style.letterSpacing) {
+                        e.style.letterSpacing = 'normal';
+                    }
+                });
+            }
         }
     });
 
@@ -96,7 +116,27 @@ export async function downloadAsPDF(
         windowHeight: Math.max(element.offsetHeight, window.innerHeight),
         onclone: (doc) => {
             const el = doc.getElementById(element.id);
-            if (el && el.parentElement) el.parentElement.style.transform = 'none';
+            if (el) {
+                // Prevent mobile viewport from squishing the layout in the clone
+                doc.body.style.width = '1200px';
+                doc.documentElement.style.width = '1200px';
+                doc.body.style.maxWidth = 'none';
+                doc.documentElement.style.maxWidth = 'none';
+
+                if (el.parentElement) {
+                    el.parentElement.style.transform = 'none';
+                    el.parentElement.style.maxWidth = 'none';
+                    el.parentElement.style.width = 'auto';
+                }
+
+                // Remove letter-spacing to fix html2canvas text overlap bug on mobile
+                const allElems = el.querySelectorAll('*');
+                allElems.forEach((e: any) => {
+                    if (e.style && e.style.letterSpacing) {
+                        e.style.letterSpacing = 'normal';
+                    }
+                });
+            }
         }
     });
 

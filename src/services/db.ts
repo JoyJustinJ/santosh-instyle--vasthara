@@ -483,10 +483,15 @@ export const enrollUserInScheme = async (userId: string, scheme: any, staffId: s
             referralCode: referralEmpId || null
         });
 
+        const userSnap = await getDoc(doc(db, "users", userId));
+        const userData = userSnap.data() || {};
+        
         // 2. Record the Cash Transaction
         const transaction = {
             userId,
+            userName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Unknown Customer',
             accountId,
+            schemeName: scheme.name || scheme.schemeName || 'Purchase Plan',
             amount: Number(scheme.amount || scheme.monthlyAmount || 0),
             type: 'subscription_join',
             status: 'Success',
