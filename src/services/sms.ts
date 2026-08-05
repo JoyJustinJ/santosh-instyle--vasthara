@@ -4,6 +4,8 @@
  */
 
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
+import { db } from '../firebase';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 // Use relative path on Web to avoid Safari CORS/Preflight issues, and absolute URL on Capacitor
 const API_BASE = Capacitor.isNativePlatform() 
@@ -24,86 +26,71 @@ const normalizePhone = (phone: string): string => {
 export const sendOTP = async (phone: string): Promise<{ success: boolean; error?: string; otp?: string }> => {
   try {
     const normalizedPhone = normalizePhone(phone);
-    let data;
-    let ok = false;
-    let status = 0;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
 
+    await setDoc(doc(db, 'otps', normalizedPhone), {
+      otp,
+      expiresAt,
+      used: false
+    });
+
+    const TOKEN = '46d542f630d189a6717c2d4d5107a746';
+    const SENDER_ID = 'SANIN';
+    const TEMPLATE_ID = '1707163500034310127'; 
+    const MESSAGE = `Dear Customer, OTP for mysanthosh app is ${otp} - Santhosh Lifestyle`;
+    const pay4smsUrl = `https://pay4sms.in/sendsms/?token=${TOKEN}&sender=${SENDER_ID}&number=${normalizedPhone}&message=${encodeURIComponent(MESSAGE)}&templateid=${TEMPLATE_ID}&credit=2`;
+
+    let ok = false;
     if (Capacitor.isNativePlatform()) {
-      const response = await CapacitorHttp.post({
-        url: `${API_BASE}/api/send-otp`,
-        headers: { 'Content-Type': 'application/json' },
-        data: { phone: normalizedPhone }
-      });
-      data = response.data;
-      status = response.status;
-      ok = status >= 200 && status < 300;
+      const response = await CapacitorHttp.post({ url: pay4smsUrl });
+      ok = response.status >= 200 && response.status < 300;
     } else {
-      const response = await fetch(`${API_BASE}/api/send-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: normalizedPhone }),
-      });
-      status = response.status;
-      ok = response.ok;
-      data = await response.json();
+      await fetch(pay4smsUrl, { mode: 'no-cors' });
+      ok = true; // no-cors doesn't give us status, but throws on network error
     }
 
     if (ok) {
-      return { success: true, otp: data?.otp };
+      return { success: true, otp };
     } else {
-      if (status >= 500) return { success: false, error: 'Our server is experiencing issues. Please try again later.' };
-      if (status === 404) return { success: false, error: 'The OTP service is currently unavailable.' };
-      return { success: false, error: data?.error || 'Failed to send OTP. Please try again.' };
+      return { success: false, error: 'Failed to send OTP. Please try again.' };
     }
   } catch (error: any) {
     console.error('Send OTP Error:', error);
-    if (/(failed to fetch|networkerror|load failed)/i.test(error.message || '')) {
-      return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
-    }
-    return { success: false, error: `Oops! We encountered an unexpected error (${error.message}). Please try again later.` };
+    return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
   }
 };
 
 export const verifyOTP = async (phone: string, otp: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const normalizedPhone = normalizePhone(phone);
-    let data;
-    let ok = false;
-    let status = 0;
+    const otpRef = doc(db, 'otps', normalizedPhone);
+    const otpDoc = await getDoc(otpRef);
 
-    if (Capacitor.isNativePlatform()) {
-      const response = await CapacitorHttp.post({
-        url: `${API_BASE}/api/verify-otp`,
-        headers: { 'Content-Type': 'application/json' },
-        data: { phone: normalizedPhone, otp }
-      });
-      data = response.data;
-      status = response.status;
-      ok = status >= 200 && status < 300;
-    } else {
-      const response = await fetch(`${API_BASE}/api/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: normalizedPhone, otp }),
-      });
-      status = response.status;
-      ok = response.ok;
-      data = await response.json();
+    if (!otpDoc.exists()) {
+      return { success: false, error: 'Invalid OTP' };
     }
 
-    if (ok) {
-      return { success: true };
-    } else {
-      if (status >= 500) return { success: false, error: 'Our server is experiencing issues. Please try again later.' };
-      if (status === 404) return { success: false, error: 'The OTP verification service is currently unavailable.' };
-      return { success: false, error: data?.error || 'Invalid OTP entered. Please try again.' };
+    const data = otpDoc.data();
+
+    if (data?.used) {
+      return { success: false, error: 'OTP already used' };
     }
+
+    if (Date.now() > data?.expiresAt) {
+      return { success: false, error: 'OTP expired' };
+    }
+
+    if (data?.otp !== String(otp)) {
+      return { success: false, error: 'Invalid OTP' };
+    }
+
+    await updateDoc(otpRef, { used: true });
+
+    return { success: true };
   } catch (error: any) {
     console.error('Verify OTP Error:', error);
-    if (/(failed to fetch|networkerror|load failed)/i.test(error.message || '')) {
-      return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
-    }
-    return { success: false, error: `Oops! We encountered an unexpected error (${error.message}). Please try again later.` };
+    return { success: false, error: 'Unable to connect to our servers. Please check your internet connection and try again.' };
   }
 };
 export const updateUserViaAPI = async (userId: string, updates: any): Promise<{ success: boolean; error?: string }> => {
