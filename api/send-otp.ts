@@ -62,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const MESSAGE = `Dear Customer, OTP for mysanthosh app is ${otp} - Santhosh Lifestyle`;
 
     // Pay4SMS API call
-    const pay4smsUrl = `http://pay4sms.in/sendsms/?token=${TOKEN}&sender=${SENDER_ID}&number=${phone}&message=${encodeURIComponent(MESSAGE)}&templateid=${TEMPLATE_ID}&credit=2`;
+    const pay4smsUrl = `https://pay4sms.in/sendsms/?token=${TOKEN}&sender=${SENDER_ID}&number=${phone}&message=${encodeURIComponent(MESSAGE)}&templateid=${TEMPLATE_ID}&credit=2`;
 
     const response = await fetch(pay4smsUrl);
     const resultText = await response.text();
