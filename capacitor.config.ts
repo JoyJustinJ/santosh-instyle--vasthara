@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.santoshinstyle.vasthara',
-  appName: 'My Santhosh App',
+  appId: 'com.santoshinstyle.vastra',
+  appName: 'Santhosh Silks - Vasthara',
   webDir: 'dist',
   server: {
     allowNavigation: [

@@ -1,4 +1,4 @@
-package com.santoshinstyle.vasthara;
+package com.santoshinstyle.vastra;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.santoshinstyle.vasthara"
+    namespace = "com.santoshinstyle.vastra"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.santoshinstyle.vasthara"
+        applicationId "com.santoshinstyle.vastra"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -19,12 +19,36 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // ─────────────────────────────────────────────────────────────────
+            // IMPORTANT: Replace these values with your actual keystore details
+            // Run the keystore generation script first:
+            //   scripts\generate_keystore.bat
+            // ─────────────────────────────────────────────────────────────────
+            def keystorePropsFile = rootProject.file("keystore.properties")
+            if (keystorePropsFile.exists()) {
+                def keystoreProps = new Properties()
+                keystoreProps.load(new FileInputStream(keystorePropsFile))
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            } else {
+                // Fallback: set directly (not recommended for production)
+                storeFile file("vasthara-release.jks")
+                storePassword System.getenv("VASTHARA_STORE_PASSWORD") ?: "changeme"
+                keyAlias "vasthara"
+                keyPassword System.getenv("VASTHARA_KEY_PASSWORD") ?: "changeme"
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
