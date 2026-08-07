@@ -4,6 +4,7 @@ import Razorpay from 'razorpay';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { checkRateLimit, buildRateLimitResponse } from './rate-limiter.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -109,6 +110,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: `Unauthorized: Invalid token - ${error instanceof Error ? error.message : String(error)}` });
     }
   }
+
+  // ── Rate Limiting ────────────────────────────────────────────────────────
+  // Per-user: max 10 payment verifications per hour
+  const userLimit = await checkRateLimit({
+    action: 'verify-payment:user',
+    identifier: decodedToken.uid,
+    maxRequests: 10,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  });
+
+  if (!userLimit.allowed) {
+    const body = buildRateLimitResponse(userLimit);
+    res.setHeader('Retry-After', body.retryAfter.toString());
+    res.setHeader('X-RateLimit-Limit', '10');
+    res.setHeader('X-RateLimit-Remaining', '0');
+    return res.status(429).json(body);
+  }
+
+  res.setHeader('X-RateLimit-Limit', '10');
+  res.setHeader('X-RateLimit-Remaining', userLimit.remaining.toString());
+  // ────────────────────────────────────────────────────────────────────────
 
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 

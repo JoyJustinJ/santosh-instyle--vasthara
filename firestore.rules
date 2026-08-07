@@ -55,38 +55,51 @@ service cloud.firestore {
       );
     }
 
-    // User profiles
+    // User profiles - Users can read/write their own profile, Admins/Staff have full access
     match /users/{userId} {
-      allow read, write: if true;
+      allow read, write: if isOwner(userId) || isStaffOrManager() || isAdmin();
     }
     
-    // Schemes - Anyone can read, only Admins can manage
+    // Schemes - Anyone authenticated can read, only Admins/Staff can write
     match /schemes/{schemeId} {
-      allow read, write: if true;
+      allow read: if isAuthenticated();
+      allow write: if isStaffOrManager() || isAdmin();
     }
     
-    // User schemes (Active plans)
+    // User schemes (Active plans) - Users can read their own, Admins/Staff have full access
     match /user_schemes/{planId} {
-      allow read, write: if true;
+      allow read: if isOwner(resource.data.userId) || isStaffOrManager() || isAdmin();
+      allow write: if isStaffOrManager() || isAdmin();
     }
     
-    // Transactions
+    // Transactions - Users can read their own, Admins/Staff have full access
     match /transactions/{txId} {
-      allow read, write: if true;
+      allow read: if isOwner(resource.data.userId) || isStaffOrManager() || isAdmin();
+      allow write: if isStaffOrManager() || isAdmin();
     }
     
-    // Admin Settings and Sensitive data
+    // OTPs - COMPLETELY LOCKED (Written via Vercel serverless Admin SDK only)
+    match /otps/{phone} {
+      allow read, write: if false; 
+    }
+
+    // Rate Limits - COMPLETELY LOCKED (Written via Vercel serverless Admin SDK only)
+    match /rate_limits/{limitId} {
+      allow read, write: if false;
+    }
+    
+    // Admin Settings and Sensitive data - Only primary Admin has access
     match /admins/{adminId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
     
     match /settings/{settingId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
-    // Default deny (allow admin or staff for audit logs etc)
+    // Default deny
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

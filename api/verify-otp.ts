@@ -1,19 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { checkRateLimit, buildRateLimitResponse } from './rate-limiter.js';
 
-const firebaseConfig = {
-    apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyCYrpQj3QfEw9n7H5dzAyIeAY-SFbj4qiE",
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID || "vasthara-8f0cf",
-};
-
-// Initialize Firebase
+// Initialize Firebase Admin SDK (for rate limiter and OTPs)
 if (!getApps().length) {
-  initializeApp(firebaseConfig);
+  try {
+    let serviceAccount;
+    if (process.env.VERCEL_FIREBASE_SERVICE_ACCOUNT) {
+      serviceAccount = JSON.parse(process.env.VERCEL_FIREBASE_SERVICE_ACCOUNT);
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+    }
+    if (serviceAccount?.project_id) {
+      initializeApp({ credential: cert(serviceAccount) });
+    }
+  } catch (err) {
+    console.error('Firebase Admin init error in verify-otp:', err);
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const db = getFirestore();
+  const db = getAdminFirestore();
   // Enable CORS for APK deployments
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -41,11 +50,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const digits = rawPhone.replace(/[^\d]/g, '');
   const phone = digits.length === 10 ? `91${digits}` : digits;
 
-  try {
-    const otpRef = doc(db, 'otps', phone);
-    const otpDoc = await getDoc(otpRef);
+  // ── Rate Limiting ────────────────────────────────────────────────────────
+  // Per-phone: max 5 OTP verification attempts per 10 minutes
+  // Prevents brute-force guessing of 6-digit OTPs
+  const phoneLimit = await checkRateLimit({
+    action: 'verify-otp:phone',
+    identifier: phone,
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000, // 10 minutes
+  });
 
-    if (!otpDoc.exists()) {
+  if (!phoneLimit.allowed) {
+    const body = buildRateLimitResponse(phoneLimit);
+    res.setHeader('Retry-After', body.retryAfter.toString());
+    res.setHeader('X-RateLimit-Limit', '5');
+    res.setHeader('X-RateLimit-Remaining', '0');
+    return res.status(429).json(body);
+  }
+
+  // Set rate limit headers on successful requests
+  res.setHeader('X-RateLimit-Limit', '5');
+  res.setHeader('X-RateLimit-Remaining', phoneLimit.remaining.toString());
+  // ────────────────────────────────────────────────────────────────────────
+
+  try {
+    const otpRef = db.collection('otps').doc(phone);
+    const otpDoc = await otpRef.get();
+
+    if (!otpDoc.exists) {
       return res.status(400).json({ error: 'Invalid OTP' });
     }
 
@@ -64,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Mark as used
-    await updateDoc(otpRef, { used: true });
+    await otpRef.update({ used: true });
 
     return res.status(200).json({ message: 'OTP verified successfully' });
 
@@ -73,3 +105,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+

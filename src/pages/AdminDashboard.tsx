@@ -2938,6 +2938,48 @@ const AdminDashboard = () => {
                                         <Trash2 size={16} className="mr-2" /> Purge Old OTPs
                                     </Button>
                                 </Card>
+                                <Card className="p-4 bg-surface rounded-2xl border border-border/50 space-y-3">
+                                    <div>
+                                        <p className="text-sm font-bold text-primary">Rate Limit Cleanup</p>
+                                        <p className="text-[10px] text-text-muted mt-1 leading-relaxed">Delete expired rate-limit counters from the database. Run this periodically if you are on the Spark plan and don't have automatic TTL cleanup enabled.</p>
+                                    </div>
+                                    <Button
+                                        fullWidth
+                                        variant="outline"
+                                        type="button"
+                                        onClick={async () => {
+                                            showNotif("Cleaning up expired rate limit records...", "info");
+                                            try {
+                                                const { getFirestore, collection, query, where, getDocs, writeBatch, Timestamp } = await import('firebase/firestore');
+                                                const db = getFirestore();
+                                                const now = Timestamp.now().toMillis();
+                                                const rlRef = collection(db, 'rate_limits');
+                                                const q = query(rlRef, where('expiresAt', '<=', new Date(now)));
+                                                const snap = await getDocs(q);
+                                                if (snap.empty) {
+                                                    showNotif("No expired rate limit records found.", "success");
+                                                    return;
+                                                }
+                                                // Batch delete in chunks of 400
+                                                let deleted = 0;
+                                                const docs = snap.docs;
+                                                for (let i = 0; i < docs.length; i += 400) {
+                                                    const batch = writeBatch(db);
+                                                    docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+                                                    await batch.commit();
+                                                    deleted += Math.min(400, docs.length - i);
+                                                }
+                                                showNotif(`Done! Deleted ${deleted} expired rate limit record${deleted !== 1 ? 's' : ''}.`, "success");
+                                            } catch (err: any) {
+                                                console.error("Rate limit cleanup error:", err);
+                                                showNotif("Cleanup failed: " + (err?.message || "Unknown error"), "error");
+                                            }
+                                        }}
+                                        className="border-warning/40 text-warning hover:bg-warning/10 hover:border-warning transition-colors text-xs"
+                                    >
+                                        <Shield size={16} className="mr-2" /> Clean Up Rate Limits
+                                    </Button>
+                                </Card>
                             </div>
 
                             <div className="pt-8 border-t border-border/50 space-y-4">

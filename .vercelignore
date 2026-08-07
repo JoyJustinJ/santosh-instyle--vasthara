@@ -1,0 +1,14 @@
+node_modules
+android
+ios
+jdk-*
+dist
+temp_repo
+*.apk
+*.txt
+transactions.json
+!*.md
+!*.jsonl
+.idea
+.vscode
+eng.traineddata

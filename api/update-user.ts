@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { checkRateLimit, buildRateLimitResponse } from './rate-limiter.js';
 
 // Initialize Firebase Admin
 if (!getApps().length) {
@@ -37,6 +38,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!userId || !updates) {
     return res.status(400).json({ error: 'userId and updates are required' });
   }
+
+  // ── Rate Limiting ────────────────────────────────────────────────────────
+  // Per-user: max 20 profile updates per hour
+  const userLimit = await checkRateLimit({
+    action: 'update-user:user',
+    identifier: userId,
+    maxRequests: 20,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  });
+
+  if (!userLimit.allowed) {
+    const body = buildRateLimitResponse(userLimit);
+    res.setHeader('Retry-After', body.retryAfter.toString());
+    res.setHeader('X-RateLimit-Limit', '20');
+    res.setHeader('X-RateLimit-Remaining', '0');
+    return res.status(429).json(body);
+  }
+
+  res.setHeader('X-RateLimit-Limit', '20');
+  res.setHeader('X-RateLimit-Remaining', userLimit.remaining.toString());
+  // ────────────────────────────────────────────────────────────────────────
 
   try {
     // Update the user document directly bypassing client security rules
