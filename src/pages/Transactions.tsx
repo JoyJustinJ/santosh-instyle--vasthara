@@ -81,7 +81,7 @@ const Transactions = () => {
         const resolvedSchemeName = tx.schemeName || planMap[tx.accountId] || planMap[tx.schemeId] || 'General Payment';
         const invoicePrimaryKey = tx.invoicePrimaryKey || tx.id;
         const paymentId = tx.razorpayPaymentId || tx.gatewayPaymentId || '';
-        const invoiceDate = tx.date || safeDate(tx.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+        const invoiceDate = safeDate(tx.date || tx.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
         return (
             <div className="fixed inset-0 z-[100] bg-gray-100 overflow-y-auto flex flex-col items-center">

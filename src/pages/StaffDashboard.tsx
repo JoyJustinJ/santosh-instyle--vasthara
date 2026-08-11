@@ -766,11 +766,7 @@ const StaffDashboard = () => {
                         pdf.setDrawColor(...colors.border);
                         pdf.rect(MARGIN, y, contentW, 22, 'S');
 
-                        const txDate = tx.date
-                            ? tx.date
-                            : tx.timestamp
-                            ? new Date(tx.timestamp).toLocaleDateString('en-IN')
-                            : 'N/A';
+                        const txDate = tx.date || tx.timestamp ? formatDate(tx.date || tx.timestamp) : 'N/A';
                         const txType = (tx.type || 'Cash Receipt').replace(/_/g, ' ');
                         const txMethod = tx.method || 'CASH';
                         const txAmt = `Rs.${Number(tx.amount || 0).toLocaleString('en-IN')}`;
@@ -1066,7 +1062,7 @@ const StaffDashboard = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {creditNoteData.transactions.map((tx: any) => (
                                                     <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{tx.date || formatDate(tx.timestamp)}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.date || tx.timestamp)}</td>
                                                         <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
                                                         <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
                                                     </tr>
@@ -1526,7 +1522,7 @@ const StaffDashboard = () => {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-[10px] font-bold text-success uppercase">{tx.status}</p>
-                                                        <p className="text-[10px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
+                                                        <p className="text-[10px] text-text-muted">{formatDate(tx.date || tx.timestamp)}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1697,7 +1693,7 @@ const StaffDashboard = () => {
                                                                 <div key={tx.id} className="flex justify-between items-center p-2 bg-surface rounded-lg border border-border/50 text-xs">
                                                                     <div>
                                                                         <p className="font-bold text-primary">₹{tx.amount}</p>
-                                                                        <p className="text-[9px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
+                                                                        <p className="text-[9px] text-text-muted">{formatDate(tx.date || tx.timestamp)}</p>
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <p className="font-bold text-success uppercase text-[9px]">{tx.status}</p>

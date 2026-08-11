@@ -296,17 +296,7 @@ const AdminDashboard = () => {
 
                 txs.forEach((tx: any) => {
                     if (tx.status === 'Success' && tx.amount) {
-                        let date = safeDate(tx.timestamp);
-                        if (tx.date && typeof tx.date === 'string') {
-                            const parts = tx.date.split(/[-/]/);
-                            if (parts.length === 3) {
-                                const day = parseInt(parts[0], 10);
-                                const month = parseInt(parts[1], 10) - 1;
-                                let year = parseInt(parts[2], 10);
-                                if (year < 100) year += 2000;
-                                date = new Date(year, month, day);
-                            }
-                        }
+                        let date = safeDate(tx.date || tx.timestamp);
                         
                         if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
                             const plan = plans.find((p: any) => p.accountId === tx.accountId);
@@ -1203,11 +1193,7 @@ const AdminDashboard = () => {
                         pdf.setDrawColor(...colors.border);
                         pdf.rect(MARGIN, y, contentW, 22, 'S');
 
-                        const txDate = tx.date
-                            ? tx.date
-                            : tx.timestamp
-                            ? new Date(tx.timestamp).toLocaleDateString('en-IN')
-                            : 'N/A';
+                        const txDate = tx.date || tx.timestamp ? formatDate(tx.date || tx.timestamp) : 'N/A';
                         const txType = (tx.type || 'Cash Receipt').replace(/_/g, ' ');
                         const txMethod = tx.method || 'CASH';
                         const txAmt = `Rs.${Number(tx.amount || 0).toLocaleString('en-IN')}`;
@@ -1386,7 +1372,7 @@ const AdminDashboard = () => {
                 `"${customerName}"`,
                 phone,
                 tx.amount || 0,
-                tx.date || formatDate(safeDate(tx.timestamp)),
+                formatDate(tx.date || tx.timestamp),
                 (tx.type || 'unknown').toUpperCase(),
                 (tx.method || 'Razorpay').toUpperCase(),
                 `"${recorderName}"`,
@@ -2216,7 +2202,7 @@ const AdminDashboard = () => {
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <p className="text-[10px] font-bold text-success uppercase">{tx.status}</p>
-                                                                        <p className="text-[10px] text-text-muted">{tx.date || formatDate(tx.timestamp)}</p>
+                                                                        <p className="text-[10px] text-text-muted">{formatDate(tx.date || tx.timestamp)}</p>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -2414,7 +2400,7 @@ const AdminDashboard = () => {
                                                                 {reportTransactions[scheme.accountId] && reportTransactions[scheme.accountId].length > 0 ? (
                                                                     reportTransactions[scheme.accountId].map((tx: any) => (
                                                                         <tr key={tx.id} className="border-b border-gray-200 text-gray-800">
-                                                                            <td className="py-2 pr-1 font-medium">{tx.date || formatDate(tx.timestamp)}</td>
+                                                                            <td className="py-2 pr-1 font-medium">{formatDate(tx.date || tx.timestamp)}</td>
                                                                             <td className="py-2 px-1 text-center">{tx.type || 'Cash'}</td>
                                                                             <td className="py-2 px-1 font-bold text-green-700 uppercase text-[10px] text-center">{tx.status}</td>
                                                                             <td className="py-2 pl-1 font-black text-right">₹{tx.amount}</td>
