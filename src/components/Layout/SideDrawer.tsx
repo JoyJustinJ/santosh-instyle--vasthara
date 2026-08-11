@@ -108,8 +108,8 @@ export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="p-8 border-t border-border">
               {!Capacitor.isNativePlatform() && !window.matchMedia('(display-mode: standalone)').matches && (
                 <a 
-                  href="https://github.com/JoyJustinJ/santosh-instyle--vasthara/releases/latest/download/MySanthoshapp.apk" 
-                  download
+                  href="https://github.com/JoyJustinJ/santosh-instyle--vasthara/raw/main/vastra-latest.apk" 
+                  download="vastra-latest.apk"
                   className="flex items-center gap-4 text-success hover:opacity-80 transition-opacity mb-6"
                   onClick={onClose}
                 >
