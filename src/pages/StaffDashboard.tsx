@@ -979,7 +979,7 @@ const StaffDashboard = () => {
         if (creditNoteData) {
             return (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-                    <div className="max-w-md mx-auto space-y-4">
+                    <div className="max-w-lg mx-auto space-y-4">
                         <div className="flex justify-between items-center no-print">
                             <button onClick={() => setCreditNoteData(null)} className="text-primary p-2 hover:bg-surface rounded-full transition-colors flex items-center gap-2">
                                 <ChevronLeft size={24} /> <span className="font-bold text-sm">Back</span>
@@ -994,86 +994,140 @@ const StaffDashboard = () => {
                             </div>
                         </div>
 
-                        <div id="credit-note-container" className="bg-white p-6 border border-gray-300 font-sans text-gray-900 print-area max-w-sm mx-auto shadow-sm relative overflow-hidden">
+                        {/* ── PDF-optimised credit note — all inline styles for html2canvas reliability ── */}
+                        <div
+                            id="credit-note-container"
+                            style={{
+                                background: '#ffffff',
+                                width: '540px',
+                                margin: '0 auto',
+                                fontFamily: "'Segoe UI', Arial, sans-serif",
+                                color: '#1a1a1a',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '4px',
+                                overflow: 'hidden',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                position: 'relative',
+                            }}
+                        >
+                            {/* Watermark */}
                             {creditNoteData.duplicate && (
-                                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none rotate-[-45deg] z-0">
-                                    <span className="text-6xl font-black text-gray-900 tracking-widest uppercase">DUPLICATE</span>
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    pointerEvents: 'none', zIndex: 0,
+                                    transform: 'rotate(-45deg)',
+                                }}>
+                                    <span style={{ fontSize: '80px', fontWeight: 900, color: '#1a1a1a', opacity: 0.04, letterSpacing: '8px', whiteSpace: 'nowrap', userSelect: 'none' }}>DUPLICATE</span>
                                 </div>
                             )}
 
-                            <div className="relative z-10">
-                                <div className="text-center border-b-2 border-gray-900 pb-4 mb-4 flex flex-col items-center">
-                                    <img src="/vasthara-logo.jpg" alt="Vastra Logo" className="w-24 h-auto object-contain mix-blend-multiply mb-2 block" />
-                                    <h1 className="text-xl font-black text-gray-900 uppercase tracking-widest">SANTOSH INSTYLE VASTRA</h1>
-                                    <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Official Credit Note</p>
+                            <div style={{ position: 'relative', zIndex: 1 }}>
+                                {/* ── Header band ── */}
+                                <div style={{ background: '#1a1a2e', padding: '20px 24px 16px', textAlign: 'center' }}>
+                                    <img src="/vasthara-logo.jpg" alt="Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain', marginBottom: '8px', display: 'block', marginLeft: 'auto', marginRight: 'auto', mixBlendMode: 'screen' }} />
+                                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>SANTOSH INSTYLE VASTRA</div>
+                                    <div style={{ fontSize: '10px', color: '#a0aec0', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px' }}>Official Credit Note</div>
                                 </div>
 
-                                <div className="flex justify-between items-end mb-6">
+                                {/* Duplicate badge */}
+                                {creditNoteData.duplicate && (
+                                    <div style={{ background: '#fef3c7', borderBottom: '2px solid #f59e0b', padding: '6px 24px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#92400e', letterSpacing: '1.5px', textTransform: 'uppercase' }}>⚠ Duplicate Copy</span>
+                                    </div>
+                                )}
+
+                                {/* ── Scheme Closed banner ── */}
+                                <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <span style={{ fontSize: '18px' }}>✅</span>
                                     <div>
-                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Closure Date</p>
-                                        <p className="font-bold text-gray-900 text-sm">{creditNoteData.closedAt}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Account ID</p>
-                                        <p className="font-mono font-bold text-gray-900 text-xs">{creditNoteData.accountId.slice(0, 12)}...</p>
+                                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#166534', letterSpacing: '0.5px' }}>SCHEME CLOSED</div>
+                                        <div style={{ fontSize: '10px', color: '#16a34a', marginTop: '1px' }}>All installments completed — Redemption Approved</div>
                                     </div>
                                 </div>
 
-                                <div className="border border-gray-300 p-4 mb-6">
-                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
-                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Customer</span>
-                                        <div className="text-right break-words max-w-[65%]">
-                                            <span className="font-bold text-gray-900 text-sm block">{creditNoteData.userName || 'Unknown Customer'}</span>
-                                            <span className="text-[10px] font-bold text-gray-500 block mt-0.5">{creditNoteData.userPhone || creditNoteData.userId}</span>
-                                        </div>
+                                {/* ── Meta row: closure date + account ID ── */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '14px 24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                    <div>
+                                        <div style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '3px' }}>Closure Date</div>
+                                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{creditNoteData.closedAt}</div>
                                     </div>
-                                    <div className="border-b border-gray-200 pb-2 mb-2 flex justify-between items-start gap-4">
-                                        <span className="text-xs font-bold text-gray-600 uppercase shrink-0">Scheme</span>
-                                        <span className="text-xs font-bold text-gray-900 text-right max-w-[65%] break-words">{creditNoteData.schemeName || creditNoteData.name}</span>
-                                    </div>
-
-                                    {(creditNoteData.bonuses || creditNoteData.gifts) && (
-                                        <div className="border-b border-gray-200 pb-2 mb-2">
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Bonuses & Gifts</span>
-                                            <div className="flex flex-col gap-1 text-right">
-                                                {creditNoteData.bonuses && <span className="text-xs font-bold text-gray-900">Bonus: {creditNoteData.bonuses}</span>}
-                                                {creditNoteData.gifts && <span className="text-xs font-bold text-gray-900">Gift: {creditNoteData.gifts}</span>}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="pt-2 flex justify-between items-center">
-                                        <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Value</span>
-                                        <span className="text-xl font-black text-gray-900">₹{creditNoteData.totalPaid}</span>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '3px' }}>Account ID</div>
+                                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#1a1a1a', fontFamily: 'monospace' }}>{creditNoteData.accountId}</div>
                                     </div>
                                 </div>
 
+                                {/* ── Customer & scheme detail table ── */}
+                                <div style={{ padding: '16px 24px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0', borderRadius: '6px', overflow: 'hidden' }}>
+                                        <tbody>
+                                            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ padding: '10px 14px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', width: '40%', background: '#f8fafc' }}>Customer Name</td>
+                                                <td style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 700, color: '#1a1a1a' }}>{creditNoteData.userName || 'Unknown Customer'}</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ padding: '10px 14px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', background: '#f8fafc' }}>Phone</td>
+                                                <td style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 600, color: '#374151', fontFamily: 'monospace' }}>{creditNoteData.userPhone || creditNoteData.userId}</td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ padding: '10px 14px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', background: '#f8fafc' }}>Scheme</td>
+                                                <td style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>{creditNoteData.schemeName || creditNoteData.name || '—'}</td>
+                                            </tr>
+                                            {(creditNoteData.bonuses || creditNoteData.gifts) && (
+                                                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                    <td style={{ padding: '10px 14px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', background: '#f8fafc' }}>Benefits</td>
+                                                    <td style={{ padding: '10px 14px', fontSize: '12px', color: '#374151' }}>
+                                                        {creditNoteData.bonuses && <div>Bonus: {creditNoteData.bonuses}</div>}
+                                                        {creditNoteData.gifts && <div>Gift: {creditNoteData.gifts}</div>}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            <tr>
+                                                <td style={{ padding: '14px 14px', fontSize: '11px', fontWeight: 800, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '1px', background: '#f0fdf4' }}>Total Redemption Value</td>
+                                                <td style={{ padding: '14px 14px', fontSize: '22px', fontWeight: 900, color: '#166534', background: '#f0fdf4' }}>₹{creditNoteData.totalPaid}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* ── Transaction ledger ── */}
                                 {creditNoteData.transactions && creditNoteData.transactions.length > 0 && (
-                                    <div className="mb-6">
-                                        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Transaction Ledger</h4>
-                                        <table className="w-full text-left text-xs">
-                                            <thead className="bg-gray-100 text-gray-600">
-                                                <tr>
-                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Date</th>
-                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider">Method</th>
-                                                    <th className="py-1.5 px-2 font-bold uppercase tracking-wider text-right">Amount</th>
+                                    <div style={{ padding: '0 24px 16px' }}>
+                                        <div style={{ fontSize: '9px', fontWeight: 700, color: '#94a3b8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>Transaction Ledger</div>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                                            <thead>
+                                                <tr style={{ background: '#1a1a2e' }}>
+                                                    <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: '#e2e8f0', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '9px' }}>#</th>
+                                                    <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: '#e2e8f0', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '9px' }}>Date</th>
+                                                    <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: '#e2e8f0', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '9px' }}>Method</th>
+                                                    <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#e2e8f0', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '9px' }}>Amount</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-gray-200">
-                                                {creditNoteData.transactions.map((tx: any) => (
-                                                    <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.date || tx.timestamp)}</td>
-                                                        <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
-                                                        <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
+                                            <tbody>
+                                                {creditNoteData.transactions.map((tx: any, idx: number) => (
+                                                    <tr key={tx.id} style={{ borderBottom: '1px solid #f1f5f9', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                                                        <td style={{ padding: '7px 10px', color: '#94a3b8', fontWeight: 600 }}>{idx + 1}</td>
+                                                        <td style={{ padding: '7px 10px', fontWeight: 600, color: '#374151' }}>{formatDate(tx.date || tx.timestamp)}</td>
+                                                        <td style={{ padding: '7px 10px', color: '#64748b', textTransform: 'uppercase', fontSize: '9px', fontWeight: 700, letterSpacing: '0.5px' }}>{tx.method || 'CASH'}</td>
+                                                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#166534', textAlign: 'right' }}>₹{tx.amount}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
+                                            <tfoot>
+                                                <tr style={{ background: '#1a1a2e' }}>
+                                                    <td colSpan={3} style={{ padding: '9px 10px', fontWeight: 800, color: '#e2e8f0', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Total</td>
+                                                    <td style={{ padding: '9px 10px', fontWeight: 900, color: '#4ade80', fontSize: '14px', textAlign: 'right' }}>₹{creditNoteData.totalPaid}</td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 )}
 
-                                <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest pt-4 border-t border-gray-300 mt-6">
-                                    This is a computer generated statement and does not require a physical signature.
+                                {/* ── Footer ── */}
+                                <div style={{ borderTop: '1px solid #e2e8f0', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                                    <div style={{ fontSize: '9px', color: '#94a3b8', letterSpacing: '0.5px' }}>This is a computer-generated document and does not require a physical signature.</div>
+                                    <div style={{ fontSize: '9px', color: '#94a3b8', letterSpacing: '0.5px', textAlign: 'right', whiteSpace: 'nowrap' }}>VASTHARA</div>
                                 </div>
                             </div>
                         </div>
