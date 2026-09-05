@@ -249,7 +249,8 @@ function fmtCNDate(d: string | undefined): string {
  */
 export async function generateCreditNotePDF(
     data: CreditNotePayload,
-    filename: string
+    filename: string,
+    openForPrint = false
 ): Promise<void> {
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const PW = 210, ML = 14, MR = 14, CW = PW - ML - MR;
@@ -400,8 +401,18 @@ export async function generateCreditNotePDF(
     pdf.text('This is a computer-generated document and does not require a physical signature.', ML, footerY + 7);
     pdf.text('VASTHARA', PW - MR, footerY + 7, { align: 'right' });
 
-    const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-    const base64Data = pdf.output('datauristring').split(',')[1];
-    const { downloadFile } = await import('./download');
-    await downloadFile(base64Data, finalFilename, 'application/pdf', true);
+    if (openForPrint) {
+        // Open the PDF in a new tab so the user can use the browser's print dialog
+        const blobUrl = pdf.output('bloburl') as unknown as string;
+        const win = window.open(blobUrl, '_blank');
+        if (win) {
+            // Trigger print automatically after the PDF loads
+            win.addEventListener('load', () => win.print(), { once: true });
+        }
+    } else {
+        const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+        const base64Data = pdf.output('datauristring').split(',')[1];
+        const { downloadFile } = await import('./download');
+        await downloadFile(base64Data, finalFilename, 'application/pdf', true);
+    }
 }

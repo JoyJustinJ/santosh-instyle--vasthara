@@ -985,7 +985,14 @@ const StaffDashboard = () => {
                                 <ChevronLeft size={24} /> <span className="font-bold text-sm">Back</span>
                             </button>
                             <div className="flex gap-2">
-                                <Button onClick={() => window.print()} variant="outline" size="sm" className="flex justify-center items-center gap-2">
+                                <Button onClick={async () => {
+                                    try {
+                                        showNotification('Preparing print...', 'info');
+                                        await generateCreditNotePDF(creditNoteData, `CreditNote_${creditNoteData.accountId}`, true);
+                                    } catch (e: any) {
+                                        showNotification(`Print failed: ${e.message}`, 'error');
+                                    }
+                                }} variant="outline" size="sm" className="flex justify-center items-center gap-2">
                                     <Printer size={16} /> Print
                                 </Button>
                                 <Button onClick={async () => {
