@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, XCircle, Shield, FileText, Download, Printer, List, BarChart3, AlertTriangle, PlusCircle } from 'lucide-react';
-import { downloadAsPDF } from '../utils/pdfUtils';
+import { downloadAsPDF, generateCreditNotePDF } from '../utils/pdfUtils';
 import { downloadFile, workbookToBase64 } from '../utils/download';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -988,7 +988,15 @@ const StaffDashboard = () => {
                                 <Button onClick={() => window.print()} variant="outline" size="sm" className="flex justify-center items-center gap-2">
                                     <Printer size={16} /> Print
                                 </Button>
-                                <Button onClick={() => downloadPDF('credit-note-container', `CreditNote_${creditNoteData.accountId}`)} size="sm" className="bg-primary text-white flex justify-center items-center gap-2">
+                                <Button onClick={async () => {
+                                    try {
+                                        showNotification('Generating PDF...', 'info');
+                                        await generateCreditNotePDF(creditNoteData, `CreditNote_${creditNoteData.accountId}`);
+                                        showNotification('PDF downloaded!', 'success');
+                                    } catch (e: any) {
+                                        showNotification(`PDF failed: ${e.message}`, 'error');
+                                    }
+                                }} size="sm" className="bg-primary text-white flex justify-center items-center gap-2">
                                     <Download size={16} /> Save PDF
                                 </Button>
                             </div>
