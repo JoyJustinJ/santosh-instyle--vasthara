@@ -288,7 +288,7 @@ const StaffDashboard = () => {
                 if (!s) continue;
 
                 const paid = Number(s.monthlyAmount || s.amount || 0);
-                const targetDocId = s.id;
+                const targetDocId = s.accountId || s.id;
                 const schemeRef = doc(db, "user_schemes", targetDocId);
                 const nextMonthsPaid = Number(s.monthsPaid || 0) + 1;
                 const isCompleted = nextMonthsPaid >= Number(s.duration || 0);
@@ -398,7 +398,16 @@ const StaffDashboard = () => {
                     });
                     console.log('paidThisMonth result:', paidThisMonth);
                     console.groupEnd();
-                    return { ...p, paidThisMonth };
+
+                    // Recompute monthsPaid and totalPaid from actual non-failed transactions
+                    // This keeps the staff receipt view in sync with the customer report view
+                    const successfulTxs = schemeTxs.filter((t: any) => t.status !== 'Failed');
+                    const computedMonthsPaid = successfulTxs.length > 0 ? successfulTxs.length : (p.monthsPaid || 0);
+                    const computedTotalPaid = successfulTxs.length > 0
+                        ? successfulTxs.reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0)
+                        : (p.totalPaid || 0);
+
+                    return { ...p, paidThisMonth, monthsPaid: computedMonthsPaid, totalPaid: computedTotalPaid };
                 }));
 
                 setCustomerActiveSchemes(enrichedSchemes);
