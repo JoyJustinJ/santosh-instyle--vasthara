@@ -18,15 +18,19 @@ import {
   Check,
   X,
   Moon,
-  UserCheck
+  UserCheck,
+  Star,
+  Share2,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { cn } from '../utils';
+import { cn, rateApp, shareApp } from '../utils';
 import { ThemeToggle } from '../components/UI/ThemeToggle';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
+import { WalkthroughModal } from '../components/UI/WalkthroughModal';
 import { sendOTP, verifyOTP } from '../services/sms';
 
 const Profile = () => {
@@ -174,10 +178,15 @@ const Profile = () => {
     }
   };
 
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+
   const menuItems = [
     { label: t('profile.security_pin'), icon: Shield, path: '/profile/security' },
     { label: t('profile.notifications'), icon: Bell, path: '/notifications' },
     { label: t('profile.transactions'), icon: CreditCard, path: '/transactions' },
+    { label: 'Rate Us on Play Store', icon: Star, action: rateApp, badge: '5.0 ★' },
+    { label: 'Share App with Friends', icon: Share2, action: shareApp },
+    { label: 'App Walkthrough Tour', icon: HelpCircle, action: () => setShowWalkthrough(true) },
     ...((user?.role === 'staff' || user?.role === 'manager' || user?.accessLevel === 'manager') ? [{ label: t('profile.staff_authority'), icon: UserCheck, path: '/staff', isSpecial: true }] : []),
     ...(user?.role === 'admin' ? [{ label: t('profile.admin_access'), icon: Shield, path: '/admin?view=management', isSpecial: true }] : []),
   ];
@@ -377,9 +386,15 @@ const Profile = () => {
                   {menuItems.map((item, i) => (
                     <button
                       key={item.label}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => {
+                        if (item.action) {
+                          item.action();
+                        } else if (item.path) {
+                          navigate(item.path);
+                        }
+                      }}
                       className={cn(
-                        "w-full flex items-center justify-between p-5 hover:bg-surface transition-colors",
+                        "w-full flex items-center justify-between p-5 hover:bg-surface transition-colors text-left",
                         i !== menuItems.length - 1 && "border-b border-border/50",
                         (item as any).isSpecial && "bg-accent/5"
                       )}
@@ -396,7 +411,14 @@ const Profile = () => {
                           (item as any).isSpecial ? "text-accent" : "text-primary"
                         )}>{item.label}</span>
                       </div>
-                      <ChevronRight size={18} className={(item as any).isSpecial ? "text-accent" : "text-text-muted"} />
+                      <div className="flex items-center gap-2">
+                        {(item as any).badge && (
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                            {(item as any).badge}
+                          </span>
+                        )}
+                        <ChevronRight size={18} className={(item as any).isSpecial ? "text-accent" : "text-text-muted"} />
+                      </div>
                     </button>
                   ))}
                 </Card>
@@ -420,6 +442,11 @@ const Profile = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <WalkthroughModal
+        isOpen={showWalkthrough}
+        onClose={() => setShowWalkthrough(false)}
+      />
     </motion.div>
   );
 };

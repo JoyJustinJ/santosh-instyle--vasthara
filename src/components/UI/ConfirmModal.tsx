@@ -12,6 +12,7 @@ interface ConfirmModalProps {
     confirmText?: string;
     cancelText?: string;
     type?: 'danger' | 'warning' | 'info';
+    confirmDisabled?: boolean;
     children?: React.ReactNode;
 }
 
@@ -24,6 +25,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     confirmText = 'Confirm',
     cancelText = 'Cancel',
     type = 'danger',
+    confirmDisabled = false,
     children
 }) => {
     return (
@@ -71,11 +73,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             <div className="flex flex-col gap-3 pt-2">
                                 <Button
                                     fullWidth
+                                    disabled={confirmDisabled}
                                     onClick={() => {
+                                        if (confirmDisabled) return;
                                         onConfirm();
                                         onCancel();
                                     }}
-                                    className={type === 'danger' ? 'bg-danger text-white' : ''}
+                                    className={type === 'danger' ? (confirmDisabled ? 'bg-gray-400 text-white cursor-not-allowed opacity-60' : 'bg-danger text-white') : ''}
                                 >
                                     {confirmText}
                                 </Button>

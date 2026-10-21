@@ -59,3 +59,47 @@ export const validateEmail = (email: string) => {
 export const validatePhone = (phone: string) => {
   return String(phone).match(/^[6-9]\d{9}$/);
 };
+
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.santoshinstyle.vastra";
+
+export const rateApp = () => {
+  try {
+    window.open(PLAY_STORE_URL, '_blank');
+  } catch (err) {
+    window.location.href = PLAY_STORE_URL;
+  }
+};
+
+export const shareApp = async () => {
+  const shareData = {
+    title: 'Santhosh Silks | VASTRA',
+    text: 'Join Santhosh Silks & VASTRA to save small and celebrate big with exclusive gold & silk membership savings!',
+    url: PLAY_STORE_URL,
+    dialogTitle: 'Share VASTRA with Friends'
+  };
+
+  try {
+    const { Share } = await import('@capacitor/share');
+    await Share.share(shareData);
+  } catch (e) {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareData.title,
+          text: shareData.text,
+          url: shareData.url,
+        });
+      } catch (err) {
+        // user cancelled share
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        alert("App link copied to clipboard! Share it with your friends.");
+      } catch (copyErr) {
+        window.open(PLAY_STORE_URL, '_blank');
+      }
+    }
+  }
+};
+

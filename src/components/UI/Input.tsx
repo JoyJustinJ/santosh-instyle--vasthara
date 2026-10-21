@@ -50,9 +50,15 @@ export const Input: React.FC<InputProps> = ({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+            title={showPassword ? "Click to hide password" : "Click to show password"}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-primary transition-colors focus:outline-none"
           >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            {showPassword ? (
+              <Eye size={18} className="text-accent stroke-[2]" />
+            ) : (
+              <EyeOff size={18} className="stroke-[1.8]" />
+            )}
           </button>
         )}
       </div>

@@ -14,10 +14,13 @@ import {
   FileText,
   RefreshCw,
   HelpCircle,
-  Download
+  Download,
+  Star,
+  Share2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { rateApp, shareApp } from '../../utils';
 
 export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { user, logout } = useAuth();
@@ -29,6 +32,8 @@ export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     { label: 'Transactions', icon: Tag, path: '/transactions' },
     { label: 'Our Stores', icon: Store, path: '/stores' },
     { label: 'Contact Us', icon: Phone, path: '/contact' },
+    { label: 'Rate Us on Play Store', icon: Star, action: () => { rateApp(); onClose(); } },
+    { label: 'Share App with Friends', icon: Share2, action: () => { shareApp(); onClose(); } },
     { label: 'About Us', icon: Info, path: '/about' },
     { label: 'Program Rules', icon: HelpCircle, path: '/program-rules' },
     { label: 'Terms & Conditions', icon: FileText, path: '/terms' },
@@ -42,7 +47,7 @@ export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     onClose();
   };
 
-  const handleNavigate = (path) => {
+  const handleNavigate = (path: string) => {
     navigate(path);
     onClose();
   };
@@ -96,11 +101,11 @@ export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
               {menuItems.map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => handleNavigate(item.path)}
-                  className="w-full flex items-center gap-4 px-8 py-4 text-text-secondary hover:bg-accent-light hover:text-accent transition-colors"
+                  onClick={() => (item as any).action ? (item as any).action() : handleNavigate(item.path)}
+                  className="w-full flex items-center gap-4 px-8 py-3.5 text-text-secondary hover:bg-accent-light hover:text-accent transition-colors"
                 >
                   <item.icon size={20} />
-                  <span className="text-sm font-bold uppercase tracking-widest">{item.label}</span>
+                  <span className="text-sm font-bold">{item.label}</span>
                 </button>
               ))}
             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, XCircle, Shield, FileText, Download, Printer, List, BarChart3, AlertTriangle, PlusCircle } from 'lucide-react';
+import { Users, HandCoins, UserCheck, Award, ChevronLeft, Search, Smartphone, CheckCircle2, XCircle, Shield, ShieldAlert, FileText, Download, Printer, List, BarChart3, AlertTriangle, PlusCircle } from 'lucide-react';
 import { downloadAsPDF, generateCreditNotePDF } from '../utils/pdfUtils';
 import { downloadFile, workbookToBase64 } from '../utils/download';
 import { Card } from '../components/UI/Card';
@@ -32,6 +32,8 @@ const StaffDashboard = () => {
     const { user } = useAuth()!;
     const { showNotification } = useNotification();
 
+    const isManager = user?.role === 'manager' || user?.accessLevel === 'manager' || user?.accessLevel === 'super';
+
     // Protection: Only staff/managers can access
     useEffect(() => {
         if (!user || (user.role !== 'staff' && user.role !== 'manager' && user.accessLevel !== 'manager')) {
@@ -61,6 +63,31 @@ const StaffDashboard = () => {
     const [ProgramsList, setProgramsList] = useState<any[]>([]);
     const [depositOTPModalOpen, setDepositOTPModalOpen] = useState(false);
     const [depositOTP, setDepositOTP] = useState('');
+    const [depositMonthsConfig, setDepositMonthsConfig] = useState<Record<string, number>>({});
+    const [bypassModalOpen, setBypassModalOpen] = useState(false);
+    const [bypassCountdown, setBypassCountdown] = useState(10);
+
+    // 10-second security countdown for Manager OTP Bypass
+    useEffect(() => {
+        let timer: any = null;
+        if (bypassModalOpen) {
+            setBypassCountdown(10);
+            timer = setInterval(() => {
+                setBypassCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            setBypassCountdown(10);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [bypassModalOpen]);
 
     // Removed myReferredUsers and myDetailedReferrals state
     const [completedSchemes, setCompletedSchemes] = useState<any[]>([]);
@@ -217,6 +244,58 @@ const StaffDashboard = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeView]);
 
+    const calculateSchemeDues = (s: any) => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        const rawDate = s.enrollmentDate || s.joinedAt || s.createdAt || s.startDate || s.date;
+        const joinDate = safeDate(rawDate);
+        const totalDuration = Number(s.duration) || 11;
+        const monthsPaid = Number(s.monthsPaid) || 0;
+
+        let elapsedMonths = 1;
+        if (joinDate && joinDate.getTime() > 0 && !isNaN(joinDate.getTime())) {
+            const joinYear = joinDate.getFullYear();
+            const joinMonth = joinDate.getMonth();
+            elapsedMonths = Math.max(1, (currentYear - joinYear) * 12 + (currentMonth - joinMonth) + 1);
+        } else {
+            elapsedMonths = monthsPaid + (s.paidThisMonth ? 0 : 1);
+        }
+
+        // STRICT RULE 1: Past and current dues ONLY, strictly NO advance!
+        const maxAllowedInstallments = Math.min(elapsedMonths, totalDuration);
+        const maxPayableDues = Math.max(0, maxAllowedInstallments - monthsPaid);
+
+        return {
+            elapsedMonths,
+            maxAllowedInstallments,
+            maxPayableDues,
+            monthsPaid,
+            totalDuration,
+            isUpToDate: maxPayableDues === 0
+        };
+    };
+
+    const calculateTotalDeposit = (selected: string[], monthsConfig: Record<string, number>) => {
+        const sum = customerActiveSchemes
+            .filter(s => selected.includes(s.accountId || s.id))
+            .reduce((acc, s) => {
+                const accId = s.accountId || s.id;
+                const duesInfo = calculateSchemeDues(s);
+                const count = isManager ? Math.min(monthsConfig[accId] || 1, duesInfo.maxPayableDues || 1) : 1;
+                const monthly = Number(s.monthlyAmount || s.amount || 0);
+                return acc + (monthly * count);
+            }, 0);
+        setDepositAmount(sum > 0 ? sum.toString() : '');
+    };
+
+    const setSchemeMonths = (accountId: string, count: number) => {
+        const newConfig = { ...depositMonthsConfig, [accountId]: count };
+        setDepositMonthsConfig(newConfig);
+        calculateTotalDeposit(selectedPlans, newConfig);
+    };
+
     const handleReceipt = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedPlans.length === 0) {
@@ -227,7 +306,12 @@ const StaffDashboard = () => {
         const amt = parseFloat(depositAmount);
         const expectedTotal = customerActiveSchemes
             .filter(s => selectedPlans.includes(s.accountId || s.id))
-            .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
+            .reduce((acc, s) => {
+                const accId = s.accountId || s.id;
+                const duesInfo = calculateSchemeDues(s);
+                const count = isManager ? Math.min(depositMonthsConfig[accId] || 1, duesInfo.maxPayableDues || 1) : 1;
+                return acc + (Number(s.monthlyAmount || s.amount || 0) * count);
+            }, 0);
 
         if (amt !== expectedTotal) {
             showNotification(`Amount must exactly match the selected schemes total: ₹${expectedTotal}`, "error");
@@ -251,12 +335,12 @@ const StaffDashboard = () => {
                 showNotification('Error triggering OTP.', 'error');
             }
         } else {
-            showNotification("No valid phone number for OTP. Proceeding without OTP.", "warning");
-            await confirmDepositWithOTP(true);
+            showNotification("No valid phone number for OTP. Proceeding with Manager confirmation.", "warning");
+            setBypassModalOpen(true);
         }
     };
 
-    const confirmDepositWithOTP = async (skipOTP = false) => {
+    const confirmDepositWithOTP = async (skipOTP = false, isBypassed = false) => {
         if (!skipOTP && (!depositOTP || depositOTP.length < 6)) {
             return showNotification('Enter valid 6-digit OTP', 'error');
         }
@@ -279,62 +363,109 @@ const StaffDashboard = () => {
         }
 
         setDepositOTPModalOpen(false);
+        setBypassModalOpen(false);
         setDepositOTP('');
 
         try {
             const userId = depositCustomerProfile?.id || depositCustomer;
+            const totalCashAmt = parseFloat(depositAmount);
+            const receiptBreakdown: any[] = [];
+
             for (const accountId of selectedPlans) {
                 const s = customerActiveSchemes.find(p => (p.accountId || p.id) === accountId);
                 if (!s) continue;
 
-                const paid = Number(s.monthlyAmount || s.amount || 0);
+                const duesInfo = calculateSchemeDues(s);
+                const monthsToPay = isManager ? Math.min(depositMonthsConfig[accountId] || 1, duesInfo.maxPayableDues || 1) : 1;
+                const monthlyAmt = Number(s.monthlyAmount || s.amount || 0);
+                const totalForScheme = monthlyAmt * monthsToPay;
+                const startingMonthsPaid = Number(s.monthsPaid || 0);
+                const nextMonthsPaid = startingMonthsPaid + monthsToPay;
+                const isCompleted = nextMonthsPaid >= Number(s.duration || 11);
                 const targetDocId = s.accountId || s.id;
                 const schemeRef = doc(db, "user_schemes", targetDocId);
-                const nextMonthsPaid = Number(s.monthsPaid || 0) + 1;
-                const isCompleted = nextMonthsPaid >= Number(s.duration || 0);
+
                 await updateDoc(schemeRef, {
                     monthsPaid: nextMonthsPaid,
-                    totalPaid: (s.totalPaid || 0) + paid,
+                    totalPaid: (s.totalPaid || 0) + totalForScheme,
                     status: isCompleted ? 'completed' : (s.status || 'active'),
                     completedAt: isCompleted ? new Date().toISOString() : (s.completedAt || null),
+                    lastPaymentDate: new Date().toISOString()
                 });
 
-                const transactionId = await recordTransactionInDB({
-                    userId: userId,
-                    userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
+                // Create individual installment transactions so passbook/progress grids are 100% accurate!
+                for (let i = 0; i < monthsToPay; i++) {
+                    const installmentNum = startingMonthsPaid + i + 1;
+                    await recordTransactionInDB({
+                        userId: userId,
+                        userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
+                        schemeName: s.name || s.schemeName || 'Purchase Plan',
+                        accountId: s.accountId || targetDocId,
+                        amount: monthlyAmt,
+                        installmentNumber: installmentNum,
+                        type: 'deposit',
+                        status: 'Success',
+                        method: 'CASH',
+                        recordedBy: user?.id || 'staff',
+                        recordedByRole: isManager ? 'manager' : 'staff',
+                        bypassedOTP: isBypassed,
+                        date: new Date().toISOString().split('T')[0],
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                const installmentDesc = monthsToPay > 1 
+                    ? `Installments #${startingMonthsPaid + 1} to #${nextMonthsPaid} (${monthsToPay} Mos)`
+                    : `Installment #${nextMonthsPaid}`;
+
+                receiptBreakdown.push({
                     schemeName: s.name || s.schemeName || 'Purchase Plan',
-                    accountId: s.accountId || targetDocId,
-                    amount: paid,
-                    type: 'deposit',
-                    status: 'Success',
-                    method: 'CASH',
-                    recordedBy: user?.id || 'staff'
+                    monthsCount: monthsToPay,
+                    installments: installmentDesc,
+                    amount: totalForScheme
                 });
 
-                if (transactionId) {
+                if (isBypassed) {
+                    await addAuditLog('MANAGER_DEPOSIT_OTP_BYPASS', user?.id || 'staff', {
+                        phone: userId,
+                        customerName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
+                        amount: totalForScheme,
+                        monthsPaidCount: monthsToPay,
+                        installmentsCovered: `${startingMonthsPaid + 1} to ${nextMonthsPaid}`,
+                        schemeId: s.name || s.schemeName || targetDocId,
+                        bypassedOTP: true,
+                        recordedByRole: isManager ? 'manager' : 'staff',
+                        reason: 'Manager 10-second security countdown override'
+                    });
+                } else {
                     await addAuditLog('MANUAL_DEPOSIT', user?.id || 'staff', {
                         phone: userId,
-                        amount: paid,
+                        customerName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
+                        amount: totalForScheme,
+                        monthsPaidCount: monthsToPay,
+                        installmentsCovered: `${startingMonthsPaid + 1} to ${nextMonthsPaid}`,
                         schemeId: s.name || s.schemeName || targetDocId,
-                        transactionId
+                        recordedByRole: isManager ? 'manager' : 'staff'
                     });
                 }
             }
 
-            showNotification("Receipt recorded & customer's plan(s) updated.", "success");
-            const amt = parseFloat(depositAmount);
+            showNotification(isBypassed ? "Cash deposit recorded with Manager Override." : "Receipt recorded & customer's plan(s) updated.", "success");
 
             setReceiptData({
-                customerName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`,
+                customerName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
                 customerId: depositCustomerProfile?.customerId || depositCustomerProfile?.id,
                 phone: depositCustomerProfile?.phone,
-                amount: amt,
-                schemes: customerActiveSchemes.filter(s => selectedPlans.includes(s.accountId || s.id)).map(s => s.name || s.schemeName),
+                amount: totalCashAmt,
+                schemes: receiptBreakdown.map(r => `${r.schemeName} [${r.installments}: ₹${r.amount}]`),
                 date: new Date().toLocaleString(),
-                recordedBy: user?.firstName || 'Staff',
-                transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`
+                recordedBy: user?.firstName || 'Manager',
+                transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                bypassedOTP: isBypassed
             });
+
             setSelectedPlans([]);
+            setDepositMonthsConfig({});
             setDepositAmount('');
         } catch (error: any) {
             console.error('Error recording receipt:', error);
@@ -415,11 +546,13 @@ const StaffDashboard = () => {
                 console.error("Error fetching customer info:", err);
             }
             setSelectedPlans([]);
+            setDepositMonthsConfig({});
             setDepositAmount('');
         } else {
             setDepositCustomerProfile(null);
             setCustomerActiveSchemes([]);
             setSelectedPlans([]);
+            setDepositMonthsConfig({});
             setDepositAmount('');
         }
     };
@@ -433,10 +566,13 @@ const StaffDashboard = () => {
         }
         setSelectedPlans(newSelection);
 
-        const total = customerActiveSchemes
-            .filter(s => newSelection.includes(s.accountId || s.id))
-            .reduce((acc, s) => acc + Number(s.monthlyAmount || s.amount || 0), 0);
-        setDepositAmount(total > 0 ? total.toString() : '');
+        const newConfig = { ...depositMonthsConfig };
+        if (!newConfig[accountId]) {
+            newConfig[accountId] = 1;
+        }
+        setDepositMonthsConfig(newConfig);
+
+        calculateTotalDeposit(newSelection, newConfig);
     };
 
     const handleCustomerSearch = async () => {
@@ -964,6 +1100,12 @@ const StaffDashboard = () => {
                                     <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Amount Paid</span>
                                     <span className="text-xl font-black text-green-700">₹{receiptData.amount}</span>
                                 </div>
+                                {receiptData.bypassedOTP && (
+                                    <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                        <span>Verification</span>
+                                        <span className="text-amber-700 font-black">Manager Security Override</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest pt-4 border-t border-gray-300">
@@ -1283,29 +1425,47 @@ const StaffDashboard = () => {
                                 if (customerActiveSchemes.length > 0) {
                                     return customerActiveSchemes.map((s: any) => {
                                         const targetAccId = s.accountId || s.id;
+                                        const duesInfo = calculateSchemeDues(s);
                                         const totalDuration = Number(s.duration) || 11;
-                                        const paidCount = Number(s.monthsPaid) || 0;
+                                        const paidCount = duesInfo.monthsPaid;
                                         const remainingMonths = totalDuration - paidCount;
+                                        const canSelect = isManager ? duesInfo.maxPayableDues > 0 : (!s.paidThisMonth && duesInfo.maxPayableDues > 0);
+                                        const selectedMonthsCount = isManager ? Math.min(depositMonthsConfig[targetAccId] || 1, duesInfo.maxPayableDues || 1) : 1;
+                                        const monthlyAmt = Number(s.monthlyAmount || s.amount || 0);
+                                        const currentDueAmount = monthlyAmt * (selectedPlans.includes(targetAccId) ? selectedMonthsCount : 1);
 
                                         return (
                                             <div key={targetAccId} className="space-y-2">
                                                 <Card
                                                     onClick={() => {
-                                                        if (!s.paidThisMonth) togglePlan(targetAccId);
-                                                        else showNotification("Payment for this month already recorded. Missed dues are extended.", "warning");
+                                                        if (canSelect) {
+                                                            togglePlan(targetAccId);
+                                                        } else {
+                                                            if (duesInfo.isUpToDate) {
+                                                                showNotification("Customer is fully paid up to the current month. Advance payment is strictly prohibited.", "info");
+                                                            } else {
+                                                                showNotification("Payment for this month already recorded. Only Branch Managers can collect past missed dues.", "warning");
+                                                            }
+                                                        }
                                                     }}
                                                     className={cn(
                                                         "p-4 border-2 transition-all relative overflow-hidden",
-                                                        !s.paidThisMonth ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                                                        canSelect ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                                                         selectedPlans.includes(targetAccId) ? "border-accent bg-accent-light/30" : "border-border/50"
                                                     )}
                                                 >
-                                                    {s.paidThisMonth ? (
-                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
-                                                            PAID THIS MONTH
+                                                    {duesInfo.isUpToDate ? (
+                                                        <div className="absolute top-0 right-0 bg-success text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-bl-lg z-10 flex items-center gap-1">
+                                                            <CheckCircle2 size={10} />
+                                                            PAID UP TO DATE
+                                                        </div>
+                                                    ) : duesInfo.maxPayableDues > 1 ? (
+                                                        <div className="absolute top-0 right-0 bg-danger text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-bl-lg z-10 flex items-center gap-1 shadow-sm">
+                                                            <AlertTriangle size={10} />
+                                                            {duesInfo.maxPayableDues} MONTHS DUE
                                                         </div>
                                                     ) : (
-                                                        <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-bl-lg z-10">
+                                                        <div className="absolute top-0 right-0 bg-warning text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-bl-lg z-10">
                                                             DUE THIS MONTH
                                                         </div>
                                                     )}
@@ -1318,15 +1478,61 @@ const StaffDashboard = () => {
                                                                 {selectedPlans.includes(targetAccId) && <CheckCircle2 size={14} className="text-white" />}
                                                             </div>
                                                             <div>
-                                                                <h4 className={cn("font-bold text-sm", !s.paidThisMonth ? "text-primary" : "text-success")}>{s.name || s.schemeName || 'Scheme'}</h4>
-                                                                <p className="text-[10px] text-text-muted mt-0.5">{paidCount} Paid • {remainingMonths > 0 ? `${remainingMonths} Mo Remaining` : 'Completed'}</p>
+                                                                <h4 className={cn("font-bold text-sm", !duesInfo.isUpToDate ? "text-primary" : "text-success")}>{s.name || s.schemeName || 'Scheme'}</h4>
+                                                                <p className="text-[10px] text-text-muted mt-0.5">
+                                                                    {paidCount} Paid • {remainingMonths > 0 ? `${remainingMonths} Mo Remaining` : 'Completed'}
+                                                                    {duesInfo.maxPayableDues > 0 && (
+                                                                        <span className="text-danger font-bold ml-1">({duesInfo.maxPayableDues} Due)</span>
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="text-sm font-bold text-primary">{formatCurrency(Number(s.monthlyAmount || s.amount || 0))}</p>
-                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">Per Month</p>
+                                                            <p className="text-sm font-bold text-primary">{formatCurrency(currentDueAmount)}</p>
+                                                            <p className="text-[9px] font-black text-accent uppercase tracking-widest">
+                                                                {selectedPlans.includes(targetAccId) && selectedMonthsCount > 1 ? `${selectedMonthsCount} Months Due` : 'Per Month'}
+                                                            </p>
                                                         </div>
                                                     </div>
+
+                                                    {selectedPlans.includes(targetAccId) && isManager && duesInfo.maxPayableDues > 1 && (
+                                                        <div className="mt-3 pt-3 border-t border-border/40 space-y-2" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
+                                                                    Select Dues to Collect ({selectedMonthsCount} of {duesInfo.maxPayableDues} Due Months)
+                                                                </span>
+                                                                <span className="text-[9px] font-bold text-accent uppercase tracking-wider bg-accent/10 px-2 py-0.5 rounded">
+                                                                    Past & Current Only • No Advance
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                                {Array.from({ length: duesInfo.maxPayableDues }).map((_, i) => {
+                                                                    const installmentNum = duesInfo.monthsPaid + i + 1;
+                                                                    const isSelected = selectedMonthsCount >= (i + 1);
+                                                                    return (
+                                                                        <button
+                                                                            key={installmentNum}
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                const newCount = (isSelected && selectedMonthsCount === i + 1 && i > 0) ? i : i + 1;
+                                                                                setSchemeMonths(targetAccId, newCount);
+                                                                            }}
+                                                                            className={cn(
+                                                                                "px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all border uppercase tracking-wider flex items-center gap-1.5",
+                                                                                isSelected
+                                                                                    ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
+                                                                                    : "bg-surface text-text-muted border-border hover:border-primary/50 hover:text-primary"
+                                                                            )}
+                                                                        >
+                                                                            {isSelected && <CheckCircle2 size={12} />}
+                                                                            Month {installmentNum}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </Card>
                                             </div>
                                         );
@@ -1346,6 +1552,7 @@ const StaffDashboard = () => {
                         <Button fullWidth className="mt-4 bg-success text-white" type="submit">Submit Cash Collection</Button>
                     </form>
 
+                    {/* Standard Customer OTP Modal */}
                     <ConfirmModal
                         isOpen={depositOTPModalOpen}
                         title="Confirm Cash Deposit"
@@ -1356,7 +1563,7 @@ const StaffDashboard = () => {
                             setDepositOTP('');
                         }}
                     >
-                        <div className="mt-4">
+                        <div className="mt-4 space-y-4">
                             <Input
                                 label="Enter 6-digit OTP"
                                 value={depositOTP}
@@ -1365,6 +1572,72 @@ const StaffDashboard = () => {
                                 placeholder="123456"
                                 className="text-center tracking-widest text-xl font-bold"
                             />
+
+                            {isManager && (
+                                <div className="pt-3 border-t border-border/40 text-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setDepositOTPModalOpen(false);
+                                            setBypassModalOpen(true);
+                                        }}
+                                        className="text-xs font-bold text-danger hover:text-danger-dark flex items-center justify-center gap-1.5 mx-auto py-1 px-3 rounded-lg hover:bg-danger/10 transition-colors"
+                                    >
+                                        <ShieldAlert size={15} />
+                                        Manager Override: Bypass OTP
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </ConfirmModal>
+
+                    {/* High-Security Manager 10-Second Countdown Bypass Modal */}
+                    <ConfirmModal
+                        isOpen={bypassModalOpen}
+                        title="Manager OTP Bypass Confirmation"
+                        message=""
+                        type="danger"
+                        confirmDisabled={bypassCountdown > 0}
+                        confirmText={bypassCountdown > 0 ? `Confirm Bypass in ${bypassCountdown}s...` : "Confirm & Record Deposit Now"}
+                        cancelText="Back to OTP"
+                        onConfirm={() => {
+                            if (bypassCountdown === 0) {
+                                setBypassModalOpen(false);
+                                confirmDepositWithOTP(true /* skipOTP */, true /* isBypassed */);
+                            }
+                        }}
+                        onCancel={() => {
+                            setBypassModalOpen(false);
+                            setDepositOTPModalOpen(true);
+                        }}
+                    >
+                        <div className="space-y-4 text-left">
+                            <div className="bg-danger/10 border border-danger/30 rounded-2xl p-4 space-y-2">
+                                <div className="flex items-center gap-2 text-danger font-bold text-sm">
+                                    <AlertTriangle size={18} className="shrink-0" />
+                                    <span>Security Warning & Audit Notice</span>
+                                </div>
+                                <p className="text-xs text-text-secondary leading-relaxed">
+                                    You are about to record a cash deposit of <strong className="text-primary font-black">₹{depositAmount}</strong> for <strong className="text-primary font-bold">{depositCustomerProfile?.firstName} {depositCustomerProfile?.lastName}</strong> without customer OTP verification.
+                                </p>
+                                <p className="text-[11px] text-danger font-medium leading-relaxed">
+                                    This action is strictly audited and permanently logged in the system ledger under your Manager account (<span className="font-mono font-bold">{user?.id}</span>). Ensure physical cash has been fully received and verified.
+                                </p>
+                            </div>
+
+                            <div className="text-center py-2">
+                                {bypassCountdown > 0 ? (
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-700 text-xs font-bold animate-pulse">
+                                        <span>Security Lock: Unlocking in</span>
+                                        <span className="font-mono text-sm bg-amber-500 text-white px-2 py-0.5 rounded-full">{bypassCountdown}s</span>
+                                    </div>
+                                ) : (
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-success-light/30 border border-success/40 rounded-full text-success text-xs font-bold">
+                                        <CheckCircle2 size={16} />
+                                        <span>Security Lock Cleared. Click Confirm below.</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </ConfirmModal>
                 </motion.div>

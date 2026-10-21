@@ -9,9 +9,10 @@ import { cn, safeDate } from '../../utils';
 interface NotificationDrawerProps {
     isOpen: boolean;
     onClose: () => void;
+    onUpdate?: () => void;
 }
 
-export const NotificationDrawer = ({ isOpen, onClose }: NotificationDrawerProps) => {
+export const NotificationDrawer = ({ isOpen, onClose, onUpdate }: NotificationDrawerProps) => {
     const { user } = useAuth()!;
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -32,18 +33,21 @@ export const NotificationDrawer = ({ isOpen, onClose }: NotificationDrawerProps)
     const handleDelete = async (id: string) => {
         await deleteNotificationFromDB(id);
         setNotifications(prev => prev.filter(n => n.id !== id));
+        onUpdate?.();
     };
 
     const handleClearAll = async () => {
         if (!window.confirm('Clear all notifications?')) return;
         await clearAllNotificationsFromDB(user.id);
         setNotifications([]);
+        onUpdate?.();
     };
 
     const handleMarkRead = async (id: string, currentlyRead: boolean) => {
         if (currentlyRead) return;
         await markNotificationAsRead(id);
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        onUpdate?.();
     };
 
     const getIcon = (type: string) => {

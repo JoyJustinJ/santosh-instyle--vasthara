@@ -60,10 +60,10 @@
     "trending_program_desc": "Check out our famous '{{name}}' membership!"
   },
   "nav": {
-    "home": "HOME",
-    "my_schemes": "MY SUBSCRIPTIONS",
-    "pay_emi": "PAY SUBSCRIPTIONS",
-    "contact": "CONTACT"
+    "home": "Home",
+    "my_schemes": "My Subscriptions",
+    "pay_emi": "Pay Subscriptions",
+    "contact": "Contact"
   },
   "my_schemes": {
     "title": "My Subscriptions",
