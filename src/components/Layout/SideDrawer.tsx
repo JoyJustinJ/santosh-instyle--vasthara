@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { rateApp, shareApp } from '../../utils';
+import { rateApp, shareApp, PLAY_STORE_URL } from '../../utils';
 
 export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { user, logout } = useAuth();
@@ -113,8 +113,9 @@ export const SideDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="p-8 border-t border-border">
               {!Capacitor.isNativePlatform() && !window.matchMedia('(display-mode: standalone)').matches && (
                 <a 
-                  href="https://github.com/JoyJustinJ/santosh-instyle--vasthara/raw/main/vastra-latest.apk" 
-                  download="vastra-latest.apk"
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-4 text-success hover:opacity-80 transition-opacity mb-6"
                   onClick={onClose}
                 >

@@ -60,7 +60,7 @@ export const validatePhone = (phone: string) => {
   return String(phone).match(/^[6-9]\d{9}$/);
 };
 
-export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.santoshinstyle.vastra";
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.santoshinstyle.vastra&pcampaignid=web_share";
 
 export const rateApp = () => {
   try {

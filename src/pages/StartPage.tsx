@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import vastraIcon from '../assets/logo.jpg';
 import { useAuth } from '../context/AuthContext';
+import { PLAY_STORE_URL } from '../utils';
 
 /* ─────────────────────────────────────────────
    Slide data
@@ -221,8 +222,9 @@ const StartPage = () => {
       {/* ── Top Floating Actions ── */}
       {!Capacitor.isNativePlatform() && (
         <a 
-          href="https://github.com/JoyJustinJ/santosh-instyle--vasthara/raw/main/vastra-latest.apk" 
-          download="vastra-latest.apk"
+          href={PLAY_STORE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className="absolute top-6 right-6 z-50 flex items-center gap-1.5 font-semibold text-accent hover:text-accent/80 transition-colors bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm text-sm"
         >
           <Download size={16} />
