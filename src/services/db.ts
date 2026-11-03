@@ -680,11 +680,19 @@ export const getAuditLogsFromDB = async () => {
 // ================= REDEMPTIONS & INCENTIVES =================
 export const markSchemeAsRedeemed = async (docId: string, staffId: string) => {
     try {
-        await updateDoc(doc(db, "user_schemes", docId), {
+        let schemeRef = doc(db, "user_schemes", docId);
+        const schemeSnap = await getDoc(schemeRef);
+        if (!schemeSnap.exists()) {
+            const qSnap = await getDocs(query(collection(db, "user_schemes"), where("accountId", "==", docId)));
+            if (!qSnap.empty) {
+                schemeRef = doc(db, "user_schemes", qSnap.docs[0].id);
+            }
+        }
+        await setDoc(schemeRef, {
             status: 'closed',
             closedAt: new Date().toISOString(),
             redeemedBy: staffId
-        });
+        }, { merge: true });
         await addAuditLog('SCHEME_REDEEMED', staffId, { accountId: docId });
         return true;
     } catch (e) {
@@ -695,11 +703,19 @@ export const markSchemeAsRedeemed = async (docId: string, staffId: string) => {
 
 export const preCloseScheme = async (docId: string) => {
     try {
-        await updateDoc(doc(db, "user_schemes", docId), {
+        let schemeRef = doc(db, "user_schemes", docId);
+        const schemeSnap = await getDoc(schemeRef);
+        if (!schemeSnap.exists()) {
+            const qSnap = await getDocs(query(collection(db, "user_schemes"), where("accountId", "==", docId)));
+            if (!qSnap.empty) {
+                schemeRef = doc(db, "user_schemes", qSnap.docs[0].id);
+            }
+        }
+        await setDoc(schemeRef, {
             status: 'closed',
             closedAt: new Date().toISOString(),
             isPreClosed: true
-        });
+        }, { merge: true });
         await addAuditLog('SCHEME_PRE_CLOSED', '', { accountId: docId });
         return true;
     } catch (e) {

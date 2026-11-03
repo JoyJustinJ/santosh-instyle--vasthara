@@ -179,8 +179,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // First pass: validate all accounts and calculate expected total
       for (const accountId of accountIds) {
         if (!accountId) continue;
-        const schemeRef = db.collection('user_schemes').doc(accountId);
-        const schemeSnap = await schemeRef.get();
+        let schemeRef = db.collection('user_schemes').doc(accountId);
+        let schemeSnap = await schemeRef.get();
+        if (!schemeSnap.exists) {
+          const qSnap = await db.collection('user_schemes').where('accountId', '==', accountId).limit(1).get();
+          if (!qSnap.empty) {
+            schemeRef = qSnap.docs[0].ref;
+            schemeSnap = qSnap.docs[0];
+          }
+        }
         if (schemeSnap.exists) {
           const current = schemeSnap.data() as any;
           expectedTotalAmount += (current.monthlyAmount || 0);
