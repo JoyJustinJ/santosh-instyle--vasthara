@@ -44,7 +44,7 @@ import {
 import { useNotification } from '../context/NotificationContext';
 import { db } from '../firebase';
 
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 
 type ViewState = 'overview' | 'create_scheme' | 'manage_schemes' | 'deposit' | 'transactions' | 'staff' | 'staff_mgmt' | 'customer_update' | 'customer_report' | 'settings' | 'analytics' | 'defaulters' | 'broadcast' | 'audit_logs' | 'redemptions' | 'create_customer' | 'enroll_customer' | 'tally' | 'referral_report';
 
@@ -531,15 +531,22 @@ const AdminDashboard = () => {
 
                 const monthsToPay = depositMonthsConfig[accountId] || 1;
                 const paid = Number(s.monthlyAmount || s.amount || 0) * monthsToPay;
-                const schemeRef = doc(db, "user_schemes", s.id);
+                const primaryDocId = s.id || s.accountId;
+                let schemeRef = doc(db, "user_schemes", primaryDocId);
+                const schemeSnap = await getDoc(schemeRef);
+                if (!schemeSnap.exists() && s.accountId && s.accountId !== primaryDocId) {
+                    const altRef = doc(db, "user_schemes", s.accountId);
+                    const altSnap = await getDoc(altRef);
+                    if (altSnap.exists()) schemeRef = altRef;
+                }
                 const nextMonthsPaid = (s.monthsPaid || 0) + monthsToPay;
                 const isCompleted = nextMonthsPaid >= (s.duration || 0);
-                await updateDoc(schemeRef, {
+                await setDoc(schemeRef, {
                     monthsPaid: nextMonthsPaid,
                     totalPaid: (s.totalPaid || 0) + paid,
                     status: isCompleted ? 'completed' : (s.status || 'active'),
                     completedAt: isCompleted ? new Date().toISOString() : (s.completedAt || null),
-                });
+                }, { merge: true });
 
                 const transactionId = await recordTransactionInDB({
                     userId: userId,

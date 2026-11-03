@@ -13,7 +13,7 @@ import { EnrollCustomer } from '../components/EnrollCustomer';
 import { formatCurrency, cn, validatePhone, safeDate, formatDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import {
     getSchemesFromDB,
     getUserPlansFromDB,
@@ -382,16 +382,34 @@ const StaffDashboard = () => {
                 const startingMonthsPaid = Number(s.monthsPaid || 0);
                 const nextMonthsPaid = startingMonthsPaid + monthsToPay;
                 const isCompleted = nextMonthsPaid >= Number(s.duration || 11);
-                const targetDocId = s.accountId || s.id;
-                const schemeRef = doc(db, "user_schemes", targetDocId);
+                // Locate the exact user_schemes document in Firestore.
+                // In Firestore, s.id is the actual document key (doc.id).
+                const primaryDocId = s.id || s.accountId;
+                let schemeRef = doc(db, "user_schemes", primaryDocId);
+                const schemeSnap = await getDoc(schemeRef);
 
-                await updateDoc(schemeRef, {
+                if (!schemeSnap.exists() && s.accountId && s.accountId !== primaryDocId) {
+                    const altRef = doc(db, "user_schemes", s.accountId);
+                    const altSnap = await getDoc(altRef);
+                    if (altSnap.exists()) {
+                        schemeRef = altRef;
+                    } else {
+                        const { collection, query, where, getDocs } = await import('firebase/firestore');
+                        const qSnap = await getDocs(query(collection(db, "user_schemes"), where("accountId", "==", s.accountId)));
+                        if (!qSnap.empty) {
+                            schemeRef = doc(db, "user_schemes", qSnap.docs[0].id);
+                        }
+                    }
+                }
+
+
+                await setDoc(schemeRef, {
                     monthsPaid: nextMonthsPaid,
                     totalPaid: (s.totalPaid || 0) + totalForScheme,
                     status: isCompleted ? 'completed' : (s.status || 'active'),
                     completedAt: isCompleted ? new Date().toISOString() : (s.completedAt || null),
                     lastPaymentDate: new Date().toISOString()
-                });
+                }, { merge: true });
 
                 // Create individual installment transactions so passbook/progress grids are 100% accurate!
                 for (let i = 0; i < monthsToPay; i++) {
@@ -400,7 +418,7 @@ const StaffDashboard = () => {
                         userId: userId,
                         userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
                         schemeName: s.name || s.schemeName || 'Purchase Plan',
-                        accountId: s.accountId || targetDocId,
+                        accountId: s.accountId || s.id,
                         amount: monthlyAmt,
                         installmentNumber: installmentNum,
                         type: 'deposit',
@@ -432,7 +450,7 @@ const StaffDashboard = () => {
                         amount: totalForScheme,
                         monthsPaidCount: monthsToPay,
                         installmentsCovered: `${startingMonthsPaid + 1} to ${nextMonthsPaid}`,
-                        schemeId: s.name || s.schemeName || targetDocId,
+                        schemeId: s.name || s.schemeName || s.accountId || s.id,
                         bypassedOTP: true,
                         recordedByRole: isManager ? 'manager' : 'staff',
                         reason: 'Manager 10-second security countdown override'
@@ -444,7 +462,7 @@ const StaffDashboard = () => {
                         amount: totalForScheme,
                         monthsPaidCount: monthsToPay,
                         installmentsCovered: `${startingMonthsPaid + 1} to ${nextMonthsPaid}`,
-                        schemeId: s.name || s.schemeName || targetDocId,
+                        schemeId: s.name || s.schemeName || s.accountId || s.id,
                         recordedByRole: isManager ? 'manager' : 'staff'
                     });
                 }
@@ -467,6 +485,9 @@ const StaffDashboard = () => {
             setSelectedPlans([]);
             setDepositMonthsConfig({});
             setDepositAmount('');
+            if (depositCustomer) {
+                handleCustomerLookup(depositCustomer);
+            }
         } catch (error: any) {
             console.error('Error recording receipt:', error);
             showNotification(`Failed to record receipt: ${error?.message || 'Unknown error'}`, "error");
