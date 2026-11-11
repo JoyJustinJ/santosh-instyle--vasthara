@@ -842,7 +842,7 @@ const AdminDashboard = () => {
             }
             const combinedTx = [...txById, ...txByPhone];
             const uniqueTx = combinedTx.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-            setCustomerTransactions(uniqueTx.sort((a, b) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime()));
+            setCustomerTransactions(uniqueTx.sort((a, b) => safeDate(b.date || b.timestamp).getTime() - safeDate(a.date || a.timestamp).getTime()));
         } else {
             showNotif("Customer not found", 'error');
         }
@@ -1899,7 +1899,7 @@ const AdminDashboard = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {creditNoteData.transactions.map((tx: any) => (
                                                     <tr key={tx.id}>
-                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.timestamp)}</td>
+                                                        <td className="py-1.5 px-2 font-medium text-gray-900">{formatDate(tx.date || tx.timestamp)}</td>
                                                         <td className="py-1.5 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tx.method || 'CASH'}</td>
                                                         <td className="py-1.5 px-2 font-bold text-gray-900 text-right">₹{tx.amount}</td>
                                                     </tr>

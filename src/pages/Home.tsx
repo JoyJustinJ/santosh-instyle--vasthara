@@ -78,7 +78,7 @@ const Home = () => {
         for (const scheme of userSchemes) {
           const txs = await getTransactionsFromDB(undefined, scheme.accountId);
           const hasPaidThisMonth = txs.some((tx: any) => {
-            const date = safeDate(tx.timestamp);
+            const date = safeDate(tx.date || tx.timestamp);
             return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
           });
 

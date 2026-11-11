@@ -229,7 +229,7 @@ const PlanDetail = () => {
                   <div>
                     <p className="text-sm font-bold text-primary">{formatCurrency(tx.amount)}</p>
                     <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
-                      {tx.timestamp ? formatDate(tx.timestamp) : 'N/A'} • {tx.method || t('plan_detail.online')}
+                      {(tx.date || tx.timestamp) ? formatDate(tx.date || tx.timestamp) : 'N/A'} • {tx.method || t('plan_detail.online')}
                     </p>
                   </div>
                 </div>

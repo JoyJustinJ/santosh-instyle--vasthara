@@ -564,7 +564,7 @@ export const getNotificationsFromDB = async (userId: string) => {
         );
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-            .sort((a: any, b: any) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime());
+            .sort((a: any, b: any) => safeDate(b.date || b.timestamp).getTime() - safeDate(a.date || a.timestamp).getTime());
     } catch (e) {
         console.error("Error fetching notifications:", e);
         return [];

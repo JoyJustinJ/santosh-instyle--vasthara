@@ -44,7 +44,7 @@ const Transactions = () => {
                     mapping[s.id] = s.name;
                 });
                 setPlanMap(mapping);
-                const sorted = txData.sort((a: any, b: any) => safeDate(b.timestamp).getTime() - safeDate(a.timestamp).getTime());
+                const sorted = txData.sort((a: any, b: any) => safeDate(b.date || b.timestamp).getTime() - safeDate(a.date || a.timestamp).getTime());
                 setTransactions(sorted);
             } catch (err) {
                 console.error('Error fetching transaction data:', err);
