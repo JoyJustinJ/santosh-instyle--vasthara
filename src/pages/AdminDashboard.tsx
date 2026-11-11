@@ -17,7 +17,7 @@ import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { NumericKeypad } from '../components/UI/NumericKeypad';
 import { CreateCustomerAccount } from '../components/CreateCustomerAccount';
 import { EnrollCustomer } from '../components/EnrollCustomer';
-import { formatCurrency, cn, formatDate, safeDate } from '../utils';
+import { formatCurrency, cn, formatDate, safeDate, getInstallmentDueDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import {
     getSchemesFromDB,
@@ -530,7 +530,9 @@ const AdminDashboard = () => {
                 if (!s) continue;
 
                 const monthsToPay = depositMonthsConfig[accountId] || 1;
-                const paid = Number(s.monthlyAmount || s.amount || 0) * monthsToPay;
+                const monthlyAmt = Number(s.monthlyAmount || s.amount || 0);
+                const paid = monthlyAmt * monthsToPay;
+                const startingMonthsPaid = s.monthsPaid || 0;
                 const primaryDocId = s.id || s.accountId;
                 let schemeRef = doc(db, "user_schemes", primaryDocId);
                 const schemeSnap = await getDoc(schemeRef);
@@ -539,36 +541,49 @@ const AdminDashboard = () => {
                     const altSnap = await getDoc(altRef);
                     if (altSnap.exists()) schemeRef = altRef;
                 }
-                const nextMonthsPaid = (s.monthsPaid || 0) + monthsToPay;
+                const nextMonthsPaid = startingMonthsPaid + monthsToPay;
                 const isCompleted = nextMonthsPaid >= (s.duration || 0);
                 await setDoc(schemeRef, {
                     monthsPaid: nextMonthsPaid,
                     totalPaid: (s.totalPaid || 0) + paid,
                     status: isCompleted ? 'completed' : (s.status || 'active'),
                     completedAt: isCompleted ? new Date().toISOString() : (s.completedAt || null),
+                    lastPaymentDate: new Date().toISOString()
                 }, { merge: true });
 
-                const transactionId = await recordTransactionInDB({
-                    userId: userId,
-                    userName: foundCustomer ? `${foundCustomer.firstName || ''} ${foundCustomer.lastName || ''}`.trim() : 'Unknown Customer',
-                    customerAccount: userId,
-                    schemeName: s.name || s.schemeName || 'Purchase Plan',
-                    accountId: accountId,
-                    schemeId: accountId,
-                    amount: paid,
-                    type: 'deposit',
-                    status: 'Success',
-                    method: 'CASH',
-                    recordedBy: 'admin'
-                });
+                const rawJoinDate = s.enrollmentDate || s.joinedAt || s.createdAt || s.startDate || s.date;
+                const todayStr = new Date().toISOString().split('T')[0];
 
-                if (transactionId) {
-                    await addAuditLog('MANUAL_DEPOSIT', 'admin', {
-                        phone: userId,
-                        amount: paid,
-                        schemeId: s.name || s.schemeName || accountId,
-                        transactionId
+                for (let i = 0; i < monthsToPay; i++) {
+                    const installmentNum = startingMonthsPaid + i + 1;
+                    const installmentDate = getInstallmentDueDate(rawJoinDate, installmentNum);
+                    const transactionId = await recordTransactionInDB({
+                        userId: userId,
+                        userName: foundCustomer ? `${foundCustomer.firstName || ''} ${foundCustomer.lastName || ''}`.trim() : 'Unknown Customer',
+                        customerAccount: userId,
+                        schemeName: s.name || s.schemeName || 'Purchase Plan',
+                        accountId: accountId,
+                        schemeId: accountId,
+                        amount: monthlyAmt,
+                        installmentNumber: installmentNum,
+                        type: 'deposit',
+                        status: 'Success',
+                        method: 'CASH',
+                        recordedBy: 'admin',
+                        date: installmentDate,
+                        collectedAt: todayStr,
+                        timestamp: new Date().toISOString()
                     });
+
+                    if (transactionId) {
+                        await addAuditLog('MANUAL_DEPOSIT', 'admin', {
+                            phone: userId,
+                            amount: monthlyAmt,
+                            installmentNumber: installmentNum,
+                            schemeId: s.name || s.schemeName || accountId,
+                            transactionId
+                        });
+                    }
                 }
             }
 
@@ -3163,8 +3178,8 @@ const AdminDashboard = () => {
                 end.setHours(23, 59, 59, 999);
                 
                 const rangeTx = allTransactions.filter(t => {
-                    // Use safeDate to properly handle Firestore Timestamp objects
-                    const txDate = safeDate(t.timestamp);
+                    // Use safeDate to properly handle Firestore Timestamp objects or collectedAt/date
+                    const txDate = safeDate(t.collectedAt || t.timestamp || t.date);
                     const inRange = txDate >= start && txDate <= end;
                     // Only include CASH transactions in the tally
                     const isCash = !t.method || t.method.toUpperCase() === 'CASH';

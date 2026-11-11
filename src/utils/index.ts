@@ -103,3 +103,48 @@ export const shareApp = async () => {
   }
 };
 
+/**
+ * Calculates the appropriate recording date for a specific scheme installment.
+ * If the installment corresponds to a past due month (e.g. October when paying in November),
+ * it returns that past month's date (aligned to the customer's joining day).
+ * If the installment corresponds to the current month or future, it returns today's date.
+ */
+export const getInstallmentDueDate = (rawEnrollmentDate: any, installmentNum: number): string => {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  const baseDate = safeDate(rawEnrollmentDate);
+  if (!baseDate || isNaN(baseDate.getTime()) || baseDate.getTime() === 0) {
+    return todayStr;
+  }
+
+  const joinYear = baseDate.getFullYear();
+  const joinMonth = baseDate.getMonth();
+  const joinDay = baseDate.getDate();
+
+  // Installment 1 = offset 0, Installment 2 = offset 1, etc.
+  const monthOffset = Math.max(0, installmentNum - 1);
+  const targetYear = joinYear + Math.floor((joinMonth + monthOffset) / 12);
+  const targetMonth = (joinMonth + monthOffset) % 12;
+
+  // Check if target installment month is strictly before the current calendar month
+  const isPastMonth = targetYear < currentYear || (targetYear === currentYear && targetMonth < currentMonth);
+
+  if (!isPastMonth) {
+    // Current or future installment being paid now -> use today's date
+    return todayStr;
+  }
+
+  // Calculate day in that past month, clamping to the max days in that month
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  const clampedDay = Math.min(joinDay, daysInTargetMonth);
+
+  const yyyy = targetYear;
+  const mm = String(targetMonth + 1).padStart(2, '0');
+  const dd = String(clampedDay).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+

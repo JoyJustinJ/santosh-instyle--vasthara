@@ -88,8 +88,9 @@ export const recordTransactionInDB = async (transaction: any): Promise<string | 
             id: docRef.id,
             referenceId,
             invoicePrimaryKey: docRef.id,
-            date: new Date().toISOString().split('T')[0], // YYYY-MM-DD for consistent safeDate parsing
-            timestamp: new Date().toISOString()
+            date: transaction.date || new Date().toISOString().split('T')[0],
+            collectedAt: transaction.collectedAt || new Date().toISOString().split('T')[0],
+            timestamp: transaction.timestamp || new Date().toISOString()
         });
         return docRef.id; // Return the real Firestore document ID
     } catch (e) {

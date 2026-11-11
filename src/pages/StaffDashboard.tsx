@@ -10,7 +10,7 @@ import { Input } from '../components/UI/Input';
 import { ConfirmModal } from '../components/UI/ConfirmModal';
 import { CreateCustomerAccount } from '../components/CreateCustomerAccount';
 import { EnrollCustomer } from '../components/EnrollCustomer';
-import { formatCurrency, cn, validatePhone, safeDate, formatDate } from '../utils';
+import { formatCurrency, cn, validatePhone, safeDate, formatDate, getInstallmentDueDate } from '../utils';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
@@ -412,8 +412,11 @@ const StaffDashboard = () => {
                 }, { merge: true });
 
                 // Create individual installment transactions so passbook/progress grids are 100% accurate!
+                const rawJoinDate = s.enrollmentDate || s.joinedAt || s.createdAt || s.startDate || s.date;
+                const todayStr = new Date().toISOString().split('T')[0];
                 for (let i = 0; i < monthsToPay; i++) {
                     const installmentNum = startingMonthsPaid + i + 1;
+                    const installmentDate = getInstallmentDueDate(rawJoinDate, installmentNum);
                     await recordTransactionInDB({
                         userId: userId,
                         userName: `${depositCustomerProfile?.firstName || ''} ${depositCustomerProfile?.lastName || ''}`.trim(),
@@ -427,7 +430,8 @@ const StaffDashboard = () => {
                         recordedBy: user?.id || 'staff',
                         recordedByRole: isManager ? 'manager' : 'staff',
                         bypassedOTP: isBypassed,
-                        date: new Date().toISOString().split('T')[0],
+                        date: installmentDate,
+                        collectedAt: todayStr,
                         timestamp: new Date().toISOString()
                     });
                 }
@@ -1014,7 +1018,7 @@ const StaffDashboard = () => {
 
     const handleDownloadTallyCSV = async () => {
         const today = new Date().toDateString();
-        const todayTx = staffTransactions.filter(t => safeDate(t.date || t.timestamp).toDateString() === today);
+        const todayTx = staffTransactions.filter(t => safeDate(t.collectedAt || t.timestamp || t.date).toDateString() === today);
         if (todayTx.length === 0) return showNotification("No transactions today", "error");
 
         const headers = ["Transaction ID", "Customer Name", "Customer Phone", "Amount", "Scheme Name", "Date"];
@@ -1024,7 +1028,7 @@ const StaffDashboard = () => {
             tx.userPhone || 'N/A',
             tx.amount,
             `"${tx.schemeName}"`,
-            safeDate(tx.date || tx.timestamp).toLocaleString()
+            safeDate(tx.collectedAt || tx.timestamp || tx.date).toLocaleString()
         ]);
 
         const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -1330,7 +1334,7 @@ const StaffDashboard = () => {
             end.setHours(23, 59, 59, 999);
 
             const rangeTx = staffTransactions.filter(t => {
-                const txDate = safeDate(t.date || t.timestamp);
+                const txDate = safeDate(t.collectedAt || t.timestamp || t.date);
                 return txDate >= start && txDate <= end;
             });
             const total = rangeTx.reduce((acc, t) => acc + (t.amount || 0), 0);
